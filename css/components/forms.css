@@ -1,0 +1,358 @@
+/* ================================================
+   CAMPAIGN MANAGER - FORMS
+   Form controls and validation
+   ================================================ */
+
+/* === FORM GROUPS === */
+.form-group {
+  margin-bottom: var(--cm-space-md);
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(var(--cm-grid-stat-min-width), 1fr)
+  );
+  gap: var(--cm-space-md);
+  margin-bottom: var(--cm-space-md);
+}
+
+.form-row:last-child {
+  margin-bottom: 0;
+}
+
+/* === LABELS === */
+.form-label,
+.form-group label {
+  display: block;
+  font-size: var(--cm-font-size-sm);
+  font-weight: var(--cm-font-weight-medium);
+  color: var(--cm-text-dark);
+  margin-bottom: var(--cm-space-xs);
+}
+
+.form-label.required::after,
+.form-group label.required::after {
+  content: " *";
+  color: var(--cm-error);
+}
+
+/* === INPUT CONTROLS === */
+.form-control,
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: var(--cm-space-sm) var(--cm-space-md);
+  border: var(--cm-border-width) solid var(--cm-border);
+  border-radius: var(--cm-radius);
+  font-size: var(--cm-font-size-sm);
+  line-height: var(--cm-line-height-base);
+  color: var(--cm-text-dark);
+  background: var(--cm-bg-white);
+  transition: var(--cm-transition-all);
+}
+
+.form-control:focus,
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--cm-primary);
+  box-shadow: 0 0 0 3px rgba(138, 109, 80, 0.1);
+}
+
+.form-control:disabled,
+.form-group input:disabled,
+.form-group textarea:disabled,
+.form-group select:disabled {
+  background: var(--cm-gray-50);
+  color: var(--cm-text-muted);
+  cursor: not-allowed;
+}
+
+.form-control::placeholder,
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--cm-text-muted);
+}
+
+/* === TEXTAREA === */
+textarea.form-control,
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* === SELECT === */
+select.form-control,
+.form-group select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right var(--cm-space-sm) center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+/* === INPUT SIZES === */
+.form-control-sm {
+  padding: var(--cm-space-xs) var(--cm-space-sm);
+  font-size: var(--cm-font-size-xs);
+}
+
+.form-control-lg {
+  padding: var(--cm-space-md) var(--cm-space-lg);
+  font-size: var(--cm-font-size-lg);
+}
+
+/* === VALIDATION STATES === */
+.form-control.is-valid,
+.form-group.is-valid input,
+.form-group.is-valid textarea,
+.form-group.is-valid select {
+  border-color: var(--cm-success);
+}
+
+.form-control.is-valid:focus,
+.form-group.is-valid input:focus,
+.form-group.is-valid textarea:focus,
+.form-group.is-valid select:focus {
+  border-color: var(--cm-success);
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+}
+
+.form-control.is-invalid,
+.form-group.is-invalid input,
+.form-group.is-invalid textarea,
+.form-group.is-invalid select {
+  border-color: var(--cm-error);
+}
+
+.form-control.is-invalid:focus,
+.form-group.is-invalid input:focus,
+.form-group.is-invalid textarea:focus,
+.form-group.is-invalid select:focus {
+  border-color: var(--cm-error);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* === FEEDBACK TEXT === */
+.form-feedback,
+.form-text {
+  display: block;
+  font-size: var(--cm-font-size-xs);
+  margin-top: var(--cm-space-xs);
+}
+
+.form-feedback.valid-feedback {
+  color: var(--cm-success);
+}
+
+.form-feedback.invalid-feedback {
+  color: var(--cm-error);
+}
+
+.form-text {
+  color: var(--cm-text-muted);
+}
+
+/* === CHECKBOXES AND RADIOS === */
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: var(--cm-space-sm);
+  margin-bottom: var(--cm-space-sm);
+}
+
+.form-check:last-child {
+  margin-bottom: 0;
+}
+
+.form-check-input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+.form-check-input[type="checkbox"] {
+  border-radius: var(--cm-radius-sm);
+}
+
+.form-check-input[type="radio"] {
+  border-radius: var(--cm-radius-full);
+}
+
+.form-check-label {
+  font-size: var(--cm-font-size-sm);
+  color: var(--cm-text-dark);
+  cursor: pointer;
+  margin: 0;
+}
+
+/* === INPUT GROUPS === */
+.input-group {
+  display: flex;
+  width: 100%;
+}
+
+.input-group .form-control {
+  border-radius: 0;
+  border-right: none;
+}
+
+.input-group .form-control:first-child {
+  border-top-left-radius: var(--cm-radius);
+  border-bottom-left-radius: var(--cm-radius);
+}
+
+.input-group .form-control:last-child {
+  border-top-right-radius: var(--cm-radius);
+  border-bottom-right-radius: var(--cm-radius);
+  border-right: var(--cm-border-width) solid var(--cm-border);
+}
+
+.input-group-text {
+  display: flex;
+  align-items: center;
+  padding: var(--cm-space-sm) var(--cm-space-md);
+  background: var(--cm-gray-50);
+  border: var(--cm-border-width) solid var(--cm-border);
+  border-left: none;
+  color: var(--cm-text-medium);
+  font-size: var(--cm-font-size-sm);
+}
+
+.input-group-text:first-child {
+  border-left: var(--cm-border-width) solid var(--cm-border);
+  border-top-left-radius: var(--cm-radius);
+  border-bottom-left-radius: var(--cm-radius);
+}
+
+.input-group-text:last-child {
+  border-top-right-radius: var(--cm-radius);
+  border-bottom-right-radius: var(--cm-radius);
+}
+
+/* === SEARCH INPUTS === */
+.search-input {
+  padding-left: 2.5rem;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'/%3e%3c/svg%3e");
+  background-position: left var(--cm-space-sm) center;
+  background-repeat: no-repeat;
+  background-size: 1rem 1rem;
+}
+
+/* === FILE INPUTS === */
+.form-file {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+}
+
+.form-file-input {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+}
+
+.form-file-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cm-space-sm);
+  padding: var(--cm-space-sm) var(--cm-space-md);
+  background: var(--cm-bg-white);
+  border: var(--cm-border-width) solid var(--cm-border);
+  border-radius: var(--cm-radius);
+  color: var(--cm-text-dark);
+  cursor: pointer;
+  transition: var(--cm-transition-all);
+}
+
+.form-file-label:hover {
+  background: var(--cm-gray-50);
+  border-color: var(--cm-primary);
+}
+
+/* === FORM ACTIONS === */
+.form-actions {
+  display: flex;
+  gap: var(--cm-space-md);
+  margin-top: var(--cm-space-lg);
+  padding-top: var(--cm-space-lg);
+  border-top: var(--cm-border-width) solid var(--cm-border);
+}
+
+.form-actions.justify-end {
+  justify-content: flex-end;
+}
+
+.form-actions.justify-between {
+  justify-content: space-between;
+}
+
+.form-actions.justify-center {
+  justify-content: center;
+}
+
+/* === FLOATING LABELS === */
+.form-floating {
+  position: relative;
+}
+
+.form-floating .form-control {
+  padding: 1rem var(--cm-space-md) 0.5rem;
+}
+
+.form-floating label {
+  position: absolute;
+  top: 0;
+  left: var(--cm-space-md);
+  padding: 1rem 0 0;
+  pointer-events: none;
+  color: var(--cm-text-muted);
+  transition: var(--cm-transition-all);
+  transform-origin: 0 0;
+}
+
+.form-floating .form-control:focus ~ label,
+.form-floating .form-control:not(:placeholder-shown) ~ label {
+  transform: scale(0.85) translateY(-0.5rem);
+  color: var(--cm-primary);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions.justify-end,
+  .form-actions.justify-between {
+    justify-content: stretch;
+  }
+
+  .input-group {
+    flex-direction: column;
+  }
+
+  .input-group .form-control,
+  .input-group-text {
+    border-radius: var(--cm-radius);
+    border: var(--cm-border-width) solid var(--cm-border);
+  }
+
+  .input-group .form-control:not(:last-child) {
+    margin-bottom: var(--cm-space-xs);
+  }
+}

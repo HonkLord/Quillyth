@@ -1,0 +1,35 @@
+/* ================================================
+   CAMPAIGN MANAGER - MAIN CSS
+   Entry point for all styles
+   ================================================ */
+
+/* Base styles */
+@import url("./base/variables.css");
+@import url("./base/reset.css");
+@import url("./base/typography.css");
+@import url("./base/layout.css");
+
+/* Components */
+@import url("./components/navigation.css");
+@import url("./components/dashboard.css");
+@import url("./components/scenes.css");
+@import url("./components/characters.css");
+@import url("./components/quests.css");
+@import url("./components/sessions.css");
+@import url("./components/campaigns.css");
+@import url("./components/locations.css");
+@import url("./components/notifications.css");
+@import url("./components/search.css");
+@import url("./components/buttons.css");
+@import url("./components/forms.css");
+@import url("./components/modals.css");
+@import url("./components/cards.css");
+
+/* Utilities */
+@import url("./utilities/spacing.css");
+@import url("./utilities/layout.css");
+@import url("./utilities/responsive.css");
+
+/* === LEGACY STYLES (TEMPORARY) === */
+/* Import legacy styles while we migrate */
+@import url("./components/notes.css");

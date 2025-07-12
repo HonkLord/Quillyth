@@ -1,0 +1,239 @@
+# 🏗️ **Modular Architecture Standards**
+
+## 📁 **Folder Structure Convention**
+
+### **Feature-Based Organization**
+
+```
+js/
+├── features/                    # Feature modules (NEW STANDARD)
+│   ├── sessions/               # Session management feature
+│   │   ├── session-core.js     # Data management & CRUD
+│   │   ├── session-planner.js  # Complex business logic
+│   │   ├── session-ui.js       # UI rendering & interactions
+│   │   └── session-manager.js  # Feature coordinator
+│   ├── characters/             # Character management feature
+│   │   ├── character-core.js   # Data management & CRUD
+│   │   ├── character-progression.js  # Progression tracking
+│   │   ├── character-relationships.js # Relationship management
+│   │   ├── character-ui.js     # UI rendering & interactions
+│   │   └── character-manager.js # Feature coordinator
+│   ├── scenes/                 # Scene management (already modular)
+│   │   ├── scene-data-manager.js
+│   │   ├── scene-renderer.js
+│   │   ├── scene-ui.js
+│   │   └── scene-manager.js
+│   ├── quests/                 # Quest management feature
+│   ├── locations/              # Location management feature
+│   └── notes/                  # Notes management feature
+├── shared/                     # Shared utilities and services
+│   ├── api-service.js          # API communication
+│   ├── data-manager.js         # Cross-feature data operations
+│   ├── notification-service.js # Toast notifications, etc.
+│   └── validation-service.js   # Data validation utilities
+├── services/                   # External service integrations
+│   ├── gemini-service.js       # AI service integration
+│   ├── search-service.js       # Search functionality
+│   └── export-import-service.js # Data export/import
+├── components/                 # Reusable UI components
+│   ├── global-search.js        # Cross-feature search component
+│   └── export-import-panel.js  # Cross-feature export panel
+└── app.js                      # Main application coordinator
+```
+
+## 🧩 **Module Responsibility Pattern**
+
+### **Core Module** (`*-core.js`)
+
+- **Responsibility**: Data management, CRUD operations, business logic
+- **Size Limit**: 200-300 lines
+- **Contains**:
+  - API calls and data fetching
+  - Data validation and transformation
+  - Basic business rules
+  - State management for the feature
+
+### **Specialized Modules** (`*-planner.js`, `*-progression.js`, etc.)
+
+- **Responsibility**: Complex business logic for specific aspects
+- **Size Limit**: 300-400 lines
+- **Contains**:
+  - Advanced algorithms and calculations
+  - Complex workflows
+  - Feature-specific business rules
+
+### **UI Module** (`*-ui.js`)
+
+- **Responsibility**: User interface rendering and interactions
+- **Size Limit**: 300-400 lines
+- **Contains**:
+  - HTML template generation
+  - Event handling
+  - UI state management
+  - Modal and form management
+
+### **Manager Module** (`*-manager.js`)
+
+- **Responsibility**: Feature coordination and public API
+- **Size Limit**: 200-300 lines
+- **Contains**:
+  - Module initialization and coordination
+  - Public methods for other features to use
+  - High-level workflow orchestration
+  - Integration with other features
+
+## 📏 **File Size Guidelines**
+
+### **Strict Limits**
+
+- **Maximum file size**: 500 lines (NEVER exceed)
+- **Optimal file size**: 200-300 lines
+- **Refactor trigger**: 400+ lines
+
+### **When to Split Files**
+
+```javascript
+// ❌ BAD: One massive file
+class CharacterManager {
+  // 3,573 lines of mixed responsibilities
+}
+
+// ✅ GOOD: Modular approach
+class CharacterCore {        // 250 lines - data management
+class CharacterProgression { // 300 lines - progression logic
+class CharacterUI {          // 350 lines - UI rendering
+class CharacterManager {     // 200 lines - coordination
+```
+
+## 🔗 **Import/Export Standards**
+
+### **Feature Module Exports**
+
+```javascript
+// Core module - default export
+export default class SessionCore { }
+
+// Specialized modules - named exports
+export class SessionPlanner { }
+export class SessionUI { }
+
+// Manager - default export (main feature interface)
+export default class SessionManager { }
+```
+
+### **Import Patterns**
+
+```javascript
+// Manager imports (feature coordinator)
+import SessionCore from './session-core.js';
+import { SessionPlanner } from './session-planner.js';
+import { SessionUI } from './session-ui.js';
+
+// Cross-feature imports
+import { ApiService } from '../../shared/api-service.js';
+import { NotificationService } from '../../shared/notification-service.js';
+```
+
+## 🎯 **Naming Conventions**
+
+### **File Naming**
+
+- **Core modules**: `feature-core.js` (e.g., `session-core.js`)
+- **Specialized modules**: `feature-aspect.js` (e.g., `character-progression.js`)
+- **UI modules**: `feature-ui.js` (e.g., `quest-ui.js`)
+- **Managers**: `feature-manager.js` (e.g., `location-manager.js`)
+
+### **Class Naming**
+
+- **Core classes**: `FeatureCore` (e.g., `SessionCore`)
+- **Specialized classes**: `FeatureAspect` (e.g., `CharacterProgression`)
+- **UI classes**: `FeatureUI` (e.g., `QuestUI`)
+- **Managers**: `FeatureManager` (e.g., `LocationManager`)
+
+## 🔄 **Migration Strategy**
+
+### **Step 1: Create Feature Directory**
+
+```bash
+mkdir -p js/features/[feature-name]
+```
+
+### **Step 2: Extract Core Module**
+
+- Move basic CRUD operations
+- Move data management logic
+- Keep API calls and state management
+
+### **Step 3: Extract Specialized Modules**
+
+- Identify complex business logic areas
+- Create focused modules for each aspect
+- Move related functionality together
+
+### **Step 4: Extract UI Module**
+
+- Move HTML generation
+- Move event handling
+- Move modal management
+
+### **Step 5: Create Lean Manager**
+
+- Keep only coordination logic
+- Import and initialize modules
+- Provide public API for other features
+
+### **Step 6: Update Imports**
+
+- Update app.js imports
+- Update cross-feature references
+- Test all functionality
+
+## ✅ **Quality Standards**
+
+### **Before Creating Any File**
+
+- [ ] File has single, clear responsibility
+- [ ] File size is under 500 lines
+- [ ] Follows naming conventions
+- [ ] Has proper imports/exports
+- [ ] Includes JSDoc comments for public methods
+
+### **Before Committing Modular Changes**
+
+- [ ] All modules follow size limits
+- [ ] Import paths are correct
+- [ ] Feature still works as before
+- [ ] No functionality is lost
+- [ ] Cross-feature integration works
+- [ ] Documentation is updated
+
+## 🚨 **Anti-Patterns to Avoid**
+
+### **File Organization**
+
+- ❌ Mixing different responsibilities in one file
+- ❌ Creating files over 500 lines
+- ❌ Using generic names like `utils.js` or `helpers.js`
+- ❌ Putting feature-specific code in shared directories
+
+### **Module Design**
+
+- ❌ Circular dependencies between modules
+- ❌ Direct database access from UI modules
+- ❌ Business logic in UI modules
+- ❌ UI code in core modules
+
+### **Import/Export**
+
+- ❌ Default exports for specialized modules
+- ❌ Named exports for main managers
+- ❌ Importing entire features when only one method is needed
+- ❌ Deep import paths (more than 3 levels)
+
+---
+
+**This standard ensures consistent, maintainable, and scalable code organization across all features.**
+description:
+globs:
+alwaysApply: false
+---

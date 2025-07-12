@@ -1,0 +1,252 @@
+/* ================================================
+   CAMPAIGN MANAGER - TYPOGRAPHY
+   Font styles and text utilities
+   ================================================ */
+
+/* === HEADINGS === */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: var(--cm-font-weight-semibold);
+  line-height: var(--cm-line-height-tight);
+  color: var(--cm-text-dark);
+  margin-bottom: var(--cm-space-md);
+}
+
+h1 {
+  font-size: var(--cm-font-size-4xl);
+  font-weight: var(--cm-font-weight-bold);
+}
+
+h2 {
+  font-size: var(--cm-font-size-3xl);
+}
+
+h3 {
+  font-size: var(--cm-font-size-2xl);
+}
+
+h4 {
+  font-size: var(--cm-font-size-xl);
+}
+
+h5 {
+  font-size: var(--cm-font-size-lg);
+}
+
+h6 {
+  font-size: var(--cm-font-size-base);
+}
+
+/* === TEXT ELEMENTS === */
+p {
+  margin-bottom: var(--cm-space-md);
+  line-height: var(--cm-line-height-base);
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+/* === LINKS === */
+a {
+  color: var(--cm-primary);
+  text-decoration: none;
+  transition: var(--cm-transition-all);
+}
+
+a:hover {
+  color: var(--cm-primary-dark);
+  text-decoration: underline;
+}
+
+a:focus {
+  outline: 2px solid var(--cm-primary);
+  outline-offset: 2px;
+}
+
+/* === LISTS === */
+ul,
+ol {
+  margin-bottom: var(--cm-space-md);
+  padding-left: var(--cm-space-lg);
+}
+
+li {
+  margin-bottom: var(--cm-space-xs);
+}
+
+li:last-child {
+  margin-bottom: 0;
+}
+
+/* === EMPHASIS === */
+strong,
+b {
+  font-weight: var(--cm-font-weight-semibold);
+}
+
+em,
+i {
+  font-style: italic;
+}
+
+small {
+  font-size: var(--cm-font-size-xs);
+  color: var(--cm-text-muted);
+}
+
+/* === CODE === */
+code,
+pre {
+  font-family: var(--cm-font-family-mono);
+  font-size: var(--cm-font-size-sm);
+}
+
+code {
+  background: var(--cm-gray-100);
+  padding: 0.125rem 0.25rem;
+  border-radius: var(--cm-radius-sm);
+  color: var(--cm-text-dark);
+}
+
+pre {
+  background: var(--cm-gray-100);
+  padding: var(--cm-space-md);
+  border-radius: var(--cm-radius);
+  overflow-x: auto;
+  margin-bottom: var(--cm-space-md);
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+/* === BLOCKQUOTES === */
+blockquote {
+  border-left: 4px solid var(--cm-primary);
+  padding-left: var(--cm-space-md);
+  margin: var(--cm-space-md) 0;
+  font-style: italic;
+  color: var(--cm-text-medium);
+}
+
+/* === HORIZONTAL RULES === */
+hr {
+  border: none;
+  height: 1px;
+  background: var(--cm-border);
+  margin: var(--cm-space-xl) 0;
+}
+
+/* === TEXT UTILITIES === */
+.text-xs {
+  font-size: var(--cm-font-size-xs);
+}
+.text-sm {
+  font-size: var(--cm-font-size-sm);
+}
+.text-base {
+  font-size: var(--cm-font-size-base);
+}
+.text-lg {
+  font-size: var(--cm-font-size-lg);
+}
+.text-xl {
+  font-size: var(--cm-font-size-xl);
+}
+.text-2xl {
+  font-size: var(--cm-font-size-2xl);
+}
+.text-3xl {
+  font-size: var(--cm-font-size-3xl);
+}
+.text-4xl {
+  font-size: var(--cm-font-size-4xl);
+}
+
+.font-normal {
+  font-weight: var(--cm-font-weight-normal);
+}
+.font-medium {
+  font-weight: var(--cm-font-weight-medium);
+}
+.font-semibold {
+  font-weight: var(--cm-font-weight-semibold);
+}
+.font-bold {
+  font-weight: var(--cm-font-weight-bold);
+}
+
+.leading-tight {
+  line-height: var(--cm-line-height-tight);
+}
+.leading-base {
+  line-height: var(--cm-line-height-base);
+}
+.leading-relaxed {
+  line-height: var(--cm-line-height-relaxed);
+}
+
+.text-left {
+  text-align: left;
+}
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+
+.text-primary {
+  color: var(--cm-primary);
+}
+.text-dark {
+  color: var(--cm-text-dark);
+}
+.text-medium {
+  color: var(--cm-text-medium);
+}
+.text-muted {
+  color: var(--cm-text-muted);
+}
+.text-light {
+  color: var(--cm-text-light);
+}
+.text-success {
+  color: var(--cm-success);
+}
+.text-warning {
+  color: var(--cm-warning);
+}
+.text-error {
+  color: var(--cm-error);
+}
+.text-info {
+  color: var(--cm-info);
+}
+
+.uppercase {
+  text-transform: uppercase;
+}
+.lowercase {
+  text-transform: lowercase;
+}
+.capitalize {
+  text-transform: capitalize;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.break-words {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}

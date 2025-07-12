@@ -1,0 +1,587 @@
+/* ================================================
+   QUEST COMPONENTS
+   Quest cards, modals, objectives, rewards
+   ================================================ */
+
+/* === QUEST CARDS === */
+.quest-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.quest-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Quest Status Colors */
+.quest-card.quest-status-active {
+  border-left: 4px solid #10b981;
+}
+
+.quest-card.quest-status-completed {
+  border-left: 4px solid #10b981;
+  background: #f0f9ff;
+  border-color: #059669;
+}
+
+.quest-card.quest-status-failed {
+  border-left: 4px solid #ef4444;
+  background: #fef2f2;
+}
+
+.quest-card.quest-status-not-started {
+  border-left: 4px solid #9ca3af;
+  background: #f9fafb;
+}
+
+.quest-card.quest-status-on-hold {
+  border-left: 4px solid #f59e0b;
+  background: #fffbeb;
+}
+
+/* Quest Priority Colors */
+.quest-card.quest-priority-high {
+  border-top: 3px solid #ef4444;
+}
+
+.quest-card.quest-priority-medium {
+  border-top: 3px solid #f59e0b;
+}
+
+.quest-card.quest-priority-low {
+  border-top: 3px solid #6b7280;
+}
+
+/* === QUEST CARD CONTENT === */
+.quest-title-section {
+  margin-bottom: 16px;
+}
+
+.quest-title {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.3;
+}
+
+.quest-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.quest-category,
+.quest-status,
+.quest-priority {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid;
+}
+
+.quest-category {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #93c5fd;
+}
+
+.quest-status {
+  background: #f3f4f6;
+  color: #4b5563;
+  border-color: #d1d5db;
+}
+
+.quest-status.active {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #6ee7b7;
+}
+
+.quest-status.completed {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #86efac;
+}
+
+.quest-status.failed {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+.quest-priority {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fbbf24;
+}
+
+.quest-priority.high {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+.quest-priority.low {
+  background: #f3f4f6;
+  color: #4b5563;
+  border-color: #d1d5db;
+}
+
+.quest-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.quest-actions .btn {
+  flex: 1;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.quest-description {
+  margin: 12px 0;
+}
+
+.quest-description p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+/* === QUEST OBJECTIVES === */
+.quest-objectives {
+  margin: 16px 0;
+}
+
+.objectives-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.objectives-header span {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, #10b981, #34d399);
+  transition: width 0.3s ease;
+  border-radius: 5px;
+}
+
+.objectives-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.objective {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.objective:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.objective:last-child {
+  margin-bottom: 0;
+}
+
+.objective.completed {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.objective.completed span {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+
+.objective input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: #10b981;
+}
+
+/* === QUEST PLAYERS === */
+.quest-players {
+  margin-top: 16px;
+}
+
+.players-label {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.players-label i {
+  color: #3b82f6;
+  font-size: 12px;
+}
+
+.players-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.player-tag {
+  padding: 4px 8px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #93c5fd;
+  transition: all 0.2s ease;
+}
+
+.player-tag:hover {
+  background: #bfdbfe;
+  transform: translateY(-1px);
+}
+
+/* === QUEST FOOTER === */
+.quest-footer {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.quest-updated {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.quest-updated i {
+  color: #9ca3af;
+  font-size: 10px;
+}
+
+/* === EMPTY STATE === */
+.quest-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 2px dashed #d1d5db;
+  margin: 24px 0;
+}
+
+.quest-empty-state i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+  color: #9ca3af;
+}
+
+.quest-empty-state h3 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.quest-empty-state p {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* === QUEST MODALS === */
+.create-quest-modal,
+.edit-quest-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  padding: 32px;
+  max-width: 700px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+}
+
+.create-quest-modal h3,
+.edit-quest-modal h3 {
+  margin: 0 0 24px 0;
+  color: #1f2937;
+  font-size: 24px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.create-quest-modal h3 i,
+.edit-quest-modal h3 i {
+  color: #3b82f6;
+  font-size: 20px;
+}
+
+.create-quest-modal .form-row,
+.edit-quest-modal .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* === QUEST OBJECTIVES & REWARDS === */
+.objective-item,
+.reward-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: center;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.objective-input,
+.reward-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  color: #1f2937;
+  transition: all 0.2s ease;
+}
+
+.objective-input:focus,
+.reward-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+  min-width: auto;
+  font-weight: 500;
+}
+
+.remove-objective,
+.remove-reward {
+  flex-shrink: 0;
+}
+
+.objective-completed,
+.reward-claimed {
+  margin: 0 8px;
+  accent-color: #10b981;
+}
+
+.objective-completed-label,
+.reward-claimed-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-right: 12px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* === UTILITY BUTTONS === */
+.btn-xs {
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #374151;
+  font-weight: 500;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-xs:hover {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-xs.locked {
+  background: #f59e0b;
+  color: white;
+  border-color: #f59e0b;
+}
+
+.btn-xs.locked:hover {
+  background: #d97706;
+  border-color: #d97706;
+}
+
+/* === QUEST LISTS AND GRIDS === */
+.quest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.quest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* === QUEST FILTERS === */
+.quest-filters {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 24px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.filter-group select {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  font-size: 14px;
+  min-width: 120px;
+}
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 768px) {
+  .create-quest-modal .form-row,
+  .edit-quest-modal .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .create-quest-modal,
+  .edit-quest-modal {
+    width: 95%;
+    padding: 24px;
+  }
+
+  .quest-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .quest-actions {
+    flex-direction: column;
+  }
+
+  .quest-footer {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .players-list {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .quest-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quest-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .filter-group select {
+    min-width: auto;
+  }
+}

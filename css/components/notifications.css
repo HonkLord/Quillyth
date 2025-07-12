@@ -1,0 +1,307 @@
+/* ================================================
+   NOTIFICATION COMPONENTS
+   Toast notifications, alerts, confirmations
+   ================================================ */
+
+/* === TOAST NOTIFICATIONS === */
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  color: white;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  box-shadow: var(--shadow-lg);
+  animation: slideInRight 0.3s ease-out;
+  max-width: 400px;
+  min-width: 300px;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: all 0.3s ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast-success {
+  background: var(--color-success);
+}
+
+.toast-error {
+  background: var(--color-error);
+}
+
+.toast-warning {
+  background: var(--color-warning);
+}
+
+.toast-info {
+  background: var(--color-primary);
+}
+
+.toast i {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 1;
+}
+
+.toast-icon {
+  font-size: 1.1rem;
+}
+
+.toast-success .toast-icon {
+  color: white;
+}
+
+.toast-error .toast-icon {
+  color: white;
+}
+
+.toast-info .toast-icon {
+  color: white;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* === CONFIRMATION DIALOGS === */
+.confirmation-modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  overflow: hidden;
+}
+
+.confirmation-header {
+  background: var(--color-surface-secondary);
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.confirmation-header h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.confirmation-content {
+  padding: var(--space-lg);
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+}
+
+.confirmation-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: var(--color-warning-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-warning);
+  font-size: 1.5rem;
+}
+
+.confirmation-text {
+  flex: 1;
+}
+
+.confirmation-message {
+  margin: 0 0 var(--space-sm) 0;
+  color: var(--color-text);
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.confirmation-details {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.confirmation-actions {
+  padding: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  gap: var(--space-md);
+  justify-content: flex-end;
+}
+
+.confirmation-actions .btn {
+  min-width: 100px;
+}
+
+.confirmation-overlay {
+  z-index: 10000;
+}
+
+/* === SUCCESS NOTIFICATIONS === */
+.success-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--color-success);
+  color: white;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.success-toast.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.success-notification,
+.error-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  color: white;
+  font-weight: 500;
+  z-index: 10000;
+  animation: slideInRight 0.3s ease-out;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.success-notification {
+  background: var(--color-success);
+}
+
+.error-notification {
+  background: var(--color-error);
+}
+
+/* === NOTIFICATION VARIANTS === */
+.notification {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-weight: 500;
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification-success {
+  background: var(--color-success-light);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}
+
+.notification-error {
+  background: var(--color-error-light);
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+}
+
+.notification-warning {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning);
+}
+
+.notification-info {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+/* === ANIMATIONS === */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 768px) {
+  .confirmation-modal {
+    width: 95%;
+  }
+
+  .confirmation-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .confirmation-actions {
+    flex-direction: column-reverse;
+  }
+
+  .confirmation-actions .btn {
+    width: 100%;
+  }
+
+  .toast {
+    right: 10px;
+    left: 10px;
+    max-width: none;
+    min-width: auto;
+  }
+
+  .success-toast {
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+
+  .success-notification,
+  .error-notification {
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+}

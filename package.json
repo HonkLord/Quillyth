@@ -1,0 +1,32 @@
+{
+  "name": "campaign-manager",
+  "version": "1.0.0",
+  "description": "A modular, data-driven campaign management system for D&D campaigns with SQLite backend.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "migrate": "node migrate-to-database.js",
+    "dev": "node server.js",
+    "test": "node tests/test-runner.js",
+    "test:manual": "echo \"Manual testing checklist available at tests/manual-test-checklist.md\"",
+    "test:install": "npm install node-fetch@2"
+  },
+  "keywords": [
+    "dnd",
+    "campaign",
+    "manager",
+    "sqlite"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/gemini-cli": "github:google-gemini/gemini-cli",
+    "better-sqlite3": "^12.2.0",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "node-fetch": "^2.7.0"
+  }
+}

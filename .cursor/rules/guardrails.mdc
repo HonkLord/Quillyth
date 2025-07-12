@@ -1,0 +1,89 @@
+---
+alwaysApply: true
+---
+### 🔄 Project Awareness & Context
+
+- **Always read `README.md`** at the start of a new conversation to understand the project's architecture, goals, and features.
+- **Check existing code patterns** before implementing new features - maintain consistency with the established architecture.
+- **Use consistent naming conventions, file structure, and architecture patterns** as seen in the existing codebase.
+- **Understand the modular structure**: Scene Manager, Character Manager, Narrative Weave Engine, Moment Dynamics System, etc.
+
+### 🧱 Code Structure & Modularity
+
+- **Never create a JavaScript file longer than 500 lines of code.** If a file approaches this limit, refactor by splitting it into modules or helper files.
+- **Follow the standardized modular architecture** defined in `.cursor/rules/architecture-standards.mdc`:
+  - `js/features/[feature]/` - Feature modules (core, specialized, ui, manager)
+  - `js/shared/` - Shared utilities and cross-feature services
+  - `js/services/` - External service integrations (APIs, etc.)
+  - `js/components/` - Reusable UI components
+  - `css/` - Styling
+  - `campaign-content/` - Campaign-specific content (don't modify without explicit instruction)
+- **Use the 4-module pattern for large features**:
+  - `*-core.js` (200-300 lines) - Data management & CRUD operations
+  - `*-[aspect].js` (300-400 lines) - Specialized business logic
+  - `*-ui.js` (300-400 lines) - UI rendering & interactions  
+  - `*-manager.js` (200-300 lines) - Feature coordination & public API
+- **Use ES6 modules with clear imports/exports** (`import`/`export` statements).
+- **Follow consistent naming conventions** as defined in architecture standards.
+
+### 🧪 Testing & Reliability
+
+- **Always test new features manually** by running the application and verifying functionality.
+- **Check for console errors** after implementing changes.
+- **Ensure database operations work correctly** with the SQLite backend.
+- **Test API integrations** (especially Gemini AI service) when making changes.
+
+### ✅ Task Completion
+
+- **Perform commits regularly** so the user has versions saved and can recover to a previous state if needed.
+- **Use descriptive commit messages** that explain what was changed and why.
+- **Test the application after major changes** to ensure it still runs properly.
+
+### 📎 Style & Conventions
+
+- **Use modern JavaScript (ES6+)** with consistent formatting.
+- **Follow existing code style** - use the same indentation, naming conventions, and patterns.
+- **Use async/await** for asynchronous operations rather than callbacks.
+- **Write clear, descriptive function and variable names**.
+- **Add JSDoc comments for complex functions**:
+
+  ```javascript
+  /**
+   * Brief summary of what the function does.
+   * @param {type} param1 - Description of parameter
+   * @returns {type} Description of return value
+   */
+  ```
+
+### 📚 Documentation & Explainability
+
+- **Update `README.md`** when new features are added, dependencies change, or setup steps are modified.
+- **Comment non-obvious code** and ensure everything is understandable to a developer familiar with D&D campaign management.
+- **When writing complex logic, add inline comments** explaining the why, not just the what.
+- **Document API endpoints** and database schema changes.
+
+### 🎮 Campaign Manager Specific Rules
+
+- **Understand the D&D context** - this is a tabletop RPG campaign management tool.
+- **Preserve campaign data integrity** - never modify files in `campaign-content/` without explicit instruction.
+- **Maintain the narrative systems** - Narrative Weave Engine and Moment Dynamics System are core features.
+- **Respect the AI integration** - Gemini API is used for content generation, handle API keys securely.
+- **Keep the database schema consistent** - coordinate changes with the existing SQLite structure.
+
+### 🧠 AI Behavior Rules
+
+- **Never assume missing context. Ask questions if uncertain** about D&D rules, campaign management workflows, or existing functionality.
+- **Never hallucinate libraries or functions** – only use known, verified JavaScript packages and Node.js modules.
+- **Always confirm file paths and module names** exist before referencing them in code.
+- **Never delete or overwrite existing code** unless explicitly instructed to or if it's clearly unused/broken.
+- **Preserve user's campaign data** - treat content in `campaign-content/` as precious user data.
+- **When making database changes**, ensure backward compatibility or provide migration instructions.
+
+### 🔧 Technical Constraints
+
+- **Use Node.js and Express** for the backend server.
+- **Use SQLite with better-sqlite3** for database operations.
+- **Maintain the existing ES6 module structure** for frontend JavaScript.
+- **Keep the single-page application architecture** with dynamic content loading.
+- **Preserve the existing CSS framework and styling approach**.
+- **Handle API keys securely** - never expose them in client-side code.

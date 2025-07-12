@@ -1,0 +1,498 @@
+/* Campaign Management Styles */
+
+/* Campaign Workspace */
+.campaign-workspace {
+  padding: 1.5rem;
+  background: var(--cm-background);
+  min-height: 100vh;
+}
+
+.campaign-workspace__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--cm-border);
+}
+
+.campaign-workspace__title-section {
+  flex: 1;
+}
+
+.campaign-workspace__title {
+  color: var(--cm-primary);
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.campaign-workspace__title i {
+  color: var(--cm-accent);
+}
+
+.campaign-workspace__subtitle {
+  color: var(--cm-text-secondary);
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.campaign-workspace__actions {
+  display: flex;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+/* Campaign Grid Layout */
+.campaign-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.campaign-section--full-width {
+  grid-column: 1 / -1;
+}
+
+/* Campaign Sections */
+.campaign-section {
+  background: var(--cm-surface);
+  border: 1px solid var(--cm-border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.campaign-section:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.campaign-section__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, var(--cm-primary), var(--cm-accent));
+  color: white;
+}
+
+.campaign-section__title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.campaign-section__content {
+  padding: 1.25rem;
+}
+
+/* Campaign Information */
+.campaign-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.campaign-info__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.campaign-info__item--full {
+  grid-column: 1 / -1;
+}
+
+.campaign-info__label {
+  font-weight: 600;
+  color: var(--cm-text-primary);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.campaign-info__value {
+  color: var(--cm-text-secondary);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.campaign-info__description {
+  background: var(--cm-background);
+  padding: 0.75rem;
+  border-radius: 4px;
+  border-left: 3px solid var(--cm-accent);
+  font-style: italic;
+}
+
+.campaign-info--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--cm-text-secondary);
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-badge--active {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+.status-badge--paused {
+  background: rgba(251, 191, 36, 0.1);
+  color: #d97706;
+}
+
+.status-badge--completed {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+}
+
+.status-badge--archived {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+}
+
+/* Campaign Statistics */
+.campaign-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--cm-background);
+  border: 1px solid var(--cm-border);
+  border-radius: 6px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card--featured {
+  background: linear-gradient(135deg, var(--cm-primary), var(--cm-accent));
+  color: white;
+  border: none;
+}
+
+.stat-card__icon {
+  font-size: 1.5rem;
+  color: var(--cm-accent);
+  flex-shrink: 0;
+}
+
+.stat-card--featured .stat-card__icon {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.stat-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.stat-card__value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--cm-text-primary);
+  line-height: 1;
+}
+
+.stat-card--featured .stat-card__value {
+  color: white;
+}
+
+.stat-card__label {
+  font-size: 0.8rem;
+  color: var(--cm-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.stat-card--featured .stat-card__label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Campaign Events */
+.campaign-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.campaign-event {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--cm-background);
+  border: 1px solid var(--cm-border);
+  border-radius: 6px;
+  transition: transform 0.2s ease;
+}
+
+.campaign-event:hover {
+  transform: translateX(4px);
+  border-color: var(--cm-accent);
+}
+
+.campaign-event__session {
+  flex-shrink: 0;
+  padding: 0.375rem 0.75rem;
+  background: var(--cm-accent);
+  color: white;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  align-self: flex-start;
+}
+
+.campaign-event__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.campaign-event__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cm-text-primary);
+  margin: 0 0 0.25rem 0;
+}
+
+.campaign-event__description {
+  font-size: 0.9rem;
+  color: var(--cm-text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.campaign-events--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--cm-text-secondary);
+}
+
+.campaign-events--empty i {
+  font-size: 2.5rem;
+  color: var(--cm-border);
+}
+
+/* Player Status */
+.player-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--cm-background);
+  border: 1px solid var(--cm-border);
+  border-radius: 6px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.player-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.player-card__avatar {
+  width: 3rem;
+  height: 3rem;
+  background: var(--cm-accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.player-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-card__name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--cm-text-primary);
+  margin: 0 0 0.25rem 0;
+}
+
+.player-card__details {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.player-card__class,
+.player-card__level {
+  font-size: 0.8rem;
+  color: var(--cm-text-secondary);
+  font-weight: 500;
+}
+
+.player-card__race {
+  font-size: 0.85rem;
+  color: var(--cm-text-secondary);
+}
+
+.player-card__status {
+  flex-shrink: 0;
+}
+
+.player-status--loading,
+.player-status--empty,
+.player-status--error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--cm-text-secondary);
+  grid-column: 1 / -1;
+}
+
+.player-status--empty i,
+.player-status--error i {
+  font-size: 2.5rem;
+  color: var(--cm-border);
+}
+
+/* Error State */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 3rem;
+  text-align: center;
+}
+
+.error-state__icon {
+  font-size: 3rem;
+  color: var(--cm-error);
+}
+
+.error-state__content h3 {
+  color: var(--cm-text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.error-state__content p {
+  color: var(--cm-text-secondary);
+  margin: 0 0 1rem 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .campaign-workspace {
+    padding: 1rem;
+  }
+
+  .campaign-workspace__header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .campaign-workspace__actions {
+    justify-content: stretch;
+  }
+
+  .campaign-workspace__actions .btn {
+    flex: 1;
+  }
+
+  .campaign-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .campaign-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-card {
+    padding: 0.75rem;
+  }
+
+  .stat-card__icon {
+    font-size: 1.25rem;
+  }
+
+  .stat-card__value {
+    font-size: 1.25rem;
+  }
+
+  .campaign-event {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .campaign-event__session {
+    align-self: flex-start;
+  }
+
+  .player-status-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .campaign-workspace__title {
+    font-size: 1.5rem;
+  }
+
+  .campaign-section__header {
+    padding: 0.75rem 1rem;
+  }
+
+  .campaign-section__content {
+    padding: 1rem;
+  }
+
+  .campaign-stats {
+    grid-template-columns: 1fr;
+  }
+}

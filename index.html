@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D&D Campaign Manager</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="./css/main.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Top Navigation Bar -->
+      <header class="top-nav">
+        <div class="nav-left">
+          <h1
+            class="campaign-title"
+            data-action="edit-campaign-title"
+            title="Click to edit campaign title"
+          >
+            <i class="fas fa-dragon"></i>
+            D&D Campaign
+          </h1>
+        </div>
+
+        <nav class="nav-center">
+          <div class="main-nav-tabs">
+            <button
+              id="nav-dashboard"
+              class="main-nav-tab active"
+              data-section="dashboard"
+              data-action="show-dashboard"
+            >
+              <i class="fas fa-home"></i>
+              <span>Dashboard</span>
+            </button>
+            <button
+              id="nav-scenes"
+              class="main-nav-tab"
+              data-section="scenes"
+              data-action="show-scenes"
+            >
+              <i class="fas fa-theater-masks"></i>
+              <span>Scenes</span>
+            </button>
+            <button
+              id="nav-characters"
+              class="main-nav-tab"
+              data-section="characters"
+              data-action="show-characters"
+            >
+              <i class="fas fa-users"></i>
+              <span>Characters</span>
+            </button>
+            <button
+              id="nav-relationships"
+              class="main-nav-tab"
+              data-section="relationships"
+              data-action="show-relationships"
+            >
+              <i class="fas fa-project-diagram"></i>
+              <span>Relationships</span>
+            </button>
+            <button
+              id="nav-locations"
+              class="main-nav-tab"
+              data-section="locations"
+              data-action="show-locations"
+            >
+              <i class="fas fa-map-marker-alt"></i>
+              <span>Locations</span>
+            </button>
+            <button
+              id="nav-quests"
+              class="main-nav-tab"
+              data-section="quests"
+              data-action="show-quests"
+            >
+              <i class="fas fa-scroll"></i>
+              <span>Quests</span>
+            </button>
+            <button
+              id="nav-notes"
+              class="main-nav-tab"
+              data-section="notes"
+              data-action="show-notes"
+            >
+              <i class="fas fa-sticky-note"></i>
+              <span>Notes</span>
+            </button>
+            <button
+              id="nav-sessions"
+              class="main-nav-tab"
+              data-section="sessions"
+              data-action="show-sessions"
+            >
+              <i class="fas fa-calendar-alt"></i>
+              <span>Sessions</span>
+            </button>
+            <button
+              id="nav-campaign"
+              class="main-nav-tab"
+              data-section="campaign"
+              data-action="show-campaign"
+            >
+              <i class="fas fa-book"></i>
+              <span>Campaign</span>
+            </button>
+            <button
+              id="nav-export-import"
+              class="main-nav-tab"
+              data-section="export-import"
+              data-action="show-export-import"
+            >
+              <i class="fas fa-download"></i>
+              <span>Export/Import</span>
+            </button>
+          </div>
+        </nav>
+
+        <div class="nav-right">
+          <!-- Search Bar (contextual to active section) -->
+          <div class="search-container" id="search-container">
+            <input
+              type="text"
+              id="scene-search"
+              class="search-input"
+              placeholder="🔍 Search..."
+            />
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="quick-actions">
+            <button
+              class="quick-action-btn"
+              onclick="window.globalSearch?.showSearch()"
+              title="Global Search (Ctrl+K)"
+            >
+              <i class="fas fa-search"></i>
+            </button>
+            <button
+              class="quick-action-btn"
+              data-action="show-quick-actions"
+              title="Quick Actions"
+            >
+              <i class="fas fa-bolt"></i>
+            </button>
+            <button class="quick-action-btn" title="Settings">
+              <i class="fas fa-cog"></i>
+            </button>
+            <button class="quick-action-btn" title="Help">
+              <i class="fas fa-question-circle"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content Area (Full Width) -->
+      <main id="main-content" class="main-content-full">
+        <!-- Workspace Header (Secondary Navigation) -->
+        <div class="workspace-header" id="workspace-header">
+          <div class="workspace-title-section">
+            <h2 class="workspace-title" id="workspace-title">Dashboard</h2>
+            <p class="workspace-subtitle" id="workspace-subtitle">
+              Campaign overview and statistics
+            </p>
+          </div>
+
+          <!-- Workspace Tabs (Secondary level) -->
+          <div class="workspace-tabs" id="workspace-tabs">
+            <!-- Dynamic tabs will be inserted here based on current section -->
+          </div>
+
+          <!-- Workspace Actions -->
+          <div class="workspace-actions" id="workspace-actions">
+            <!-- Dynamic action buttons will be inserted here -->
+          </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area" id="content-area">
+          <!-- Welcome/Dashboard Content -->
+          <div id="dashboard-content" class="workspace-content active">
+            <div class="management-panel">
+              <div class="dashboard-grid">
+                <!-- Quick Stats -->
+                <div class="dashboard-section">
+                  <h3 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    Campaign Overview
+                  </h3>
+                  <div class="quick-stats">
+                    <div class="stat-card">
+                      <i class="fas fa-theater-masks"></i>
+                      <div class="stat-title">Scenes</div>
+                      <div class="stat-description" id="scenes-count">
+                        Loading...
+                      </div>
+                    </div>
+                    <div class="stat-card">
+                      <i class="fas fa-users"></i>
+                      <div class="stat-title">Players</div>
+                      <div class="stat-description" id="players-count">
+                        Loading...
+                      </div>
+                    </div>
+                    <div class="stat-card">
+                      <i class="fas fa-crossroads"></i>
+                      <div class="stat-title">Scene Options</div>
+                      <div class="stat-description" id="options-count">
+                        Loading...
+                      </div>
+                    </div>
+                    <div class="stat-card">
+                      <i class="fas fa-users"></i>
+                      <div class="stat-title">Characters</div>
+                      <div class="stat-description" id="characters-count">
+                        Loading...
+                      </div>
+                    </div>
+                    <div class="stat-card">
+                      <i class="fas fa-scroll"></i>
+                      <div class="stat-title">Quests</div>
+                      <div class="stat-description" id="quest-count">
+                        Loading...
+                      </div>
+                    </div>
+                    <div class="stat-card">
+                      <i class="fas fa-sticky-note"></i>
+                      <div class="stat-title">Notes</div>
+                      <div class="stat-description" id="notes-count">
+                        Loading...
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="dashboard-section full-width">
+                  <h3 class="section-title">
+                    <i class="fas fa-clock"></i>
+                    Getting Started
+                  </h3>
+                  <div class="getting-started-guide">
+                    <div class="guide-step">
+                      <div class="step-number">1</div>
+                      <div class="step-content">
+                        <h4>Create your first scene</h4>
+                        <p>
+                          Start by creating interactive narrative scenes in the
+                          Scenes workspace
+                        </p>
+                      </div>
+                    </div>
+                    <div class="guide-step">
+                      <div class="step-number">2</div>
+                      <div class="step-content">
+                        <h4>Add your players</h4>
+                        <p>
+                          Create player profiles with character details and
+                          backgrounds
+                        </p>
+                      </div>
+                    </div>
+                    <div class="guide-step">
+                      <div class="step-number">3</div>
+                      <div class="step-content">
+                        <h4>Add branching paths</h4>
+                        <p>
+                          Create dynamic options and choices that lead to
+                          different outcomes
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Workspace Content Areas -->
+          <div id="locations-content" class="workspace-content">
+            <!-- Main content area for location details -->
+            <div id="content" class="location-detail-content">
+              <!-- Location content will be inserted here -->
+            </div>
+          </div>
+
+          <div id="scenes-content" class="workspace-content">
+            <!-- Scenes workspace content will be inserted here -->
+          </div>
+
+          <div id="characters-content" class="workspace-content">
+            <!-- Characters workspace content will be inserted here -->
+          </div>
+
+          <div id="relationships-content" class="workspace-content">
+            <!-- Relationships workspace content will be inserted here -->
+          </div>
+
+          <div id="quests-content" class="workspace-content">
+            <!-- Quests workspace content will be inserted here -->
+          </div>
+
+          <div id="notes-content" class="workspace-content">
+            <!-- Notes workspace content will be inserted here -->
+          </div>
+
+          <div id="sessions-content" class="workspace-content">
+            <!-- Sessions workspace content will be inserted here -->
+          </div>
+
+          <div id="campaign-content" class="workspace-content">
+            <!-- Campaign workspace content will be inserted here -->
+          </div>
+
+          <div id="export-import-content" class="workspace-content">
+            <!-- Export/Import workspace content will be inserted here -->
+          </div>
+        </div>
+      </main>
+
+      <!-- Scene Tree/Navigation Panel (Collapsible) -->
+      <div id="scene-tree-panel" class="scene-tree-panel hidden">
+        <div class="scene-tree-header">
+          <h3><i class="fas fa-sitemap"></i> Scene Navigation</h3>
+          <button class="close-panel-btn" data-action="toggle-scene-tree">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div id="nav-content-tree" class="nav-content-tree">
+          <!-- Scene hierarchy will be inserted here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Application Module -->
+    <script src="js/app.js" type="module"></script>
+  </body>
+</html>
