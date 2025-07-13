@@ -139,7 +139,7 @@ export class CharacterUI {
                     <div class="card-meta">
                       <span class="card-class-level">${
                         character.class || "Unknown"
-                      } ${character.level || 1}</span>
+                      }${character.subclass ? ` (${character.subclass})` : ""} ${character.level || 1}</span>
                     </div>
                   </div>
                   <div class="card-actions">
@@ -612,7 +612,7 @@ export class CharacterUI {
             <div class="character-meta">
               <span class="character-class">${
                 character.class || "Unknown Class"
-              }</span>
+              }${character.subclass ? ` (${character.subclass})` : ""}</span>
               <span class="character-level">Level ${character.level || 1}</span>
               <span class="character-race">${
                 character.race || "Unknown Race"
@@ -1090,34 +1090,43 @@ export class CharacterUI {
 
       // Resolve characterManager once
       const characterManager = window.characterManager || null;
+      let result;
 
       if (isEdit) {
         if (characterManager) {
           console.log("🎭 Calling characterManager.handleEditCharacter");
-          return await characterManager.handleEditCharacter(
+          result = await characterManager.handleEditCharacter(
             form,
             character.id,
             isPlayerCharacter
           );
         } else {
           console.log("🎭 Calling this.handleEditCharacter as fallback");
-          return await this.handleEditCharacter(
+          result = await this.handleEditCharacter(
             form,
             character.id,
             isPlayerCharacter
           );
         }
+        
+        // Re-select the character after successful edit to maintain selection
+        setTimeout(() => {
+          this.selectCharacter(character.id);
+        }, 100);
+        
       } else {
         if (characterManager) {
-          return isPlayerCharacter
+          result = isPlayerCharacter
             ? await characterManager.handleAddCharacter(form)
             : await characterManager.handleAddNPC(form);
         } else {
-          return isPlayerCharacter
+          result = isPlayerCharacter
             ? await this.handleAddCharacter(form)
             : await this.handleAddNPC(form);
         }
       }
+      
+      return result;
     });
   }
 
@@ -1292,6 +1301,16 @@ export class CharacterUI {
             name="class" 
             value="${character?.class || ""}"
             placeholder="Fighter, Wizard, etc..."
+          />
+        </div>
+        <div class="form-group">
+          <label for="character-subclass">Subclass</label>
+          <input 
+            type="text" 
+            id="character-subclass" 
+            name="subclass" 
+            value="${character?.subclass || ""}"
+            placeholder="Champion, Evocation, etc..."
           />
         </div>
         <div class="form-group">

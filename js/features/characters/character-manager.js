@@ -376,9 +376,19 @@ export default class CharacterManager {
    */
   async refreshCharacterDisplay() {
     if (this.isInitialized) {
+      // Store currently selected character to preserve selection
+      const selectedCharacterId = this.ui.selectedCharacter?.id;
+      
       // Reload character data from database to ensure UI shows latest changes
       await this.core.loadCharacterData();
       this.ui.showCharacterOverview();
+      
+      // Restore selected character if there was one
+      if (selectedCharacterId) {
+        setTimeout(() => {
+          this.ui.selectCharacter(selectedCharacterId);
+        }, 100);
+      }
     }
   }
 

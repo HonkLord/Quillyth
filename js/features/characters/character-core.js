@@ -425,6 +425,7 @@ export default class CharacterCore {
       const characterData = {
         name: formData.get("name"),
         class: formData.get("class"),
+        subclass: formData.get("subclass"),
         race: formData.get("race"),
         level: parseInt(formData.get("level")) || 1,
         background: formData.get("background"),

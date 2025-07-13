@@ -49,6 +49,7 @@ module.exports = (db) => {
           id: p.id,
           name: p.name,
           class: p.class,
+          subclass: p.subclass,
           level: p.level,
           race: p.race,
           background: p.background,
@@ -278,6 +279,7 @@ module.exports = (db) => {
           campaign_id,
           name,
           class: playerClass,
+          subclass,
           level,
           background,
           race,
@@ -290,8 +292,8 @@ module.exports = (db) => {
         }
 
         const stmt = db.prepare(`
-          INSERT INTO players (id, campaign_id, name, class, level, background, race, description, backstory, goals, patron_spirits, icon, status)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+          INSERT INTO players (id, campaign_id, name, class, subclass, level, background, race, description, backstory, goals, patron_spirits, icon, status)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         `);
 
         const id = `player-${Date.now()}-${Math.random()
@@ -302,6 +304,7 @@ module.exports = (db) => {
           campaign_id,
           name,
           playerClass || "",
+          subclass || "",
           level || 1,
           background || "",
           race || "",
@@ -335,6 +338,7 @@ module.exports = (db) => {
         const {
           name,
           class: playerClass,
+          subclass,
           level,
           background,
           race,
@@ -346,13 +350,14 @@ module.exports = (db) => {
 
         const stmt = db.prepare(`
           UPDATE players 
-          SET name = ?, class = ?, level = ?, background = ?, race = ?, description = ?, backstory = ?, goals = ?, patron_spirits = ?, updated_at = CURRENT_TIMESTAMP
+          SET name = ?, class = ?, subclass = ?, level = ?, background = ?, race = ?, description = ?, backstory = ?, goals = ?, patron_spirits = ?, updated_at = CURRENT_TIMESTAMP
           WHERE id = ?
         `);
 
         const result = stmt.run(
           name,
           playerClass || "",
+          subclass || "",
           level || 1,
           background || "",
           race || "",

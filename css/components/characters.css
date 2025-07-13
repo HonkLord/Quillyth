@@ -83,14 +83,6 @@
   color: var(--cm-text-medium);
 }
 
-.character-tabs {
-  /* Uses workspace-tabs base styles from layout.css */
-}
-
-.character-tab {
-  /* Uses workspace-tab base styles from layout.css */
-}
-
 /* === CHARACTER CARDS === */
 .character-avatar {
   width: 32px;
@@ -160,6 +152,7 @@
   line-height: var(--cm-line-height-base);
   color: var(--cm-text-medium);
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -2452,6 +2445,7 @@
   text-align: center;
   overflow: hidden;
   display: -webkit-box;
+  line-clamp: 3;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }

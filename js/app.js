@@ -209,8 +209,12 @@ class CampaignManager {
           break;
         case "edit-character":
         case "edit-npc":
-          const characterCard = event.target.closest(".card-character");
-          const characterId = characterCard?.dataset.characterId;
+          let characterCard = event.target.closest(".card-character");
+          let characterId = characterCard?.dataset.characterId;
+          // Fallback: check the button's own data-character-id if not found on parent
+          if (!characterId) {
+            characterId = target?.dataset.characterId;
+          }
           if (characterId && this.characterManager?.ui) {
             console.log("🎭 App.js: Edit character action for:", characterId);
             this.characterManager.ui.showEditCharacterDialog(characterId);
