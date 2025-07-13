@@ -48,7 +48,13 @@ class TestRunner {
   }
 
   async apiRequest(endpoint, options = {}) {
-    const url = `${this.baseUrl}${endpoint}`;
+    let url = `${this.baseUrl}${endpoint}`;
+    // Automatically add campaign_id to requests that need it
+    if (this.campaignId && !endpoint.includes("campaign_id")) {
+      const separator = url.includes("?") ? "&" : "?";
+      url += `${separator}campaign_id=${this.campaignId}`;
+    }
+
     const response = await fetch(url, {
       headers: {
         "Content-Type": "application/json",
@@ -143,8 +149,15 @@ class TestRunner {
 
   async testPlayersAPI() {
     await this.test("Players API", async () => {
-      const players = await this.apiRequest("/api/players");
-      this.assert(Array.isArray(players), "Should return array of players");
+      const characters = await this.apiRequest("/api/characters");
+      this.assert(
+        typeof characters === "object" && characters !== null,
+        "Should return a characters object"
+      );
+      this.assert(
+        Array.isArray(characters.players),
+        "Should have a players array"
+      );
     });
   }
 
@@ -154,61 +167,55 @@ class TestRunner {
 
   async testPlayerArcsAPI() {
     await this.test("Player Arcs API - GET", async () => {
-      const playerArcs = await this.apiRequest("/api/player-arcs");
+      const characters = await this.apiRequest("/api/characters");
+      if (!characters.players || characters.players.length === 0) {
+        console.log("   ⚠️  No players found, skipping player arcs test");
+        return;
+      }
+      const playerId = characters.players[0].id;
+      const playerArcs = await this.apiRequest(
+        `/api/characters/${playerId}/arcs`
+      );
       this.assert(
         Array.isArray(playerArcs),
         "Should return array of player arcs"
       );
-
-      // Validate structure of player arcs
-      if (playerArcs.length > 0) {
-        const arc = playerArcs[0];
-        this.assert(arc.hasOwnProperty("playerId"), "Should have playerId");
-        this.assert(arc.hasOwnProperty("playerName"), "Should have playerName");
-        this.assert(arc.hasOwnProperty("goals"), "Should have goals array");
-        this.assert(
-          arc.hasOwnProperty("milestones"),
-          "Should have milestones array"
-        );
-        this.assert(Array.isArray(arc.goals), "Goals should be an array");
-        this.assert(
-          Array.isArray(arc.milestones),
-          "Milestones should be an array"
-        );
-      }
     });
   }
 
   async testPlayerArcsUpdate() {
     await this.test("Player Arcs API - UPDATE", async () => {
-      // First get existing player arcs
-      const playerArcs = await this.apiRequest("/api/player-arcs");
+      const characters = await this.apiRequest("/api/characters");
+      this.assert(
+        characters.players && characters.players.length > 0,
+        "Prerequisite: At least one player character must exist."
+      );
 
-      if (playerArcs.length === 0) {
-        console.log("   ⚠️  No players found, skipping update test");
-        return;
-      }
+      const testPlayerId = characters.players[0].id;
 
-      const testPlayerId = playerArcs[0].playerId;
-      const updateData = {
-        description: "Test character arc description",
+      const arcData = {
+        campaign_id: this.campaignId,
+        arc_type: "current_goal", // Use a valid arc_type
+        title: "A Hero's Journey",
+        content: "This is the story of a hero.",
         status: "active",
-        goals: [
-          {
-            title: "Test Goal",
-            description: "This is a test goal",
-            status: "active",
-          },
-        ],
-        milestones: [],
+        importance_weight: 75,
+        session_notes: "Started in session 1.",
       };
 
-      const result = await this.apiRequest(`/api/player-arcs/${testPlayerId}`, {
-        method: "PUT",
-        body: JSON.stringify(updateData),
-      });
+      const result = await this.apiRequest(
+        `/api/characters/${testPlayerId}/arcs`,
+        {
+          method: "POST",
+          body: JSON.stringify(arcData),
+        }
+      );
 
-      this.assert(result.success, "Should successfully update player arc");
+      this.assert(
+        result.success,
+        "Should successfully create a new player arc."
+      );
+      this.assert(result.id, "Response should include the new arc ID.");
     });
   }
 
@@ -482,8 +489,6 @@ class TestRunner {
         "/api/sessions",
         "/api/scenes",
         "/api/characters",
-        "/api/players",
-        "/api/player-arcs",
       ];
 
       for (const endpoint of endpoints) {
@@ -507,6 +512,52 @@ class TestRunner {
     console.log("🚀 Starting Campaign Manager Test Suite\n");
     console.log("=".repeat(60));
 
+    // Fetch the current campaign ID to be used in subsequent tests
+    try {
+      const currentCampaign = await this.apiRequest("/api/campaigns/current");
+      this.campaignId = currentCampaign.id;
+      console.log(`\nℹ️  Using Campaign ID: ${this.campaignId}`);
+    } catch (error) {
+      console.error(
+        "❌ CRITICAL: Could not fetch current campaign. Attempting to create a new test campaign.",
+        error
+      );
+      // Create a new test campaign
+      const testCampaignId = `test-campaign-${Date.now()}`;
+      const testCampaignData = {
+        id: testCampaignId,
+        name: "Test Campaign (Auto)",
+        description: "Autogenerated campaign for test suite.",
+        setting: "Test Realm",
+        current_session: 1,
+        current_location: "Test Location",
+        dm_name: "Test Runner",
+        status: "active",
+        metadata: { test: true },
+      };
+      try {
+        const created = await this.apiRequest("/api/campaigns", {
+          method: "POST",
+          body: JSON.stringify(testCampaignData),
+        });
+        this.campaignId = created.id;
+        console.log(
+          `\n⚠️  Created and using new test campaign ID: ${this.campaignId}`
+        );
+      } catch (createError) {
+        console.error(
+          "❌ CRITICAL: Failed to create test campaign. Most tests will fail.",
+          createError
+        );
+        throw createError;
+      }
+    }
+
+    // Run the failing test first for focused debugging
+    console.log("\n🐞 DEBUGGING FAILED TESTS FIRST");
+    console.log("-".repeat(40));
+    await this.testPlayerArcsUpdate();
+
     // Server and connectivity tests
     console.log("\n📡 SERVER CONNECTIVITY TESTS");
     console.log("-".repeat(40));
@@ -523,7 +574,6 @@ class TestRunner {
     await this.testCharactersAPI();
     await this.testPlayersAPI();
     await this.testPlayerArcsAPI();
-    await this.testPlayerArcsUpdate();
     await this.testQuestsAPI();
     await this.testNotesAPI();
 

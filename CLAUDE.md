@@ -184,7 +184,7 @@ A comprehensive D&D campaign management application with integrated systems for 
 ### Do not allow code to be more than 500 lines per file for easier readability and segregation of purpose.
 
 ## 🚀 **Quick Start**
-
+You do not need to run these unless you encounter an error stating that they are not running—always assume they are already running.
 ```bash
 # Install dependencies
 npm install

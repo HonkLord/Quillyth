@@ -106,10 +106,6 @@ export default class QuestUI {
               </select>
             </div>
             
-            <div class="filter-group">
-              <label>Search:</label>
-              <input type="text" id="quest-search" placeholder="Search quests...">
-            </div>
           </div>
         </div>
         
@@ -325,13 +321,12 @@ export default class QuestUI {
   setupQuestFilters() {
     const statusFilter = document.getElementById("quest-status-filter");
     const categoryFilter = document.getElementById("quest-category-filter");
-    const searchInput = document.getElementById("quest-search");
 
     const applyFilters = () => {
       const filters = {
         status: statusFilter?.value || "",
         category: categoryFilter?.value || "",
-        search: searchInput?.value || "",
+        search: "",
       };
 
       this.filterQuests(filters);
@@ -339,7 +334,6 @@ export default class QuestUI {
 
     statusFilter?.addEventListener("change", applyFilters);
     categoryFilter?.addEventListener("change", applyFilters);
-    searchInput?.addEventListener("input", applyFilters);
   }
 
   /**

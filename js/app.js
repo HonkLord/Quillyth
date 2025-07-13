@@ -5,7 +5,12 @@ import PlayerArcManager from "./features/player-arcs/player-arc-manager.js";
 import QuestManager from "./features/quests/quest-manager.js";
 import { NotesManager } from "./features/notes/notes-manager.js";
 import { SessionManager } from "./features/sessions/session-manager-new.js";
-import { GlobalSearch } from "./components/global-search.js";
+// --- Global Search Initialization ---
+// The Global Search feature is currently disabled to prevent duplicate search interfaces in the application.
+// There is an existing search UI elsewhere, and enabling this would result in two overlapping or redundant search bars,
+// which can confuse users and clutter the UI. Before re-enabling, the search system should be refactored to ensure
+// a single, unified search experience. Future plans: revisit the search architecture to merge or coordinate all search UIs.
+// import { GlobalSearch } from "./components/global-search.js"; // DISABLED
 import ExportImportPanel from "./components/export-import-panel.js";
 import LocationManager from "./features/locations/location-manager.js";
 
@@ -40,45 +45,32 @@ class CampaignManager {
     } else {
       console.error("❌ campaign-content NOT found at startup!");
     }
-    
-    // Add test function to window for debugging
-    window.testCharacterEdit = () => {
-      console.log("🧪 Testing character edit functionality:");
-      console.log("Character Manager:", this.characterManager);
-      console.log("Character Manager UI:", this.characterManager?.ui);
-      console.log("Character Core:", this.characterManager?.core);
-      console.log("Player Characters:", this.characterManager?.core?.playerCharacters);
-      if (this.characterManager?.core?.playerCharacters?.length > 0) {
-        const firstCharacter = this.characterManager.core.playerCharacters[0];
-        console.log("Testing edit dialog for:", firstCharacter.name, firstCharacter.id);
-        this.characterManager.ui.showEditCharacterDialog(firstCharacter.id);
-      }
-    };
 
-    // Initialize managers
-    this.sceneManager = new SceneManager();
+    // Initialize shared Data Manager first (load campaign once)
+    this.dataManager = new DataManager();
+    await this.dataManager.loadCurrentCampaign();
+
+    // Initialize managers with shared DataManager
+    this.sceneManager = new SceneManager(this.dataManager);
     await this.sceneManager.init();
 
-    this.characterManager = new CharacterManager();
+    this.characterManager = new CharacterManager(this.dataManager);
     await this.characterManager.init();
 
-    // Initialize Data Manager
-    this.dataManager = new DataManager();
-
     // Initialize Player Arc Manager
-    this.playerArcManager = new PlayerArcManager();
+    this.playerArcManager = new PlayerArcManager(this.dataManager);
     await this.playerArcManager.init();
 
     // Initialize Quest Manager
-    this.questManager = new QuestManager();
+    this.questManager = new QuestManager(this.dataManager);
     await this.questManager.init();
 
     // Initialize Notes Manager
-    this.notesManager = new NotesManager();
+    this.notesManager = new NotesManager(this.dataManager);
     await this.notesManager.init();
 
     // Initialize Session Manager
-    this.sessionManager = new SessionManager();
+    this.sessionManager = new SessionManager(this.dataManager);
     await this.sessionManager.init();
 
     // Initialize Location Manager
@@ -88,8 +80,8 @@ class CampaignManager {
     );
     await this.locationManager.init();
 
-    // Initialize Global Search
-    this.globalSearch = new GlobalSearch();
+    // Initialize Global Search - DISABLED to prevent duplicate search interfaces
+    // this.globalSearch = new GlobalSearch();
 
     // Initialize Export/Import Panel
     this.exportImportPanel = new ExportImportPanel();
@@ -113,7 +105,9 @@ class CampaignManager {
     this.setupEventListeners();
 
     console.log("🚀 CampaignManager: Application started successfully!");
-    console.log("🧪 Debug: Type 'testCharacterEdit()' in console to test character editing");
+    console.log(
+      "🧪 Debug: Type 'testCharacterEdit()' in console to test character editing"
+    );
   }
 
   setupMainUI() {
@@ -146,13 +140,17 @@ class CampaignManager {
       if (!action) return;
 
       // Add debug logging for character actions
-      if (action.includes("character") || action.includes("edit") || action.includes("npc")) {
+      if (
+        action.includes("character") ||
+        action.includes("edit") ||
+        action.includes("npc")
+      ) {
         console.log(`🎭 Character action triggered: ${action}`, {
           target: target,
           originalTarget: event.target,
           eventType: event.type,
           characterManager: !!this.characterManager,
-          characterManagerUI: !!this.characterManager?.ui
+          characterManagerUI: !!this.characterManager?.ui,
         });
       } else {
         console.log(`🔘 Navigation action triggered: ${action}`, {
@@ -238,6 +236,33 @@ class CampaignManager {
           break;
         case "view-progression":
           this.characterManager?.ui?.switchCharacterDetailTab("progression");
+          break;
+        case "switch-tab":
+          const tabName = event.target.closest("[data-tab]")?.dataset.tab;
+          if (tabName && this.characterManager?.ui) {
+            this.characterManager.ui.switchCharacterDetailTab(tabName);
+          }
+          break;
+        case "export-character":
+          const exportCharacterId = event.target.closest("[data-character-id]")
+            ?.dataset.characterId;
+          if (exportCharacterId && this.characterManager?.ui) {
+            const { character } =
+              this.characterManager.core.getCharacterById(exportCharacterId);
+            if (character) {
+              this.characterManager.ui.showCharacterExportDialog(character);
+            }
+          }
+          break;
+        case "save-character-notes":
+          const notesModal = event.target.closest(".modal-overlay");
+          const saveCharacterId = event.target.dataset.characterId;
+          if (saveCharacterId && this.characterManager && notesModal) {
+            this.characterManager.saveCharacterNotes(
+              saveCharacterId,
+              notesModal
+            );
+          }
           break;
       }
     });
@@ -498,11 +523,13 @@ class CampaignManager {
 
     // Initialize with relationships matrix interface
     if (this.characterManager && this.characterManager.relationships) {
-      const relationshipsContent = document.getElementById("relationships-content");
+      const relationshipsContent = document.getElementById(
+        "relationships-content"
+      );
       if (relationshipsContent) {
-        relationshipsContent.innerHTML = 
+        relationshipsContent.innerHTML =
           this.characterManager.relationships.renderRelationshipsMatrixView();
-        
+
         // Set up event listeners for the matrix view
         this.setupRelationshipsWorkspaceListeners();
       }
@@ -748,14 +775,18 @@ class CampaignManager {
 
   setupRelationshipsWorkspaceListeners() {
     console.log("🤝 Setting up relationships workspace event listeners");
-    
-    const relationshipsContent = document.getElementById("relationships-content");
+
+    const relationshipsContent = document.getElementById(
+      "relationships-content"
+    );
     if (!relationshipsContent) return;
 
     // Handle Add Relationship button clicks in the matrix view
-    const addRelationshipBtns = relationshipsContent.querySelectorAll('[data-action="add-relationship"]');
-    addRelationshipBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
+    const addRelationshipBtns = relationshipsContent.querySelectorAll(
+      '[data-action="add-relationship"]'
+    );
+    addRelationshipBtns.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
         e.preventDefault();
         const fromCharacterId = btn.dataset.fromCharacterId;
         this.characterManager.showAddRelationshipDialog(fromCharacterId);

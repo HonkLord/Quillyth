@@ -8,11 +8,11 @@ import { CharacterRelationships } from "./character-relationships.js";
 import { CharacterUI } from "./character-ui.js";
 
 export default class CharacterManager {
-  constructor() {
+  constructor(dataManager = null) {
     // Initialize modules
-    this.core = new CharacterCore();
-    this.progression = new CharacterProgression(this.core);
-    this.relationships = new CharacterRelationships(this.core);
+    this.core = new CharacterCore(dataManager);
+    this.progression = new CharacterProgression(this.core, dataManager);
+    this.relationships = new CharacterRelationships(this.core, dataManager);
     this.ui = new CharacterUI(this.core, this.progression, this.relationships);
 
     this.isInitialized = false;
@@ -173,7 +173,7 @@ export default class CharacterManager {
         isPlayerCharacter
       );
       this.ui.showSuccessMessage(`Character updated successfully`);
-      this.refreshCharacterDisplay();
+      await this.refreshCharacterDisplay();
       return updatedCharacter;
     } catch (error) {
       this.ui.showError(`Failed to update character: ${error.message}`);
@@ -374,8 +374,10 @@ export default class CharacterManager {
   /**
    * Refresh character display after data changes
    */
-  refreshCharacterDisplay() {
+  async refreshCharacterDisplay() {
     if (this.isInitialized) {
+      // Reload character data from database to ensure UI shows latest changes
+      await this.core.loadCharacterData();
       this.ui.showCharacterOverview();
     }
   }

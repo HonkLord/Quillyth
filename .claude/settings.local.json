@@ -2,24 +2,43 @@
   "permissions": {
     "allow": [
       "Bash(npm test)",
+      "Bash(npm start)",
+      "Bash(npm run migrate)",
+      "Bash(node server.js)",
+      "Bash(true)",
       "Bash(grep:*)",
       "Bash(rg:*)",
-      "Bash(node:*)",
-      "Bash(find:*)",
-      "Bash(lsof:*)",
-      "Bash(pkill:*)",
-      "Bash(true)",
-      "Bash(npm rebuild:*)",
-      "Bash(rm:*)",
+      "Bash(find:/mnt/e/Projects/Quillyth:*)",
       "Bash(npm install)",
-      "Bash(npm install:*)",
-      "Bash(git add:*)",
-      "Bash(git reset:*)",
-      "Bash(git config:*)",
-      "Bash(git commit:*)",
-      "Bash(git rm:*)",
-      "Bash(npm start)"
+      "Bash(npm install @types/*)",
+      "Bash(npm install --save-dev *)",
+      "Bash(npm rebuild sqlite3)",
+      "Bash(git add .)",
+      "Bash(git add *.js)",
+      "Bash(git add *.css)",
+      "Bash(git add *.json)",
+      "Bash(git commit -m *)",
+      "Bash(git status)",
+      "Bash(git diff)",
+      "Bash(git log --oneline -10)",
+      "Bash(lsof -i :3000)",
+      "Bash(pkill -f node)",
+      "Bash(sqlite3 campaign.db .tables)",
+      "Bash(sqlite3 campaign.db .schema)",
+      "Bash(rm -f *.log)",
+      "Bash(rm -f /tmp/*quillyth*)"
     ],
-    "deny": []
+    "deny": [
+      "Bash(curl:*)",
+      "Bash(cd:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(ss:*)",
+      "Bash(rm -rf:*)",
+      "Bash(git config --global:*)",
+      "Bash(npm init:*)",
+      "Bash(node:* --eval *)",
+      "Bash(sqlite3:* DROP *)",
+      "Bash(sqlite3:* DELETE FROM *)"
+    ]
   }
 }

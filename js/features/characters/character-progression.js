@@ -2,9 +2,12 @@
  * CharacterProgression - Character progression tracking and timeline management
  * Handles progression tracking, campaign milestones, and character development
  */
+import { DataManager } from "../../data-manager.js";
+
 export class CharacterProgression {
-  constructor(characterCore) {
+  constructor(characterCore, dataManager = null) {
     this.characterCore = characterCore;
+    this.dataManager = dataManager || new DataManager();
     this.characterProgression = {};
   }
 
@@ -12,21 +15,23 @@ export class CharacterProgression {
     try {
       console.log("📈 CharacterProgression: Initializing...");
 
+      // Load current campaign to get campaign context (only if not already loaded)
+      if (!this.dataManager.currentCampaignId) {
+        await this.dataManager.loadCurrentCampaign();
+      }
+
       // Load character progression data
       try {
-        const progressionResponse = await fetch("/api/characters/progression");
+        const progressionResponse = await fetch(`/api/characters/progression?campaign_id=${this.dataManager.currentCampaignId}`);
         if (progressionResponse.ok) {
           this.characterProgression = await progressionResponse.json();
+          console.log("📈 Character progression data loaded successfully");
         } else {
-          console.log(
-            "📝 Character progression endpoint not available, using empty object"
-          );
+          console.log("📝 Character progression endpoint returned error, using empty object");
           this.characterProgression = {};
         }
       } catch (error) {
-        console.log(
-          "📝 Character progression endpoint not available, using empty object"
-        );
+        console.log("📝 Character progression endpoint error, using empty object");
         this.characterProgression = {};
       }
 

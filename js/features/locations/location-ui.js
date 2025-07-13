@@ -89,7 +89,6 @@ export default class LocationUI {
                 Locations
               </h3>
               <div class="workspace-panel-actions">
-                <input type="text" id="location-search" placeholder="Search locations..." class="search-input">
                 <select id="location-type-filter" class="filter-select">
                   <option value="">All Types</option>
                   <option value="region">Region</option>
@@ -128,14 +127,6 @@ export default class LocationUI {
    * Setup event listeners for the location manager
    */
   setupEventListeners() {
-    // Search functionality
-    const searchInput = document.getElementById("location-search");
-    if (searchInput) {
-      searchInput.addEventListener("input", (e) => {
-        this.filterLocations(e.target.value);
-      });
-    }
-
     // Type filter
     const typeFilter = document.getElementById("location-type-filter");
     if (typeFilter) {

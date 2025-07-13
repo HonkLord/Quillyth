@@ -8,8 +8,8 @@ import QuestTracking from "./quest-tracking.js";
 import QuestUI from "./quest-ui.js";
 
 export default class QuestManager {
-  constructor() {
-    this.core = new QuestCore();
+  constructor(dataManager = null) {
+    this.core = new QuestCore(dataManager);
     this.tracking = new QuestTracking(this.core);
     this.ui = new QuestUI(this.core, this.tracking);
   }

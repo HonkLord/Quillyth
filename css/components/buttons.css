@@ -198,6 +198,30 @@
   text-decoration: none;
 }
 
+.btn-outline-info {
+  background: transparent;
+  color: var(--cm-info);
+  border-color: var(--cm-info);
+}
+
+.btn-outline-info:hover:not(:disabled) {
+  background: var(--cm-info);
+  color: white;
+  text-decoration: none;
+}
+
+.btn-outline-success {
+  background: transparent;
+  color: var(--cm-success);
+  border-color: var(--cm-success);
+}
+
+.btn-outline-success:hover:not(:disabled) {
+  background: var(--cm-success);
+  color: white;
+  text-decoration: none;
+}
+
 /* === BUTTON SIZES === */
 .btn-xs {
   padding: var(--cm-space-xs) var(--cm-space-sm);
