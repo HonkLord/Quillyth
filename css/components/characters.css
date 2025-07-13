@@ -1096,7 +1096,7 @@
 
 .relationships-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: var(--cm-space-lg);
   margin-top: var(--cm-space-lg);
 }
@@ -1356,6 +1356,59 @@
   grid-template-columns: 1fr 1fr;
   gap: var(--cm-space-lg);
 }
+
+/* Override grid layout when showing relationships or other full-width content */
+.character-content .character-relationships,
+.character-content .character-progression {
+  grid-column: 1 / -1; /* Span all columns */
+}
+
+/* Ensure relationships grid has proper layout in character detail area */
+.character-content .relationships-grid {
+  display: grid !important;
+  gap: var(--cm-space-md) !important;
+  margin-top: var(--cm-space-lg) !important;
+  width: 100% !important;
+
+  /* Smart responsive grid - adapts to available space and content */
+  /* Uses auto-fit to collapse empty columns and auto-size to actual content */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+
+  /* Center cards within the grid */
+  justify-items: center !important;
+
+  /* Ensure cards don't get too wide on large screens */
+  max-width: 100% !important;
+  grid-auto-rows: min-content !important;
+}
+
+/* Progressive enhancement for different screen sizes */
+@media (min-width: 600px) {
+  .character-content .relationships-grid {
+    /* Allow more flexible sizing on medium screens */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+    justify-items: center !important;
+  }
+}
+
+@media (min-width: 900px) {
+  .character-content .relationships-grid {
+    /* Optimize for 3+ columns on larger screens */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 280px)) !important;
+    justify-content: center !important;
+    justify-items: center !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .character-content .relationships-grid {
+    /* Cap maximum width and center the grid for very large screens */
+    grid-template-columns: repeat(auto-fit, minmax(220px, 300px)) !important;
+    justify-content: center !important;
+    justify-items: center !important;
+  }
+}
+
 
 .character-section {
   background: var(--cm-bg-cream);
@@ -2056,6 +2109,49 @@
   font-weight: var(--cm-font-weight-semibold);
 }
 
+/* === CHARACTER VIEW TOGGLE BUTTONS === */
+.character-view-toggle {
+  position: relative;
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease !important;
+}
+
+.character-view-toggle:hover {
+  background: rgba(59, 130, 246, 0.1) !important;
+  border-color: rgba(59, 130, 246, 0.6) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.character-view-toggle.active {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-color: #3b82f6 !important;
+  color: #1e40af !important;
+  font-weight: var(--cm-font-weight-bold) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.character-view-toggle.active::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #3b82f6, #6366f1);
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0.3;
+}
+
+.character-view-toggle.active:hover {
+  background: rgba(59, 130, 246, 0.2) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  transform: translateY(-1px);
+}
+
 /* === MATRIX HEADER & LABEL ENHANCEMENTS === */
 .matrix-header-cell .char-name,
 .matrix-label .char-name {
@@ -2476,3 +2572,402 @@
   min-height: 20px;
   flex: 1;
 }
+
+/* === CHARACTER FILTERS === */
+.character-filters {
+  background: var(--cm-bg-white);
+  border: var(--cm-border-width) solid var(--cm-border);
+  border-radius: var(--cm-radius-md);
+  padding: var(--cm-space-md);
+  margin-bottom: var(--cm-space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--cm-space-lg);
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: var(--cm-space-xs);
+  min-width: 0;
+}
+
+.filter-group label {
+  font-size: var(--cm-font-size-sm);
+  font-weight: var(--cm-font-weight-medium);
+  color: var(--cm-text-dark);
+  white-space: nowrap;
+  margin: 0;
+}
+
+.character-filters .filter-select {
+  min-width: 140px;
+  padding: var(--cm-space-xs) var(--cm-space-sm);
+  border: var(--cm-border-width) solid var(--cm-border);
+  border-radius: var(--cm-radius-sm);
+  background: var(--cm-bg-white);
+  font-size: var(--cm-font-size-sm);
+  color: var(--cm-text-dark);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.character-filters .filter-select:focus {
+  border-color: var(--cm-primary);
+  box-shadow: 0 0 0 2px var(--cm-primary-alpha);
+}
+
+.filter-actions {
+  margin-left: auto;
+}
+
+@media (max-width: 768px) {
+  .character-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--cm-space-md);
+  }
+
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--cm-space-xs);
+  }
+
+  .filter-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .filter-actions {
+    margin-left: 0;
+  }
+}
+
+/* === NPC SPECIFIC STYLES === */
+.favorability-note {
+  color: var(--cm-text-medium);
+  font-style: italic;
+  margin-top: var(--cm-space-xs);
+  display: block;
+}
+
+.scene-tag {
+  display: inline-block;
+  background: var(--cm-primary-alpha);
+  color: var(--cm-primary);
+  padding: var(--cm-space-xs) var(--cm-space-sm);
+  border-radius: var(--cm-radius-sm);
+  font-size: var(--cm-font-size-sm);
+  margin-right: var(--cm-space-xs);
+  margin-bottom: var(--cm-space-xs);
+  border: 1px solid var(--cm-primary);
+}
+
+.scene-tag.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.scene-tag.clickable:hover {
+  background: var(--cm-primary);
+  color: var(--cm-bg-white);
+  transform: translateY(-1px);
+}
+
+.scene-tag.clickable:focus-visible {
+  outline: 2px solid var(--cm-primary-dark);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); /* blue glow for accessibility */
+  background: var(--cm-primary);
+  color: var(--cm-bg-white);
+}
+
+.npc-scenes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cm-space-xs);
+}
+
+/* === SCENE MODAL === */
+.scene-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--cm-space-md);
+}
+
+.scene-modal {
+  background: var(--cm-bg-white);
+  border-radius: var(--cm-radius-lg);
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.scene-modal .modal-header {
+  padding: var(--cm-space-lg);
+  border-bottom: var(--cm-border-width) solid var(--cm-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--cm-bg-light);
+}
+
+.scene-modal .modal-header h3 {
+  margin: 0;
+  color: var(--cm-primary);
+  font-size: var(--cm-font-size-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--cm-space-sm);
+}
+
+.scene-modal .modal-close {
+  background: none;
+  border: none;
+  font-size: var(--cm-font-size-lg);
+  color: var(--cm-text-medium);
+  cursor: pointer;
+  padding: var(--cm-space-xs);
+  border-radius: var(--cm-radius-sm);
+  transition: all 0.2s ease;
+}
+
+.scene-modal .modal-close:hover {
+  background: var(--cm-bg-medium);
+  color: var(--cm-text-dark);
+}
+
+.scene-modal .modal-body {
+  padding: var(--cm-space-lg);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.scene-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--cm-space-md);
+  padding: var(--cm-space-md);
+  background: var(--cm-bg-light);
+  border-radius: var(--cm-radius-md);
+  margin-bottom: var(--cm-space-lg);
+}
+
+.scene-meta-item {
+  font-size: var(--cm-font-size-sm);
+}
+
+.scene-meta-item strong {
+  color: var(--cm-text-dark);
+  font-weight: var(--cm-font-weight-semibold);
+}
+
+.scene-section {
+  margin-bottom: var(--cm-space-lg);
+}
+
+.scene-section h4 {
+  margin: 0 0 var(--cm-space-md) 0;
+  color: var(--cm-primary);
+  font-size: var(--cm-font-size-lg);
+  font-weight: var(--cm-font-weight-semibold);
+  padding-bottom: var(--cm-space-xs);
+  border-bottom: 2px solid var(--cm-primary-alpha);
+}
+
+.scene-section p {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--cm-text-dark);
+}
+
+.read-aloud-text {
+  background: var(--cm-bg-light);
+  border-left: 4px solid var(--cm-primary);
+  padding: var(--cm-space-md);
+  border-radius: var(--cm-radius-sm);
+  font-style: italic;
+  color: var(--cm-text-dark);
+  line-height: 1.6;
+}
+
+.scene-modal .modal-footer {
+  padding: var(--cm-space-lg);
+  border-top: var(--cm-border-width) solid var(--cm-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--cm-bg-light);
+}
+
+@media (max-width: 768px) {
+  .scene-modal-overlay {
+    padding: var(--cm-space-sm);
+  }
+
+  .scene-modal {
+    max-height: 95vh;
+  }
+
+  .scene-meta {
+    grid-template-columns: 1fr;
+    gap: var(--cm-space-sm);
+  }
+
+  .scene-modal .modal-footer {
+    flex-direction: column;
+    gap: var(--cm-space-sm);
+  }
+}
+
+/* Override grid layout when showing relationships or other full-width content */
+.character-details-view .character-content .character-relationships,
+.character-details-view .character-content .character-progression {
+  grid-column: 1 / -1;
+}
+
+/* Ensure relationships grid has proper layout in character detail area */
+.character-details-view .character-content .relationships-grid {
+  display: grid;
+  gap: var(--cm-space-md);
+  margin-top: var(--cm-space-lg);
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  justify-items: center;
+  max-width: 100%;
+  grid-auto-rows: min-content;
+}
+
+@media (min-width: 600px) {
+  .character-details-view .character-content .relationships-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    justify-items: center;
+  }
+}
+
+@media (min-width: 900px) {
+  .character-details-view .character-content .relationships-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 280px));
+    justify-content: center;
+    justify-items: center;
+  }
+}
+
+@media (min-width: 1200px) {
+  .character-details-view .character-content .relationships-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 300px));
+    justify-content: center;
+    justify-items: center;
+  }
+}
+
+/* Character detail view relationship cards - consolidated rules with high specificity */
+.character-details-view .character-content .relationship-card,
+.character-content .relationship-card {
+  width: 100%;
+  max-width: 280px;
+  min-width: 240px;
+  height: auto;
+  min-height: auto;
+  aspect-ratio: auto;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.character-details-view .character-content .relationship-card .card-header,
+.character-content .relationship-card .card-header {
+  flex-direction: row;
+  text-align: left;
+  padding: var(--cm-space-md);
+  gap: var(--cm-space-sm);
+  flex: 0 0 auto;
+}
+
+.character-details-view .character-content .relationship-card .card-body,
+.character-content .relationship-card .card-body {
+  padding: var(--cm-space-sm) var(--cm-space-md) var(--cm-space-md);
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+}
+
+.character-details-view .character-content .relationship-card .relationship-type-select,
+.character-content .relationship-card .relationship-type-select {
+  width: 100%;
+  padding: var(--cm-space-xs) var(--cm-space-sm);
+  border: var(--cm-border-width) solid var(--cm-border);
+  border-radius: var(--cm-radius-sm);
+  background: var(--cm-bg-white);
+  font-size: var(--cm-font-size-xs);
+  color: var(--cm-text-dark);
+}
+
+/* Alternate card layout (playing card style) - only for relationship matrix view */
+.character-relationships .relationships-grid.workspace-cards-grid {
+  grid-template-columns: repeat(auto-fit, 120px);
+  grid-auto-columns: 120px;
+  justify-content: start;
+  gap: 12px;
+  width: 100%;
+}
+
+.character-relationships .relationships-grid.workspace-cards-grid .card.relationship-card {
+  max-width: 120px;
+  min-height: 240px;
+  width: 120px;
+  height: 240px;
+  aspect-ratio: 1/2;
+  flex: none;
+  box-sizing: border-box;
+}
+
+.character-relationships .relationships-grid.workspace-cards-grid .card.relationship-card .card-header {
+  padding: 10px;
+  flex-direction: column;
+  text-align: center;
+  gap: 6px;
+}
+
+.character-relationships .relationships-grid.workspace-cards-grid .card.relationship-card .card-title {
+  font-size: 14px;
+  margin: 0;
+  text-align: center;
+}
+
+.character-relationships .relationships-grid.workspace-cards-grid .card.relationship-card .card-body {
+  padding: 8px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.character-relationships .relationships-grid.workspace-cards-grid .card.relationship-card .card-actions {
+  padding: 6px 8px;
+  border-top: 1px solid #e5e7eb;
+  background: #fafafa;
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Character view toggle buttons use !important to ensure consistent styling across different layout contexts.
+   Relationship cards use high specificity selectors to handle different layouts without !important declarations. */

@@ -4,6 +4,7 @@
  */
 
 import { DataManager } from "../../data-manager.js";
+import { escapeHTML } from "../../shared/escape-html.js";
 
 export class NotesManager {
   constructor() {
@@ -54,7 +55,9 @@ export class NotesManager {
    */
   async loadNotes() {
     try {
-      const response = await fetch(`${this.apiBase}/notes?campaign_id=${this.dataManager.currentCampaignId}`);
+      const response = await fetch(
+        `${this.apiBase}/notes?campaign_id=${this.dataManager.currentCampaignId}`
+      );
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -264,12 +267,12 @@ export class NotesManager {
           <div class="note-card__title-section">
             <h3 class="note-card__title">
               <i class="${getCategoryIcon(note.category)}"></i>
-              ${note.title}
+              ${escapeHTML(note.title)}
             </h3>
             <div class="note-card__meta">
               <span class="note-card__category note-card__category--${
                 note.category
-              }">${note.category}</span>
+              }">${escapeHTML(note.category)}</span>
               <span class="note-card__date">Updated: ${formatDate(
                 note.updated_at
               )}</span>
@@ -295,7 +298,7 @@ export class NotesManager {
         </div>
         
         <div class="note-card__content">
-          <p>${truncateContent(note.content)}</p>
+          <p>${escapeHTML(truncateContent(note.content))}</p>
         </div>
         
         ${tagsHTML ? `<div class="note-card__tags">${tagsHTML}</div>` : ""}
@@ -315,7 +318,7 @@ export class NotesManager {
 
     const modalContent = `
       <div class="note-modal">
-        <h3>${modalTitle}</h3>
+        <h3>${escapeHTML(modalTitle)}</h3>
         <form id="note-form" data-note-id="${noteId || ""}">
           <div class="form-group">
             <label for="note-title">Title *</label>
@@ -324,7 +327,7 @@ export class NotesManager {
               id="note-title" 
               name="title" 
               required 
-              value="${note ? note.title : ""}"
+              value="${escapeHTML(note ? note.title : "")}"
               placeholder="Enter note title..."
             />
           </div>
@@ -336,11 +339,11 @@ export class NotesManager {
                 ${this.noteCategories
                   .map(
                     (category) =>
-                      `<option value="${category}" ${
+                      `<option value="${escapeHTML(category)}" ${
                         note && note.category === category ? "selected" : ""
-                      }>${
+                      }>${escapeHTML(
                         category.charAt(0).toUpperCase() + category.slice(1)
-                      }</option>`
+                      )}</option>`
                   )
                   .join("")}
               </select>
@@ -352,7 +355,7 @@ export class NotesManager {
                 type="text" 
                 id="note-tags" 
                 name="tags" 
-                value="${note ? note.tags || "" : ""}"
+                value="${escapeHTML(note ? note.tags || "" : "")}"
                 placeholder="important, follow-up, secret..."
               />
             </div>
@@ -365,7 +368,7 @@ export class NotesManager {
               name="content" 
               rows="10"
               placeholder="Enter your note content..."
-            >${note ? note.content || "" : ""}</textarea>
+            >${escapeHTML(note ? note.content || "" : "")}</textarea>
           </div>
           
           <div class="form-actions">
@@ -373,7 +376,7 @@ export class NotesManager {
               Cancel
             </button>
             <button type="submit" class="btn btn-primary">
-              ${submitText}
+              ${escapeHTML(submitText)}
             </button>
           </div>
         </form>
@@ -433,10 +436,10 @@ export class NotesManager {
     try {
       const formData = new FormData(form);
       const noteData = {
-        title: formData.get("title"),
-        content: formData.get("content"),
-        category: formData.get("category"),
-        tags: formData.get("tags"),
+        title: escapeHTML(formData.get("title")),
+        content: escapeHTML(formData.get("content")),
+        category: escapeHTML(formData.get("category")),
+        tags: escapeHTML(formData.get("tags")),
         campaign_id: this.dataManager.currentCampaignId,
       };
 
@@ -469,10 +472,10 @@ export class NotesManager {
     try {
       const formData = new FormData(form);
       const noteData = {
-        title: formData.get("title"),
-        content: formData.get("content"),
-        category: formData.get("category"),
-        tags: formData.get("tags"),
+        title: escapeHTML(formData.get("title")),
+        content: escapeHTML(formData.get("content")),
+        category: escapeHTML(formData.get("category")),
+        tags: escapeHTML(formData.get("tags")),
       };
 
       const response = await fetch(`${this.apiBase}/notes/${noteId}`, {
@@ -541,8 +544,8 @@ export class NotesManager {
         <div class="note-details-header">
           <div class="note-title-section">
             <i class="${getCategoryIcon(note.category)}"></i>
-            <h3>${note.title}</h3>
-            <span class="note-category">${note.category}</span>
+            <h3>${escapeHTML(note.title)}</h3>
+            <span class="note-category">${escapeHTML(note.category)}</span>
           </div>
           <div class="note-actions">
             <button class="btn btn-primary" onclick="notesManager.showNoteModal('${
@@ -566,7 +569,7 @@ export class NotesManager {
         </div>
         
         <div class="note-content-full">
-          ${this.formatNoteContent(note.content)}
+          ${this.formatNoteContent(escapeHTML(note.content))}
         </div>
         
         <div class="form-actions">
@@ -605,7 +608,9 @@ export class NotesManager {
     if (!note) return;
 
     const confirmed = confirm(
-      `Are you sure you want to delete the note "${note.title}"?\n\nThis action cannot be undone.`
+      `Are you sure you want to delete the note "${escapeHTML(
+        note.title
+      )}"?\n\nThis action cannot be undone.`
     );
 
     if (confirmed) {
@@ -665,7 +670,7 @@ export class NotesManager {
           ? "exclamation-circle"
           : "info-circle"
       }"></i>
-      <span>${message}</span>
+      <span>${escapeHTML(message)}</span>
     `;
 
     // Add to page

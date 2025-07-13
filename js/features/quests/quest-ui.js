@@ -1,4 +1,5 @@
-import { uiNotificationService } from '../../services/ui-notification-service.js';
+import { uiNotificationService } from "../../services/ui-notification-service.js";
+import { escapeHTML } from "../../shared/escape-html.js";
 
 /**
  * QuestUI - Handles quest UI rendering, modal dialogs, and user interactions
@@ -184,7 +185,7 @@ export default class QuestUI {
       )} priority-${quest.priority}" data-quest-id="${quest.id}">
         <div class="card-header">
           <div class="card-title-info">
-            <h4 class="card-title">${quest.title}</h4>
+            <h4 class="card-title">${escapeHTML(quest.title)}</h4>
             <div class="card-meta">
               <span class="card-category">${quest.category}</span>
               <span class="card-status">${quest.status.replace("_", " ")}</span>
@@ -214,7 +215,7 @@ export default class QuestUI {
           quest.description
             ? `
           <div class="card-body">
-            <p class="card-description">${quest.description}</p>
+            <p class="card-description">${escapeHTML(quest.description)}</p>
           </div>
         `
             : ""
@@ -242,7 +243,7 @@ export default class QuestUI {
                          data-action="toggle-objective"
                          data-quest-id="${quest.id}"
                          data-objective-id="${obj.id}">
-                  <span class="objective-text">${obj.text}</span>
+                  <span class="objective-text">${escapeHTML(obj.text)}</span>
                 </li>
               `
                 )
@@ -264,7 +265,9 @@ export default class QuestUI {
                   (reward) => `
                 <li class="reward-item">
                   <span class="reward-type">${reward.type}</span>: 
-                  <span class="reward-description">${reward.description}</span>
+                  <span class="reward-description">${escapeHTML(
+                    reward.description
+                  )}</span>
                   ${
                     reward.value
                       ? `<span class="reward-value">(${reward.value})</span>`
@@ -750,8 +753,8 @@ export default class QuestUI {
     }
 
     const confirmed = await uiNotificationService.showConfirmation(
-        'Delete Quest',
-        `Are you sure you want to delete the quest "${quest.title}"? This action cannot be undone.`
+      "Delete Quest",
+      `Are you sure you want to delete the quest "${quest.title}"? This action cannot be undone.`
     );
 
     if (confirmed) {
@@ -795,14 +798,14 @@ export default class QuestUI {
    * Show error message
    */
   showError(message) {
-    uiNotificationService.showToast(message, 'error');
+    uiNotificationService.showToast(message, "error");
   }
 
   /**
    * Show success message
    */
   showSuccess(message) {
-    uiNotificationService.showToast(message, 'success');
+    uiNotificationService.showToast(message, "success");
   }
 
   /**

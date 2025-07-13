@@ -244,22 +244,46 @@ export default class CharacterManager {
       // Get existing relationship to preserve description
       const fromCharacterData = this.core.getCharacterById(fromCharacterId);
       const existingRelationship = fromCharacterData.character.relationships?.[toCharacterId];
+      const description = existingRelationship?.description || "";
       
+      // Update via API
+      const response = await fetch(`/api/character-relationships/${fromCharacterId}/${toCharacterId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          relationship_type: newType,
+          description: description,
+          campaign_id: this.core.dataManager.currentCampaignId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update relationship: ${response.statusText}`);
+      }
+      
+      // Update local memory
       if (existingRelationship) {
         existingRelationship.type = newType;
-        
-        // Save to database
-        if (this.relationships) {
-          await this.relationships.saveRelationshipData();
+      } else if (fromCharacterData.character) {
+        // Create new relationship if it doesn't exist
+        if (!fromCharacterData.character.relationships) {
+          fromCharacterData.character.relationships = {};
         }
+        fromCharacterData.character.relationships[toCharacterId] = {
+          type: newType,
+          description: description,
+          created: new Date().toISOString()
+        };
+      }
         
-        this.ui.showSuccessMessage(`Relationship updated to ${newType}`);
+      this.ui.showSuccessMessage(`Relationship updated to ${newType}`);
         
-        // Refresh the view to update visual styling
-        const currentTab = document.querySelector('.character-detail-tab.active')?.dataset.tab;
-        if (currentTab === 'relationships') {
-          this.ui.switchCharacterDetailTab('relationships');
-        }
+      // Refresh the view to update visual styling
+      const currentTab = document.querySelector('.character-detail-tab.active')?.dataset.tab;
+      if (currentTab === 'relationships') {
+        this.ui.switchCharacterDetailTab('relationships');
       }
     } catch (error) {
       this.ui.showError(`Failed to update relationship: ${error.message}`);

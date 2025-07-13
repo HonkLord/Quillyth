@@ -3,6 +3,8 @@
  * Part of the modular session management architecture
  * Handles: form HTML generation, modal content creation
  */
+import { escapeHTML } from "../../shared/escape-html.js";
+
 export class SessionForms {
   constructor() {
     // No dependencies needed for form HTML generation

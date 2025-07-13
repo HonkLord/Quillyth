@@ -1,6 +1,7 @@
 import { SessionCore } from "./session-core.js";
 import { SessionForms } from "./session-forms.js";
-import { uiNotificationService } from '../../services/ui-notification-service.js';
+import { uiNotificationService } from "../../services/ui-notification-service.js";
+import { escapeHTML } from "../../shared/escape-html.js";
 
 /**
  * SessionUI - UI rendering and modal interactions for sessions

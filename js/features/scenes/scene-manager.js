@@ -5,6 +5,7 @@ import { SceneNavigation } from "../../components/scene-nav.js";
 import { SceneActionSystem } from "../../components/scene-action-system.js";
 import { SceneAI } from "../../components/scene-ai.js";
 import SceneRenderer from "../../components/scene-renderer.js";
+import { escapeHTML } from "../../shared/escape-html.js";
 
 /**
  * SceneManager - Lean coordinator for the modular scene management system
@@ -240,12 +241,14 @@ export class SceneManager {
       <div class="card card-scene clickable" data-scene-id="${scene.id}">
         <div class="card-header">
           <div class="card-title-info">
-            <h4 class="card-title">${scene.name}</h4>
+            <h4 class="card-title">${escapeHTML(scene.name)}</h4>
             <div class="card-meta">
               <span class="card-status status-${statusClass}">${statusLabel}</span>
               ${
                 scene.location_id
-                  ? `<span class="card-category"><i class="fas fa-map-marker-alt"></i> ${scene.location_id}</span>`
+                  ? `<span class="card-category"><i class="fas fa-map-marker-alt"></i> ${escapeHTML(
+                      scene.location_id
+                    )}</span>`
                   : ""
               }
             </div>
@@ -271,8 +274,8 @@ export class SceneManager {
         <div class="card-body">
           <p class="card-description">${
             scene.description
-              ? scene.description.substring(0, 150) +
-                (scene.description.length > 150 ? "..." : "")
+              ? escapeHTML(scene.description).substring(0, 150) +
+                (escapeHTML(scene.description).length > 150 ? "..." : "")
               : "No description provided."
           }</p>
         </div>
