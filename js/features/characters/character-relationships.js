@@ -3,6 +3,7 @@
  * Handles relationship tracking, social dynamics, and character connections
  */
 import { DataManager } from "../../data-manager.js";
+import { escapeHTML } from "../../shared/escape-html.js";
 
 export class CharacterRelationships {
   constructor(characterCore, dataManager = null) {
@@ -24,7 +25,7 @@ export class CharacterRelationships {
       let attempts = 0;
       while (!this.characterCore.isInitialized && attempts < 10) {
         console.log("⏳ Waiting for CharacterCore to initialize...");
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
         attempts++;
       }
 
@@ -44,22 +45,31 @@ export class CharacterRelationships {
 
   async loadRelationshipData() {
     try {
-      const response = await fetch(`/api/character-relationships?campaign_id=${this.dataManager.currentCampaignId}`);
+      const response = await fetch(
+        `/api/character-relationships?campaign_id=${this.dataManager.currentCampaignId}`
+      );
       if (response.ok) {
         const relationships = await response.json();
         // Convert API format to matrix format
         this.relationshipMatrix = this.convertApiToMatrix(relationships);
         // Save to localStorage for offline use
-        localStorage.setItem('character-relationships', JSON.stringify(this.relationshipMatrix));
+        localStorage.setItem(
+          "character-relationships",
+          JSON.stringify(this.relationshipMatrix)
+        );
         console.log("🤝 Character relationships loaded from API");
       } else {
-        console.log("📝 Character relationships endpoint returned error, using localStorage");
-        const stored = localStorage.getItem('character-relationships');
+        console.log(
+          "📝 Character relationships endpoint returned error, using localStorage"
+        );
+        const stored = localStorage.getItem("character-relationships");
         this.relationshipMatrix = stored ? JSON.parse(stored) : {};
       }
     } catch (error) {
-      console.log("📝 Character relationships endpoint error, using localStorage");
-      const stored = localStorage.getItem('character-relationships');
+      console.log(
+        "📝 Character relationships endpoint error, using localStorage"
+      );
+      const stored = localStorage.getItem("character-relationships");
       this.relationshipMatrix = stored ? JSON.parse(stored) : {};
     }
 
@@ -72,13 +82,13 @@ export class CharacterRelationships {
    */
   convertApiToMatrix(relationships) {
     const matrix = {};
-    relationships.forEach(rel => {
+    relationships.forEach((rel) => {
       if (!matrix[rel.from_character_id]) {
         matrix[rel.from_character_id] = {};
       }
       matrix[rel.from_character_id][rel.to_character_id] = {
         type: rel.relationship_type,
-        description: rel.description
+        description: rel.description,
       };
     });
     return matrix;
@@ -88,22 +98,25 @@ export class CharacterRelationships {
    * Apply loaded relationship data to character objects
    */
   applyRelationshipsToCharacters() {
-    if (!this.relationshipMatrix || Object.keys(this.relationshipMatrix).length === 0) {
+    if (
+      !this.relationshipMatrix ||
+      Object.keys(this.relationshipMatrix).length === 0
+    ) {
       return;
     }
 
     const allCharacters = this.characterCore.getAllCharacters();
-    
-    allCharacters.forEach(character => {
+
+    allCharacters.forEach((character) => {
       if (this.relationshipMatrix[character.id]) {
         character.relationships = {
           ...character.relationships,
-          ...this.relationshipMatrix[character.id]
+          ...this.relationshipMatrix[character.id],
         };
       }
     });
 
-    console.log('✅ Applied stored relationships to characters');
+    console.log("✅ Applied stored relationships to characters");
   }
 
   /**
@@ -111,7 +124,9 @@ export class CharacterRelationships {
    */
   renderCharacterRelationships(character) {
     const allCharacters = this.characterCore.getAllCharacters();
-    const otherCharacters = allCharacters.filter(char => char.id !== character.id);
+    const otherCharacters = allCharacters.filter(
+      (char) => char.id !== character.id
+    );
     const relationships = character.relationships || {};
 
     if (otherCharacters.length === 0) {
@@ -127,7 +142,13 @@ export class CharacterRelationships {
     }
 
     const characterCards = otherCharacters
-      .map(targetChar => this.renderCharacterRelationshipCard(character, targetChar, relationships[targetChar.id]))
+      .map((targetChar) =>
+        this.renderCharacterRelationshipCard(
+          character,
+          targetChar,
+          relationships[targetChar.id]
+        )
+      )
       .join("");
 
     return `
@@ -166,84 +187,105 @@ export class CharacterRelationships {
   /**
    * Render a character relationship card for the character-specific view
    */
-  renderCharacterRelationshipCard(fromCharacter, targetCharacter, relationship) {
+  renderCharacterRelationshipCard(
+    fromCharacter,
+    targetCharacter,
+    relationship
+  ) {
     try {
-      const hasRelationship = !!relationship;
-      const relationshipType = relationship?.type || "neutral";
+      // Always default to "undefined" if no relationship exists
+      const relationshipType = relationship?.type || "undefined";
       const relationshipDescription = relationship?.description || "";
-      
+
       const charTypeClass = this.getCharacterTypeClass(targetCharacter);
-      const isPC = targetCharacter.type === "pc" || targetCharacter.isPlayerCharacter || targetCharacter.player_character;
-      
+      const isPC =
+        targetCharacter.type === "pc" ||
+        targetCharacter.isPlayerCharacter ||
+        targetCharacter.player_character;
+
       return `
         <div class="card relationship-card ${charTypeClass}" 
-             data-character-id="${targetCharacter.id}"
-             data-from-character-id="${fromCharacter.id}"
-             data-to-character-id="${targetCharacter.id}">
+             data-character-id="${escapeHTML(String(targetCharacter.id))}"
+             data-from-character-id="${escapeHTML(String(fromCharacter.id))}"
+             data-to-character-id="${escapeHTML(String(targetCharacter.id))}">
           <div class="card-header">
             <div class="character-avatar">
-              ${targetCharacter.name.charAt(0).toUpperCase()}
+              ${escapeHTML(targetCharacter.name.charAt(0).toUpperCase())}
             </div>
             <div class="card-title-info">
-              <h4 class="card-title">${targetCharacter.name}</h4>
+              <h4 class="card-title">${escapeHTML(targetCharacter.name)}</h4>
               <div class="card-meta">
-                ${isPC ? `
-                  <span class="card-class-level">${targetCharacter.class || "Unknown"} ${targetCharacter.level || 1}</span>
-                ` : `
-                  <span class="card-role-location">${targetCharacter.role || "NPC"}${targetCharacter.location ? ` • ${targetCharacter.location}` : ""}</span>
-                `}
+                ${
+                  isPC
+                    ? `
+                  <span class="card-class-level">${escapeHTML(
+                    targetCharacter.class || "Unknown"
+                  )}${
+                        targetCharacter.subclass
+                          ? ` (${escapeHTML(targetCharacter.subclass)})`
+                          : ""
+                      } ${escapeHTML(String(targetCharacter.level || 1))}</span>
+                `
+                    : `
+                  <span class="card-role-location">${escapeHTML(
+                    targetCharacter.role || "NPC"
+                  )}${
+                        targetCharacter.location
+                          ? ` • ${escapeHTML(targetCharacter.location)}`
+                          : ""
+                      }</span>
+                `
+                }
               </div>
-            </div>
-            <div class="card-actions">
-              ${hasRelationship ? `
-                <select class="relationship-type-select btn btn-xs" 
-                        data-from-character-id="${fromCharacter.id}"
-                        data-to-character-id="${targetCharacter.id}"
-                        onchange="characterManager.updateRelationshipType(this)"
-                        onclick="event.stopPropagation()">
-                  <option value="neutral" ${relationshipType === "neutral" ? "selected" : ""}>Neutral</option>
-                  <option value="friend" ${relationshipType === "friend" ? "selected" : ""}>Friend</option>
-                  <option value="ally" ${relationshipType === "ally" ? "selected" : ""}>Ally</option>
-                  <option value="rival" ${relationshipType === "rival" ? "selected" : ""}>Rival</option>
-                  <option value="enemy" ${relationshipType === "enemy" ? "selected" : ""}>Enemy</option>
-                  <option value="family" ${relationshipType === "family" ? "selected" : ""}>Family</option>
-                  <option value="romantic" ${relationshipType === "romantic" ? "selected" : ""}>Romantic</option>
-                  <option value="mentor" ${relationshipType === "mentor" ? "selected" : ""}>Mentor</option>
-                  <option value="student" ${relationshipType === "student" ? "selected" : ""}>Student</option>
-                </select>
-                <button class="btn btn-xs btn-outline-danger" 
-                        data-action="delete-relationship"
-                        data-from-character-id="${fromCharacter.id}"
-                        data-to-character-id="${targetCharacter.id}"
-                        title="Delete Relationship">
-                  <i class="fas fa-trash"></i>
-                </button>
-              ` : `
-                <button class="btn btn-xs btn-primary" 
-                        data-action="add-relationship"
-                        data-from-character-id="${fromCharacter.id}"
-                        data-to-character-id="${targetCharacter.id}"
-                        onclick="event.stopPropagation()"
-                        title="Add Relationship">
-                  <i class="fas fa-plus"></i>
-                </button>
-              `}
             </div>
           </div>
           <div class="card-body">
-            ${hasRelationship && relationshipDescription ? `
-              <p class="card-description">${relationshipDescription}</p>
-            ` : hasRelationship ? `
-              <p class="card-description text-muted">No description provided.</p>
-            ` : `
-              <p class="card-description text-muted">Click to add relationship</p>
-            `}
+            <select class="relationship-type-select" 
+                    data-from-character-id="${escapeHTML(
+                      String(fromCharacter.id)
+                    )}"
+                    data-to-character-id="${escapeHTML(
+                      String(targetCharacter.id)
+                    )}">
+              <option value="undefined"${
+                relationshipType === "undefined" ? " selected" : ""
+              }>Undefined</option>
+              <option value="neutral"${
+                relationshipType === "neutral" ? " selected" : ""
+              }>Neutral</option>
+              <option value="friend"${
+                relationshipType === "friend" ? " selected" : ""
+              }>Friend</option>
+              <option value="ally"${
+                relationshipType === "ally" ? " selected" : ""
+              }>Ally</option>
+              <option value="rival"${
+                relationshipType === "rival" ? " selected" : ""
+              }>Rival</option>
+              <option value="enemy"${
+                relationshipType === "enemy" ? " selected" : ""
+              }>Enemy</option>
+              <option value="family"${
+                relationshipType === "family" ? " selected" : ""
+              }>Family</option>
+              <option value="romantic"${
+                relationshipType === "romantic" ? " selected" : ""
+              }>Romantic</option>
+              <option value="mentor"${
+                relationshipType === "mentor" ? " selected" : ""
+              }>Mentor</option>
+              <option value="student"${
+                relationshipType === "student" ? " selected" : ""
+              }>Student</option>
+            </select>
+            <div class="relationship-description">${escapeHTML(
+              relationshipDescription
+            )}</div>
           </div>
         </div>
       `;
-    } catch (error) {
-      console.error("❌ Error rendering relationship card:", error);
-      return `<div class="card card-character">Error: ${error.message}</div>`;
+    } catch (e) {
+      return `<div class="card relationship-card error">Error rendering relationship card</div>`;
     }
   }
 
@@ -251,8 +293,10 @@ export class CharacterRelationships {
    * Render the relationships matrix view
    */
   renderRelationshipsMatrixView() {
-    console.log("🎭 RenderRelationshipsMatrixView: Starting enhanced matrix render");
-    
+    console.log(
+      "🎭 RenderRelationshipsMatrixView: Starting enhanced matrix render"
+    );
+
     // Check if characters are still loading
     if (!this.characterCore.isInitialized) {
       console.log("⏳ CharacterCore not initialized, showing loading state");
@@ -261,7 +305,10 @@ export class CharacterRelationships {
 
     const allCharacters = this.characterCore.getAllCharacters();
     console.log(`📊 Matrix: Rendering with ${allCharacters.length} characters`);
-    console.log("📊 Character types:", allCharacters.map(c => `${c.name}:${c.type}`));
+    console.log(
+      "📊 Character types:",
+      allCharacters.map((c) => `${c.name}:${c.type}`)
+    );
 
     if (allCharacters.length === 0) {
       return this.renderNoCharactersMessage();
@@ -355,14 +402,17 @@ export class CharacterRelationships {
     try {
       console.log("🔄 Refreshing relationships...");
       await this.loadRelationshipData();
-      
+
       // Re-render the current view if we're on the relationships tab
       const centerPanel = document.getElementById("character-detail-content");
       if (centerPanel) {
         centerPanel.innerHTML = this.renderRelationshipsMatrixView();
         // Re-setup event listeners if needed
         const characterUI = window.characterManager?.ui;
-        if (characterUI && typeof characterUI.setupRelationshipsListeners === 'function') {
+        if (
+          characterUI &&
+          typeof characterUI.setupRelationshipsListeners === "function"
+        ) {
           characterUI.setupRelationshipsListeners();
         }
       }
@@ -408,7 +458,8 @@ export class CharacterRelationships {
             // Get attitude/favorability score
             const attitude = this.getCharacterAttitude(fromChar, toChar);
             const attitudeClass = this.getAttitudeClass(attitude);
-            const relationshipClass = this.getRelationshipHighlightClass(relationshipType);
+            const relationshipClass =
+              this.getRelationshipHighlightClass(relationshipType);
 
             return `
           <div class="matrix-cell attitude-cell ${attitudeClass} ${relationshipClass}" 
@@ -730,8 +781,8 @@ export class CharacterRelationships {
       // Build relationship matrix from all characters
       const allCharacters = this.characterCore.getAllCharacters();
       const relationshipData = {};
-      
-      allCharacters.forEach(char => {
+
+      allCharacters.forEach((char) => {
         if (char.relationships && Object.keys(char.relationships).length > 0) {
           relationshipData[char.id] = char.relationships;
         }
@@ -739,26 +790,32 @@ export class CharacterRelationships {
 
       // Try to save to API first
       try {
-        const response = await fetch('/api/character-relationships', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(relationshipData)
+        const response = await fetch("/api/character-relationships", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(relationshipData),
         });
-        
+
         if (response.ok) {
-          console.log('💾 Relationship data saved to API');
+          console.log("💾 Relationship data saved to API");
         } else {
-          throw new Error('API save failed');
+          throw new Error("API save failed");
         }
       } catch (apiError) {
-        console.warn('⚠️ API save failed, using localStorage only:', apiError.message);
+        console.warn(
+          "⚠️ API save failed, using localStorage only:",
+          apiError.message
+        );
       }
-      
+
       // Always save to localStorage as backup
-      localStorage.setItem('character-relationships', JSON.stringify(relationshipData));
-      console.log('💾 Relationship data saved to localStorage');
+      localStorage.setItem(
+        "character-relationships",
+        JSON.stringify(relationshipData)
+      );
+      console.log("💾 Relationship data saved to localStorage");
     } catch (error) {
-      console.error('❌ Error saving relationship data:', error);
+      console.error("❌ Error saving relationship data:", error);
     }
   }
 
@@ -909,7 +966,11 @@ export class CharacterRelationships {
    */
   getCharacterTypeClass(character) {
     // Check if character is a player character
-    if (character.type === "pc" || character.isPlayerCharacter || character.player_character) {
+    if (
+      character.type === "pc" ||
+      character.isPlayerCharacter ||
+      character.player_character
+    ) {
       return "char-pc";
     }
     return "char-npc";
@@ -919,7 +980,11 @@ export class CharacterRelationships {
    * Get display text for character type
    */
   getCharacterTypeDisplay(character) {
-    if (character.type === "pc" || character.isPlayerCharacter || character.player_character) {
+    if (
+      character.type === "pc" ||
+      character.isPlayerCharacter ||
+      character.player_character
+    ) {
       return "PC";
     }
     return "NPC";
@@ -930,7 +995,11 @@ export class CharacterRelationships {
    */
   getRelationshipHighlightClass(relationshipType) {
     // Positive relationships
-    if (["ally", "friend", "family", "romantic", "mentor"].includes(relationshipType)) {
+    if (
+      ["ally", "friend", "family", "romantic", "mentor"].includes(
+        relationshipType
+      )
+    ) {
       return "relationship-positive";
     }
     // Negative relationships

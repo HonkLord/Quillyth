@@ -1,5 +1,4 @@
-import { uiNotificationService } from '../../services/ui-notification-service.js';
-
+import { uiNotificationService } from "../../services/ui-notification-service.js";
 /**
  * SceneUI - Handles modal dialogs, form handling, notifications, and UI interactions
  * Part of the modular scene management architecture
@@ -425,14 +424,19 @@ export class SceneUI {
     confirmText = "Confirm",
     confirmClass = "btn-primary"
   ) {
-    return uiNotificationService.showConfirmation(title, `${message}<br><small>${details}</small>`);
+    return uiNotificationService.showConfirmation(
+      title,
+      `${message}<br><small>${details}</small>`
+    );
   }
 
   /**
    * Show suggestion modal
    */
   showSuggestionModal(title, suggestion) {
-    uiNotificationService.showModal(title, suggestion, [{ text: 'Close', class: 'btn-primary', action: () => {} }]);
+    uiNotificationService.showModal(title, suggestion, [
+      { text: "Close", class: "btn-primary", action: () => {} },
+    ]);
   }
 
   /**
@@ -526,7 +530,9 @@ export class SceneUI {
    * Show modal with custom content
    */
   showModal(title, content) {
-    return uiNotificationService.showModal(title, content, [{ text: 'Close', class: 'btn-secondary', action: () => {} }]);
+    return uiNotificationService.showModal(title, content, [
+      { text: "Close", class: "btn-secondary", action: () => {} },
+    ]);
   }
 
   /**

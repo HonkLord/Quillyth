@@ -2,6 +2,8 @@
  * CharacterUI - User interface rendering and interactions for character management
  * Handles HTML generation, modal dialogs, event listeners, and UI state management
  */
+import { escapeHTML } from "../../shared/escape-html.js";
+
 export class CharacterUI {
   constructor(characterCore, characterProgression, characterRelationships) {
     this.characterCore = characterCore;
@@ -49,16 +51,72 @@ export class CharacterUI {
           </div>
         </div>
 
-        <div class="workspace-grid workspace-grid-2">
-          <div class="workspace-panel workspace-panel-primary">
-            ${this.renderCharacterSections()}
+        <div class="workspace-panel">
+          <div id="character-detail-content" class="character-detail-content">
+            ${this.renderCharacterGridView()}
           </div>
-          
-          <div class="workspace-panel workspace-panel-secondary">
-            <div id="character-detail-content" class="character-detail-content">
-              ${this.renderCharacterDetailsPlaceholder()}
-            </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Render character grid view (combines PCs and NPCs in one grid)
+   */
+  renderCharacterGridView() {
+    const allCharacters = [
+      ...this.characterCore.playerCharacters,
+      ...this.characterCore.importantNPCs,
+    ];
+
+    if (allCharacters.length === 0) {
+      return `
+        <div class="character-grid-empty">
+          <i class="fas fa-users"></i>
+          <h3>No Characters Yet</h3>
+          <p>Add player characters and NPCs to start managing your campaign.</p>
+          <div class="empty-actions">
+            <button class="btn btn-primary" data-action="add-character">
+              <i class="fas fa-user-plus"></i> Add Player Character
+            </button>
+            <button class="btn btn-secondary" data-action="add-npc">
+              <i class="fas fa-users"></i> Add NPC
+            </button>
           </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="character-grid-view">
+        ${this.renderCharacterFilters()}
+        <div class="character-grid workspace-cards-grid" id="character-grid-container">
+          ${allCharacters
+            .map((character) => this.renderCharacterCard(character))
+            .join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Render character filters UI
+   */
+  renderCharacterFilters() {
+    return `
+      <div class="character-filters">
+        <div class="filter-group">
+          <label for="character-type-filter">Character Type:</label>
+          <select id="character-type-filter" class="filter-select" data-filter="character-type">
+            <option value="all">All Characters</option>
+            <option value="pc">Player Characters</option>
+            <option value="npc">NPCs</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-sm btn-outline-secondary" data-action="clear-filters">
+            <i class="fas fa-times"></i> Clear Filters
+          </button>
         </div>
       </div>
     `;
@@ -127,19 +185,21 @@ export class CharacterUI {
         ${this.characterCore.playerCharacters
           .map((character) => {
             return `
-              <div class="card card-character clickable" data-character-id="${
-                character.id
-              }">
+              <div class="card card-character clickable" data-character-id="${escapeHTML(
+                String(character.id)
+              )}">
                 <div class="card-header">
                   <div class="character-avatar">
-                    ${character.name.charAt(0).toUpperCase()}
+                    ${escapeHTML(character.name.charAt(0).toUpperCase())}
                   </div>
                   <div class="card-title-info">
-                    <h4 class="card-title">${character.name}</h4>
+                    <h4 class="card-title">${escapeHTML(character.name)}</h4>
                     <div class="card-meta">
-                      <span class="card-class-level">${
+                      <span class="card-class-level">${escapeHTML(
                         character.class || "Unknown"
-                      } ${character.level || 1}</span>
+                      )}${
+              character.subclass ? ` (${escapeHTML(character.subclass)})` : ""
+            } ${escapeHTML(String(character.level || 1))}</span>
                     </div>
                   </div>
                   <div class="card-actions">
@@ -155,11 +215,11 @@ export class CharacterUI {
                   </div>
                 </div>
                 <div class="card-body">
-                  <p class="card-description">${
+                  <p class="card-description">${escapeHTML(
                     character.description ||
-                    character.personality ||
-                    "No description available."
-                  }</p>
+                      character.personality ||
+                      "No description available."
+                  )}</p>
                 </div>
               </div>
             `;
@@ -191,19 +251,21 @@ export class CharacterUI {
         ${this.characterCore.importantNPCs
           .map((npc) => {
             return `
-              <div class="card card-character clickable" data-character-id="${
-                npc.id
-              }">
+              <div class="card card-character clickable" data-character-id="${escapeHTML(
+                String(npc.id)
+              )}">
                 <div class="card-header">
                   <div class="character-avatar">
-                    ${npc.name.charAt(0).toUpperCase()}
+                    ${escapeHTML(npc.name.charAt(0).toUpperCase())}
                   </div>
                   <div class="card-title-info">
-                    <h4 class="card-title">${npc.name}</h4>
+                    <h4 class="card-title">${escapeHTML(npc.name)}</h4>
                     <div class="card-meta">
-                      <span class="card-role-location">${
+                      <span class="card-role-location">${escapeHTML(
                         npc.role || "Unknown Role"
-                      }${npc.location ? ` • ${npc.location}` : ""}</span>
+                      )}${
+              npc.location ? ` • ${escapeHTML(npc.location)}` : ""
+            }</span>
                     </div>
                   </div>
                   <div class="card-actions">
@@ -216,16 +278,88 @@ export class CharacterUI {
                   </div>
                 </div>
                 <div class="card-body">
-                  <div class="npc-relationships">
-                    ${this.characterRelationships.renderNPCRelationshipTags(
-                      npc
-                    )}
-                  </div>
+                  <div class="npc-relationships">${this.characterRelationships.renderNPCRelationshipTags(
+                    npc
+                  )}</div>
                 </div>
               </div>
             `;
           })
           .join("")}
+      </div>
+    `;
+  }
+
+  /**
+   * Render a unified character card (works for both PCs and NPCs)
+   */
+  renderCharacterCard(character) {
+    const isPlayerCharacter =
+      character.type === "pc" ||
+      character.isPlayerCharacter ||
+      character.player_character;
+
+    // Determine actions based on character type
+    const actions = isPlayerCharacter
+      ? `
+        <button class="btn btn-xs btn-outline-secondary" data-action="edit-character" title="Edit">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn btn-xs btn-outline-info" data-action="character-notes" title="Notes">
+          <i class="fas fa-sticky-note"></i>
+        </button>
+      `
+      : `
+        <button class="btn btn-xs btn-outline-secondary" data-action="edit-npc" title="Edit">
+          <i class="fas fa-edit"></i>
+        </button>
+      `;
+
+    // Determine meta info based on character type
+    const metaInfo = isPlayerCharacter
+      ? `<span class="card-class-level">${escapeHTML(
+          character.class || "Unknown"
+        )}${
+          character.subclass ? ` (${escapeHTML(character.subclass)})` : ""
+        } ${escapeHTML(String(character.level || 1))}</span>`
+      : `<span class="card-role-location">${escapeHTML(
+          character.role || "Unknown Role"
+        )}${
+          character.location ? ` • ${escapeHTML(character.location)}` : ""
+        }</span>`;
+
+    // Determine body content based on character type
+    const bodyContent = isPlayerCharacter
+      ? `<p class="card-description">${escapeHTML(
+          character.description ||
+            character.personality ||
+            "No description available."
+        )}</p>`
+      : `<div class="npc-relationships">${this.characterRelationships.renderNPCRelationshipTags(
+          character
+        )}</div>`;
+
+    return `
+      <div class="card card-character clickable" data-character-id="${escapeHTML(
+        String(character.id)
+      )}">
+        <div class="card-header">
+          <div class="character-avatar">
+            ${escapeHTML(character.name.charAt(0).toUpperCase())}
+          </div>
+          <div class="card-title-info">
+            <h4 class="card-title">${escapeHTML(character.name)}</h4>
+            <div class="card-meta">
+              ${metaInfo}
+            </div>
+          </div>
+          <div class="card-actions">
+            ${actions}
+          </div>
+        </div>
+        <div class="card-body">
+          ${bodyContent}
+        </div>
       </div>
     `;
   }
@@ -240,14 +374,6 @@ export class CharacterUI {
           <i class="fas fa-user-circle"></i>
           <h4>Select a Character</h4>
           <p>Choose a character from the list to view their details, relationships, and progression.</p>
-          <div class="placeholder-actions">
-            <button class="btn btn-outline-primary" data-action="switch-tab" data-tab="relationships">
-              <i class="fas fa-project-diagram"></i> View All Relationships
-            </button>
-            <button class="btn btn-outline-secondary" data-action="switch-tab" data-tab="progression">
-              <i class="fas fa-chart-line"></i> View Campaign Progression
-            </button>
-          </div>
         </div>
       </div>
     `;
@@ -340,68 +466,189 @@ export class CharacterUI {
   }
 
   /**
-   * Setup event listeners for character overview
+   * Setup event listeners for character overview (event delegation)
    */
   setupCharacterOverviewListeners() {
-    // Only setup tab switching and card selection listeners
-    // Character actions are handled by main app.js event delegation
-
     // Remove any existing listeners to prevent duplicates
     this.removeCharacterListeners();
 
-    // Create bound methods for event handling
-    this.handleCharacterTabClick = this.handleCharacterTabClick.bind(this);
-    this.handleCharacterDetailTabClick =
-      this.handleCharacterDetailTabClick.bind(this);
-    this.handleCharacterCardClick = this.handleCharacterCardClick.bind(this);
+    // Bind unified handlers
+    this.handleCharacterUIClick = this.handleCharacterUIClick.bind(this);
+    this.handleCharacterUIChange = this.handleCharacterUIChange.bind(this);
 
-    // Add event listeners (character actions are handled by app.js)
-    document.addEventListener("click", this.handleCharacterTabClick);
-    document.addEventListener("click", this.handleCharacterDetailTabClick);
-    document.addEventListener("click", this.handleCharacterCardClick);
+    // Add unified event delegation listeners
+    document.addEventListener("click", this.handleCharacterUIClick);
+    document.addEventListener("change", this.handleCharacterUIChange);
 
-    console.log("🎭 CharacterUI: Event listeners setup complete");
+    console.log("🎭 CharacterUI: Unified event delegation setup complete");
   }
 
   removeCharacterListeners() {
-    if (this.handleCharacterTabClick) {
-      document.removeEventListener("click", this.handleCharacterTabClick);
+    if (this.handleCharacterUIClick) {
+      document.removeEventListener("click", this.handleCharacterUIClick);
     }
-    if (this.handleCharacterDetailTabClick) {
-      document.removeEventListener("click", this.handleCharacterDetailTabClick);
-    }
-    if (this.handleCharacterCardClick) {
-      document.removeEventListener("click", this.handleCharacterCardClick);
+    if (this.handleCharacterUIChange) {
+      document.removeEventListener("change", this.handleCharacterUIChange);
     }
   }
 
-  handleCharacterTabClick(event) {
-    if (event.target.classList.contains("character-tab")) {
-      const tabName = event.target.dataset.tab;
-      this.switchCharacterTab(tabName);
+  /**
+   * Unified click event handler for all character UI actions
+   */
+  handleCharacterUIClick(event) {
+    // Handle character view toggle buttons first (they don't have data-action)
+    const viewToggleEl = event.target.closest(".character-view-toggle");
+    if (viewToggleEl) {
+      const viewType = viewToggleEl.getAttribute("data-view");
+      if (viewType) {
+        this.switchCharacterView(viewType);
+        return;
+      }
+    }
+
+    // Find the closest element with a data-action attribute
+    const actionEl = event.target.closest("[data-action]");
+    if (!actionEl) {
+      // Handle card selection (clicking on card, not on action buttons)
+      const characterCard = event.target.closest(".card-character");
+      if (characterCard && !event.target.closest("[data-action]")) {
+        const characterId = characterCard.dataset.characterId;
+        this.selectCharacter(characterId);
+      }
+      // Handle relationship card quick-add/edit (not on buttons/selects)
+      const relationshipCard = event.target.closest(".relationship-card");
+      if (
+        relationshipCard &&
+        !event.target.closest("button") &&
+        !event.target.closest("select") &&
+        !event.target.closest(".card-actions")
+      ) {
+        const fromCharacterId = relationshipCard.dataset.fromCharacterId;
+        const toCharacterId = relationshipCard.dataset.toCharacterId;
+        const hasRelationship =
+          relationshipCard.querySelector(".relationship-type-select") !== null;
+        if (!hasRelationship) {
+          this.showAddRelationshipDialog(fromCharacterId, toCharacterId);
+        } else {
+          this.showEditRelationshipDialog(fromCharacterId, toCharacterId);
+        }
+      }
+      return;
+    }
+    const action = actionEl.getAttribute("data-action");
+    switch (action) {
+      case "add-character":
+        this.showAddCharacterDialog();
+        break;
+      case "add-npc":
+        this.showAddNPCDialog();
+        break;
+      case "edit-character":
+        this.showEditCharacterDialog(actionEl.dataset.characterId);
+        break;
+      case "edit-npc":
+        this.showEditCharacterDialog(actionEl.dataset.characterId);
+        break;
+      case "character-notes":
+        this.showCharacterNotesDialog(actionEl.dataset.characterId);
+        break;
+      case "view-character":
+        this.showCharacterDetails(
+          actionEl.closest(".card-character").dataset.characterId
+        );
+        break;
+      case "view-npc":
+        this.showCharacterDetails(
+          actionEl.closest(".card-character").dataset.characterId
+        );
+        break;
+      case "back-to-characters":
+        this.showCharacterGrid();
+        break;
+      case "clear-filters":
+        this.clearCharacterFilters();
+        break;
+      case "switch-tab":
+        if (actionEl.hasAttribute("data-tab")) {
+          // Used for both main and detail tab switching
+          const tabName = actionEl.getAttribute("data-tab");
+          if (actionEl.classList.contains("character-tab")) {
+            this.switchCharacterTab(tabName);
+          } else {
+            this.switchCharacterDetailTab(tabName);
+          }
+        }
+        break;
+      case "add-relationship":
+        this.showAddRelationshipDialog(
+          actionEl.dataset.fromCharacterId,
+          actionEl.dataset.toCharacterId
+        );
+        break;
+      case "edit-relationship":
+        this.showEditRelationshipDialog(
+          actionEl.dataset.fromCharacterId,
+          actionEl.dataset.toCharacterId
+        );
+        break;
+      case "delete-relationship":
+        {
+          const fromCharacterId = actionEl.dataset.fromCharacterId;
+          const toCharacterId = actionEl.dataset.toCharacterId;
+          if (confirm("Are you sure you want to delete this relationship?")) {
+            (async () => {
+              try {
+                await this.characterRelationships.deleteRelationship(
+                  fromCharacterId,
+                  toCharacterId
+                );
+                this.switchCharacterDetailTab("relationships");
+                this.showSuccessMessage("Relationship deleted successfully");
+              } catch (error) {
+                this.showError(
+                  `Failed to delete relationship: ${error.message}`
+                );
+              }
+            })();
+          }
+        }
+        break;
+      // Add more data-action cases as needed
+      default:
+        break;
     }
   }
 
-  handleCharacterDetailTabClick(event) {
-    // Handle switch-tab action buttons (header buttons)
-    if (event.target.closest('[data-action="switch-tab"]')) {
-      const button = event.target.closest('[data-action="switch-tab"]');
-      const tabName = button.dataset.tab;
-      this.switchCharacterDetailTab(tabName);
+  /**
+   * Unified change event handler for all character UI actions
+   */
+  handleCharacterUIChange(event) {
+    // Handle filter selects
+    if (event.target.classList.contains("filter-select")) {
+      // Check for data-action="filter-relationships"
+      if (event.target.getAttribute("data-action") === "filter-relationships") {
+        if (
+          window.characterManager &&
+          window.characterManager.filterRelationships
+        ) {
+          window.characterManager.filterRelationships();
+        }
+        return;
+      }
+      this.applyCharacterFilters();
+      return;
     }
-  }
-
-  handleCharacterCardClick(event) {
-    const characterCard = event.target.closest(".card-character");
-    if (characterCard && !event.target.closest("[data-action]")) {
-      // Only handle character selection if not clicking on an action button
-      const characterId = characterCard.dataset.characterId;
-      this.selectCharacter(characterId);
+    // Handle relationship type select changes
+    if (event.target.classList.contains("relationship-type-select")) {
+      if (
+        window.characterManager &&
+        window.characterManager.updateRelationshipType
+      ) {
+        window.characterManager.updateRelationshipType(event.target);
+      }
       return;
     }
   }
-
-  // Character actions are now handled by main app.js event delegation
 
   /**
    * Switch character tab (main workspace tabs)
@@ -472,7 +719,10 @@ export class CharacterUI {
     switch (tabName) {
       case "overview":
         // Don't reset to placeholder if we have character details already
-        if (!centerPanel.innerHTML.includes("character-details-view")) {
+        if (
+          !centerPanel.innerHTML.includes("character-details-view") &&
+          !centerPanel.innerHTML.includes("npc-details-view")
+        ) {
           console.log("🎭 UI: Setting overview placeholder");
           centerPanel.innerHTML = this.renderCharacterDetailsPlaceholder();
         } else {
@@ -515,6 +765,78 @@ export class CharacterUI {
         }
         this.setupProgressionViewListeners();
         break;
+    }
+  }
+
+  /**
+   * Switch character view within the character detail page
+   */
+  switchCharacterView(viewType) {
+    console.log("🎭 UI: switchCharacterView called with:", viewType);
+
+    if (!this.selectedCharacter) {
+      console.warn("🎭 UI: No character selected for view switching");
+      return;
+    }
+
+    // Update active state on toggle buttons
+    document.querySelectorAll(".character-view-toggle").forEach((button) => {
+      button.classList.remove("active");
+    });
+    const targetButton = document.querySelector(
+      `.character-view-toggle[data-view="${viewType}"]`
+    );
+    if (targetButton) {
+      targetButton.classList.add("active");
+    }
+
+    // Update the character content area
+    const contentArea = document.getElementById("character-content-area");
+    if (!contentArea) {
+      console.error("🎭 UI: character-content-area not found");
+      return;
+    }
+
+    // Determine if this is a player character or NPC
+    const isPlayerCharacter =
+      this.selectedCharacter.type === "player" ||
+      this.selectedCharacter.isPlayerCharacter;
+
+    switch (viewType) {
+      case "details":
+        if (isPlayerCharacter) {
+          contentArea.innerHTML = this.renderCharacterDetailsContent(
+            this.selectedCharacter
+          );
+        } else {
+          contentArea.innerHTML = this.renderNPCDetailsContent(
+            this.selectedCharacter
+          );
+        }
+        break;
+      case "relationships":
+        contentArea.innerHTML = this.renderCharacterRelationshipsContent(
+          this.selectedCharacter
+        );
+        this.setupRelationshipsListeners();
+        break;
+      case "progression":
+        if (isPlayerCharacter) {
+          contentArea.innerHTML = this.renderCharacterProgressionContent(
+            this.selectedCharacter
+          );
+          this.setupProgressionViewListeners();
+        } else {
+          // NPCs don't have progression, show message or different content
+          contentArea.innerHTML = `
+            <div class="npc-section">
+              <p class="text-muted"><em>Progression tracking is not available for NPCs.</em></p>
+            </div>
+          `;
+        }
+        break;
+      default:
+        console.warn("🎭 UI: Unknown view type:", viewType);
     }
   }
 
@@ -608,62 +930,208 @@ export class CharacterUI {
       <div class="character-details-view">
         <div class="character-header">
           <div class="character-header-info">
-            <h4>${character.name}</h4>
+            <h4>${escapeHTML(character.name)}</h4>
             <div class="character-meta">
-              <span class="character-class">${
+              <span class="character-class">${escapeHTML(
                 character.class || "Unknown Class"
-              }</span>
-              <span class="character-level">Level ${character.level || 1}</span>
-              <span class="character-race">${
+              )}${
+      character.subclass ? ` (${escapeHTML(character.subclass)})` : ""
+    }</span>
+              <span class="character-level">Level ${escapeHTML(
+                String(character.level || 1)
+              )}</span>
+              <span class="character-race">${escapeHTML(
                 character.race || "Unknown Race"
-              }</span>
+              )}</span>
             </div>
           </div>
           <div class="character-header-actions">
-            <button class="btn btn-outline-primary" data-action="switch-tab" data-tab="relationships">
+            <button class="btn btn-outline-secondary" data-action="back-to-characters">
+              <i class="fas fa-arrow-left"></i> Back to Characters
+            </button>
+            <button class="btn btn-outline-primary character-view-toggle active" data-view="details">
+              <i class="fas fa-user"></i> Details
+            </button>
+            <button class="btn btn-outline-primary character-view-toggle" data-view="relationships">
               <i class="fas fa-project-diagram"></i> Relationships
             </button>
-            <button class="btn btn-outline-secondary" data-action="switch-tab" data-tab="progression">
+            <button class="btn btn-outline-secondary character-view-toggle" data-view="progression">
               <i class="fas fa-chart-line"></i> Progression
             </button>
           </div>
         </div>
 
-        <div class="character-content">
-          <div class="character-section">
-            <h5>Background</h5>
-            <p>${character.background || "No background specified."}</p>
-          </div>
-
-          <div class="character-section">
-            <h5>Description</h5>
-            <p>${character.description || "No description available."}</p>
-          </div>
-
-          <div class="character-section">
-            <h5>Backstory</h5>
-            <p>${character.backstory || "No backstory recorded."}</p>
-          </div>
-
-          <div class="character-section">
-            <h5>Goals</h5>
-            <div class="character-goals">
-              ${this.renderCharacterGoals(character)}
-            </div>
-          </div>
+        <div class="character-content" id="character-content-area">
+          ${this.renderCharacterDetailsContent(character)}
         </div>
 
         <div class="character-actions">
-          <button class="btn btn-primary" data-action="edit-character" data-character-id="${
-            character.id
-          }">
+          <button class="btn btn-primary" data-action="edit-character" data-character-id="${escapeHTML(
+            String(character.id)
+          )}">
             <i class="fas fa-edit"></i> Edit Character
           </button>
-          <button class="btn btn-secondary" data-action="character-notes" data-character-id="${
-            character.id
-          }">
+          <button class="btn btn-secondary" data-action="character-notes" data-character-id="${escapeHTML(
+            String(character.id)
+          )}">
             <i class="fas fa-sticky-note"></i> Notes
           </button>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Render character details content (the main info section)
+   */
+  renderCharacterDetailsContent(character) {
+    return `
+      <div class="character-section">
+        <h5>Background</h5>
+        <p>${escapeHTML(character.background || "No background specified.")}</p>
+      </div>
+
+      <div class="character-section">
+        <h5>Description</h5>
+        <p>${escapeHTML(
+          character.description || "No description available."
+        )}</p>
+      </div>
+
+      <div class="character-section">
+        <h5>Backstory</h5>
+        <p>${escapeHTML(character.backstory || "No backstory recorded.")}</p>
+      </div>
+
+      <div class="character-section">
+        <h5>Goals</h5>
+        <div class="character-goals">
+          ${this.renderCharacterGoals(character)}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Render character relationships content
+   */
+  renderCharacterRelationshipsContent(character) {
+    const allCharacters = this.characterCore.getAllCharacters();
+    const otherCharacters = allCharacters.filter(
+      (char) => char.id !== character.id
+    );
+    const relationships = character.relationships || {};
+
+    if (otherCharacters.length === 0) {
+      return `
+        <div class="character-relationships">
+          <div class="relationships-empty">
+            <i class="fas fa-users"></i>
+            <p>No other characters available for relationships.</p>
+            <small>Add more characters to track relationships.</small>
+          </div>
+        </div>
+      `;
+    }
+
+    const characterCards = otherCharacters
+      .map((targetChar) =>
+        this.characterRelationships.renderCharacterRelationshipCard(
+          character,
+          targetChar,
+          relationships[targetChar.id]
+        )
+      )
+      .join("");
+
+    return `
+      <div class="character-relationships">
+        <div class="relationships-header">
+          <div class="relationships-header-left">
+            <h5>${escapeHTML(character.name)}'s Relationships</h5>
+          </div>
+          <div class="relationships-filters">
+            <select class="filter-select" data-filter="character-type" data-action="filter-relationships">
+              <option value="all">All Characters</option>
+              <option value="pc">Player Characters</option>
+              <option value="npc">NPCs</option>
+            </select>
+            <select class="filter-select" data-filter="relationship-type" data-action="filter-relationships">
+              <option value="all">All Relationships</option>
+              <option value="undefined">Undefined</option>
+              <option value="neutral">Neutral</option>
+              <option value="friend">Friends</option>
+              <option value="ally">Allies</option>
+              <option value="rival">Rivals</option>
+              <option value="enemy">Enemies</option>
+              <option value="family">Family</option>
+              <option value="romantic">Romantic</option>
+              <option value="mentor">Mentors</option>
+              <option value="student">Students</option>
+            </select>
+          </div>
+        </div>
+        <div class="relationships-grid">
+          ${characterCards}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Render character progression content
+   */
+  renderCharacterProgressionContent(character) {
+    return this.characterProgression.renderCharacterProgressionView(character);
+  }
+
+  /**
+   * Render NPC details content (the main info section)
+   */
+  renderNPCDetailsContent(npc) {
+    return `
+      <div class="npc-section">
+        <h5>Motivation</h5>
+        <p>${escapeHTML(npc.motivation || "No motivation recorded.")}</p>
+      </div>
+
+      <div class="npc-section">
+        <h5>Description</h5>
+        <p>${escapeHTML(npc.description || "No description available.")}</p>
+      </div>
+
+      <div class="npc-section">
+        <h5>Party Favorability</h5>
+        <div class="favorability-meter">
+          <div class="favorability-bar">
+            <div class="favorability-fill" style="width: ${escapeHTML(
+              String(npc.favorability || 50)
+            )}%"></div>
+          </div>
+          <span class="favorability-value">${escapeHTML(
+            String(npc.favorability || 50)
+          )}/100</span>
+        </div>
+        <small class="favorability-note">How this NPC feels about the party overall</small>
+      </div>
+
+      <div class="npc-section">
+        <h5>Scenes</h5>
+        <div class="npc-scenes">
+          ${
+            npc.scenes && Array.isArray(npc.scenes)
+              ? npc.scenes
+                  .map(
+                    (scene) =>
+                      `<span class="scene-tag clickable" data-action="navigate-to-scene" data-scene-id="${escapeHTML(
+                        String(scene)
+                      )}" title="Click to view scene">${escapeHTML(
+                        String(scene)
+                      )}</span>`
+                  )
+                  .join("")
+              : "<em>No scenes recorded</em>"
+          }
         </div>
       </div>
     `;
@@ -709,10 +1177,10 @@ export class CharacterUI {
         .map(
           (goal) => `
         <div class="character-goal">
-          <span class="goal-text">${goal.text || goal}</span>
-          <span class="goal-status ${goal.status || "active"}">${
+          <span class="goal-text">${escapeHTML(goal.text || goal)}</span>
+          <span class="goal-status ${escapeHTML(
             goal.status || "active"
-          }</span>
+          )}">${escapeHTML(goal.status || "active")}</span>
         </div>
       `
         )
@@ -735,70 +1203,163 @@ export class CharacterUI {
     return `
       <div class="npc-details-view">
         <div class="npc-header">
-          <h4>${npc.name}</h4>
-          <div class="npc-meta">
-            <span class="npc-role">${npc.role || "Unknown Role"}</span>
-            <span class="npc-importance">${
-              npc.importance || "Unknown"
-            } importance</span>
+          <div class="npc-header-info">
+            <h4>${escapeHTML(npc.name)}</h4>
+            <div class="npc-meta">
+              <span class="npc-role">${escapeHTML(
+                npc.role || "Unknown Role"
+              )}</span>
+              <span class="npc-importance">${escapeHTML(
+                npc.importance || "Unknown"
+              )} importance</span>
+            </div>
+          </div>
+          <div class="npc-header-actions">
+            <button class="btn btn-outline-secondary" data-action="back-to-characters">
+              <i class="fas fa-arrow-left"></i> Back to Characters
+            </button>
+            <button class="btn btn-outline-primary character-view-toggle active" data-view="details">
+              <i class="fas fa-user"></i> Details
+            </button>
+            <button class="btn btn-outline-primary character-view-toggle" data-view="relationships">
+              <i class="fas fa-project-diagram"></i> Relationships
+            </button>
           </div>
         </div>
 
-        <div class="npc-content">
-          <div class="npc-section">
-            <h5>Motivation</h5>
-            <p>${npc.motivation || "No motivation recorded."}</p>
-          </div>
-
-          <div class="npc-section">
-            <h5>Favorability</h5>
-            <div class="favorability-meter">
-              <div class="favorability-bar">
-                <div class="favorability-fill" style="width: ${
-                  npc.favorability || 50
-                }%"></div>
-              </div>
-              <span class="favorability-value">${
-                npc.favorability || 50
-              }/100</span>
-            </div>
-          </div>
-
-          <div class="npc-section">
-            <h5>Scenes</h5>
-            <div class="npc-scenes">
-              ${
-                npc.scenes && Array.isArray(npc.scenes)
-                  ? npc.scenes
-                      .map((scene) => `<span class="scene-tag">${scene}</span>`)
-                      .join("")
-                  : "<em>No scenes recorded</em>"
-              }
-            </div>
-          </div>
-
-          <div class="npc-section">
-            <h5>Relationships</h5>
-            <div class="npc-relationships">
-              ${this.characterRelationships.renderNPCRelationshipTags(npc)}
-            </div>
-          </div>
+        <div class="character-content" id="character-content-area">
+          ${this.renderNPCDetailsContent(npc)}
         </div>
 
         <div class="npc-actions">
-          <button class="btn btn-primary" data-action="edit-character" data-character-id="${
-            npc.id
-          }">
+          <button class="btn btn-primary" data-action="edit-character" data-character-id="${escapeHTML(
+            String(npc.id)
+          )}">
             <i class="fas fa-edit"></i> Edit NPC
           </button>
-          <button class="btn btn-secondary" data-action="export-character" data-character-id="${
-            npc.id
-          }">
+          <button class="btn btn-secondary" data-action="export-character" data-character-id="${escapeHTML(
+            String(npc.id)
+          )}">
             <i class="fas fa-download"></i> Export
           </button>
         </div>
       </div>
     `;
+  }
+
+  /**
+   * Go back to character grid view
+   */
+  showCharacterGrid() {
+    // Clear selected character
+    this.selectedCharacter = null;
+
+    // Update the content area with character grid
+    const centerPanel = document.getElementById("character-detail-content");
+    if (centerPanel) {
+      centerPanel.innerHTML = this.renderCharacterGridView();
+    }
+  }
+
+  /**
+   * Apply character filters to the grid
+   */
+  applyCharacterFilters() {
+    const characterTypeFilter =
+      document.getElementById("character-type-filter")?.value || "all";
+
+    const cards = document.querySelectorAll(
+      "#character-grid-container .card-character"
+    );
+
+    cards.forEach((card) => {
+      const characterId = card.dataset.characterId;
+      const { character, isPlayerCharacter } =
+        this.characterCore.getCharacterById(characterId);
+
+      if (!character) return;
+
+      let showCard = true;
+
+      // Character type filter
+      if (characterTypeFilter !== "all") {
+        if (characterTypeFilter === "pc" && !isPlayerCharacter) {
+          showCard = false;
+        } else if (characterTypeFilter === "npc" && isPlayerCharacter) {
+          showCard = false;
+        }
+      }
+
+      card.style.display = showCard ? "" : "none";
+    });
+
+    // Show/hide empty state if needed
+    this.updateEmptyState();
+  }
+
+  /**
+   * Clear all character filters
+   */
+  clearCharacterFilters() {
+    // Reset all filter selects
+    const filters = document.querySelectorAll(".filter-select");
+    filters.forEach((filter) => {
+      filter.value = "all";
+    });
+
+    // Show all cards
+    const cards = document.querySelectorAll(
+      "#character-grid-container .card-character"
+    );
+    cards.forEach((card) => {
+      card.style.display = "";
+    });
+
+    // Update empty state
+    this.updateEmptyState();
+  }
+
+  /**
+   * Update empty state visibility based on visible cards
+   */
+  updateEmptyState() {
+    const cards = document.querySelectorAll(
+      "#character-grid-container .card-character"
+    );
+    const visibleCards = Array.from(cards).filter(
+      (card) => card.style.display !== "none"
+    );
+
+    // Create or update no results message
+    let noResultsMsg = document.getElementById("no-filter-results");
+
+    if (visibleCards.length === 0) {
+      if (!noResultsMsg) {
+        noResultsMsg = document.createElement("div");
+        noResultsMsg.id = "no-filter-results";
+        noResultsMsg.className = "character-grid-empty";
+        noResultsMsg.innerHTML = `
+          <i class="fas fa-filter"></i>
+          <h3>No Characters Match Filters</h3>
+          <p>Try adjusting your filters to see more characters.</p>
+          <button class="btn btn-outline-secondary" data-action="clear-filters">
+            <i class="fas fa-times"></i> Clear Filters
+          </button>
+        `;
+        const gridContainer = document.getElementById(
+          "character-grid-container"
+        );
+        if (gridContainer) {
+          // Use DocumentFragment to batch DOM updates
+          const fragment = document.createDocumentFragment();
+          fragment.appendChild(noResultsMsg);
+          gridContainer.appendChild(fragment);
+        }
+      }
+      noResultsMsg.style.display = "";
+    } else if (noResultsMsg) {
+      noResultsMsg.style.display = "none";
+    }
   }
 
   /**
@@ -895,7 +1456,7 @@ export class CharacterUI {
         (char) =>
           `<option value="${char.id}" ${
             fromCharacterId === char.id ? "selected" : ""
-          }>${char.name}</option>`
+          }>${escapeHTML(char.name)}</option>`
       )
       .join("");
 
@@ -904,7 +1465,7 @@ export class CharacterUI {
         (char) =>
           `<option value="${char.id}" ${
             toCharacterId === char.id ? "selected" : ""
-          }>${char.name}</option>`
+          }>${escapeHTML(char.name)}</option>`
       )
       .join("");
 
@@ -1090,34 +1651,42 @@ export class CharacterUI {
 
       // Resolve characterManager once
       const characterManager = window.characterManager || null;
+      let result;
 
       if (isEdit) {
         if (characterManager) {
           console.log("🎭 Calling characterManager.handleEditCharacter");
-          return await characterManager.handleEditCharacter(
+          result = await characterManager.handleEditCharacter(
             form,
             character.id,
             isPlayerCharacter
           );
         } else {
           console.log("🎭 Calling this.handleEditCharacter as fallback");
-          return await this.handleEditCharacter(
+          result = await this.handleEditCharacter(
             form,
             character.id,
             isPlayerCharacter
           );
         }
+
+        // Re-select the character after successful edit to maintain selection
+        setTimeout(() => {
+          this.selectCharacter(character.id);
+        }, 100);
       } else {
         if (characterManager) {
-          return isPlayerCharacter
+          result = isPlayerCharacter
             ? await characterManager.handleAddCharacter(form)
             : await characterManager.handleAddNPC(form);
         } else {
-          return isPlayerCharacter
+          result = isPlayerCharacter
             ? await this.handleAddCharacter(form)
             : await this.handleAddNPC(form);
         }
       }
+
+      return result;
     });
   }
 
@@ -1127,7 +1696,7 @@ export class CharacterUI {
   showNotesModal(character) {
     const modalContent = `
       <div class="character-notes-modal">
-        <h3>Notes for ${character.name}</h3>
+        <h3>Notes for ${escapeHTML(character.name)}</h3>
         <div class="notes-content">
           <div class="form-group">
             <label for="character-notes">Character Notes</label>
@@ -1136,7 +1705,7 @@ export class CharacterUI {
               name="notes" 
               rows="10"
               placeholder="Add notes about this character..."
-            >${character.notes || ""}</textarea>
+            >${escapeHTML(character.notes || "")}</textarea>
           </div>
           
           <div class="form-group">
@@ -1146,7 +1715,7 @@ export class CharacterUI {
               name="backstory" 
               rows="6"
               placeholder="Character backstory and history..."
-            >${character.backstory || ""}</textarea>
+            >${escapeHTML(character.backstory || "")}</textarea>
           </div>
         </div>
         
@@ -1290,8 +1859,18 @@ export class CharacterUI {
             type="text" 
             id="character-class" 
             name="class" 
-            value="${character?.class || ""}"
+            value="${escapeHTML(character?.class || "")}"
             placeholder="Fighter, Wizard, etc..."
+          />
+        </div>
+        <div class="form-group">
+          <label for="character-subclass">Subclass</label>
+          <input 
+            type="text" 
+            id="character-subclass" 
+            name="subclass" 
+            value="${escapeHTML(character?.subclass || "")}"
+            placeholder="Champion, Evocation, etc..."
           />
         </div>
         <div class="form-group">
@@ -1302,7 +1881,7 @@ export class CharacterUI {
             name="level" 
             min="1" 
             max="20"
-            value="${character?.level || 1}"
+            value="${escapeHTML(String(character?.level || 1))}"
           />
         </div>
       </div>
@@ -1314,7 +1893,7 @@ export class CharacterUI {
             type="text" 
             id="character-race" 
             name="race" 
-            value="${character?.race || ""}"
+            value="${escapeHTML(character?.race || "")}"
             placeholder="Human, Elf, Dwarf, etc..."
           />
         </div>
@@ -1324,7 +1903,7 @@ export class CharacterUI {
             type="text" 
             id="character-background" 
             name="background" 
-            value="${character?.background || ""}"
+            value="${escapeHTML(character?.background || "")}"
             placeholder="Acolyte, Criminal, etc..."
           />
         </div>
@@ -1337,7 +1916,7 @@ export class CharacterUI {
           name="description" 
           rows="3"
           placeholder="Physical description and personality..."
-        >${character?.description || ""}</textarea>
+        >${escapeHTML(character?.description || "")}</textarea>
       </div>
       
       <div class="form-group">
@@ -1347,7 +1926,7 @@ export class CharacterUI {
           name="personality" 
           rows="2"
           placeholder="Character traits and personality..."
-        >${character?.personality || ""}</textarea>
+        >${escapeHTML(character?.personality || "")}</textarea>
       </div>
       
       <div class="form-group">
@@ -1357,7 +1936,7 @@ export class CharacterUI {
           name="goals" 
           rows="2"
           placeholder="Character goals and objectives..."
-        >${character?.goals || ""}</textarea>
+        >${escapeHTML(character?.goals || "")}</textarea>
       </div>
     `;
   }
@@ -1374,7 +1953,7 @@ export class CharacterUI {
             type="text" 
             id="npc-role" 
             name="role" 
-            value="${character?.role || ""}"
+            value="${escapeHTML(character?.role || "")}"
             placeholder="Merchant, Guard, Noble, etc..."
           />
         </div>
@@ -1384,7 +1963,7 @@ export class CharacterUI {
             type="text" 
             id="npc-location" 
             name="location" 
-            value="${character?.location || ""}"
+            value="${escapeHTML(character?.location || "")}"
             placeholder="Where they can be found..."
           />
         </div>
@@ -1397,7 +1976,7 @@ export class CharacterUI {
           name="description" 
           rows="3"
           placeholder="Physical description and personality..."
-        >${character?.description || ""}</textarea>
+        >${escapeHTML(character?.description || "")}</textarea>
       </div>
       
       <div class="form-group">
@@ -1407,7 +1986,9 @@ export class CharacterUI {
           name="motivation" 
           rows="2"
           placeholder="What drives this NPC..."
-        >${character?.motivation || character?.motivations || ""}</textarea>
+        >${escapeHTML(
+          character?.motivation || character?.motivations || ""
+        )}</textarea>
       </div>
       
       <div class="form-group">
@@ -1417,7 +1998,7 @@ export class CharacterUI {
           name="secrets" 
           rows="2"
           placeholder="Hidden information about this NPC..."
-        >${character?.secrets || ""}</textarea>
+        >${escapeHTML(character?.secrets || "")}</textarea>
       </div>
     `;
   }

@@ -155,4 +155,20 @@
   --cm-breakpoint-lg: 1024px;
   --cm-breakpoint-xl: 1280px;
   --cm-breakpoint-2xl: 1536px;
+
+  /* === CHARACTER VIEW TOGGLE BUTTONS === */
+  --cm-char-toggle-bg-base: rgba(255, 255, 255, 0.8);
+  --cm-char-toggle-bg-hover: rgba(59, 130, 246, 0.1);
+  --cm-char-toggle-bg-active: rgba(59, 130, 246, 0.15);
+  --cm-char-toggle-bg-active-hover: rgba(59, 130, 246, 0.2);
+  --cm-char-toggle-border-base: rgba(59, 130, 246, 0.3);
+  --cm-char-toggle-border-hover: rgba(59, 130, 246, 0.6);
+  --cm-char-toggle-border-active: #3b82f6;
+  --cm-char-toggle-text-active: #1e40af;
+  --cm-char-toggle-shadow-hover: 0 4px 12px rgba(59, 130, 246, 0.15);
+  --cm-char-toggle-shadow-active: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  --cm-char-toggle-shadow-active-hover: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  --cm-char-toggle-gradient: linear-gradient(45deg, #3b82f6, #6366f1);
+  --cm-char-toggle-transform-hover: translateY(-1px);
+  --cm-char-toggle-transition: all 0.3s ease;
 }

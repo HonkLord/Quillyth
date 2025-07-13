@@ -214,6 +214,13 @@ async function createEnhancedTables(db) {
       )
     `);
 
+    // Add subclass column to players table (for D&D subclasses)
+    try {
+      await db.exec(`ALTER TABLE players ADD COLUMN subclass TEXT DEFAULT ''`);
+    } catch (e) {
+      // Column already exists, ignore
+    }
+
     // NPCs table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS npcs (

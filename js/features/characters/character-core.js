@@ -7,7 +7,12 @@ import { DataManager } from "../../data-manager.js";
 // Set window.DEBUG = true in the browser console or in index.html to enable debug logging in development.
 
 export default class CharacterCore {
-  constructor(dataManager = null) {
+  /**
+   * @param {DataManager|null} dataManager
+   * @param {Object} [options]
+   * @param {boolean} [options.autoCreateRelationships=true] - Internal flag to control automatic relationship creation
+   */
+  constructor(dataManager = null, options = {}) {
     this.apiService = null; // Will be injected
     this.geminiService = null; // Will be injected
     this.dataManager = dataManager || new DataManager();
@@ -17,6 +22,10 @@ export default class CharacterCore {
     this.currentCharacter = null;
 
     this.isInitialized = false;
+    this.autoCreateRelationships =
+      options.autoCreateRelationships !== undefined
+        ? options.autoCreateRelationships
+        : true;
   }
 
   async init() {
@@ -425,6 +434,7 @@ export default class CharacterCore {
       const characterData = {
         name: formData.get("name"),
         class: formData.get("class"),
+        subclass: formData.get("subclass"),
         race: formData.get("race"),
         level: parseInt(formData.get("level")) || 1,
         background: formData.get("background"),
@@ -457,6 +467,9 @@ export default class CharacterCore {
       // Add to local data
       this.playerCharacters.push(newCharacter);
 
+      // Auto-create undefined relationships with all existing characters
+      await this.createDefaultRelationshipsForNewCharacter(newCharacter);
+
       return newCharacter;
     } catch (error) {
       console.error("❌ Error adding character:", error);
@@ -465,9 +478,190 @@ export default class CharacterCore {
   }
 
   /**
+   * Create default relationships for a newly added character (batch version)
+   * @param {Object} newCharacter
+   */
+  async createDefaultRelationshipsForNewCharacter(newCharacter) {
+    if (!this.autoCreateRelationships) {
+      console.log("🤝 Auto-create relationships is disabled (internal flag)");
+      return;
+    }
+    try {
+      const allExistingCharacters = this.getAllCharacters().filter(
+        (char) => char.id !== newCharacter.id
+      );
+      if (allExistingCharacters.length === 0) {
+        console.log("🤝 No existing characters to create relationships with");
+        return;
+      }
+      console.log(
+        `🤝 Creating default relationships for ${newCharacter.name} with ${allExistingCharacters.length} existing characters (batch)`
+      );
+      
+      // Prepare relationship data without modifying in-memory state yet
+      const relationshipData = {};
+      const timestamp = new Date().toISOString();
+      
+      // Build relationship data for API call
+      const allCharacters = this.getAllCharacters();
+      allCharacters.forEach((char) => {
+        // Copy existing relationships
+        if (char.relationships && Object.keys(char.relationships).length > 0) {
+          relationshipData[char.id] = { ...char.relationships };
+        }
+      });
+      
+      // Add new relationships to the data structure for API
+      if (!relationshipData[newCharacter.id]) {
+        relationshipData[newCharacter.id] = {};
+      }
+      
+      for (const existingCharacter of allExistingCharacters) {
+        // New character to existing
+        relationshipData[newCharacter.id][existingCharacter.id] = {
+          type: "undefined",
+          description: "",
+          created: timestamp,
+        };
+        // Existing character to new
+        if (!relationshipData[existingCharacter.id]) {
+          relationshipData[existingCharacter.id] = {};
+        }
+        relationshipData[existingCharacter.id][newCharacter.id] = {
+          type: "undefined",
+          description: "",
+          created: timestamp,
+        };
+      }
+      
+      // Send to API first - only update in-memory state if successful
+      const response = await fetch("/api/character-relationships", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(relationshipData),
+      });
+      
+      if (!response.ok) {
+        throw new Error(
+          `Failed to batch save relationships: ${response.statusText}`
+        );
+      }
+      
+      // API call succeeded - now update in-memory relationships
+      if (!newCharacter.relationships) newCharacter.relationships = {};
+      for (const existingCharacter of allExistingCharacters) {
+        // New character to existing
+        newCharacter.relationships[existingCharacter.id] = {
+          type: "undefined",
+          description: "",
+          created: timestamp,
+        };
+        // Existing character to new
+        if (!existingCharacter.relationships)
+          existingCharacter.relationships = {};
+        existingCharacter.relationships[newCharacter.id] = {
+          type: "undefined",
+          description: "",
+          created: timestamp,
+        };
+      }
+      
+      console.log(
+        `✅ Successfully batch created default relationships for ${newCharacter.name}`
+      );
+    } catch (error) {
+      console.error("❌ Error batch-creating default relationships:", error);
+      // Don't throw - this is not critical for character creation
+      // In-memory state remains unchanged due to API failure
+    }
+  }
+
+  /**
+   * Create a relationship between two characters
+   */
+  async createRelationship(
+    fromCharacterId,
+    toCharacterId,
+    relationshipType = "undefined",
+    description = ""
+  ) {
+    try {
+      // Input validation - check for required parameters
+      if (!fromCharacterId || !toCharacterId) {
+        throw new Error("Both fromCharacterId and toCharacterId are required");
+      }
+
+      // Prevent self-relationships
+      if (fromCharacterId === toCharacterId) {
+        throw new Error("Cannot create relationship between character and itself");
+      }
+
+      // Validate that both characters exist in local data
+      const fromCharacterData = this.getCharacterById(fromCharacterId);
+      const toCharacterData = this.getCharacterById(toCharacterId);
+
+      if (!fromCharacterData.character) {
+        throw new Error(`From character not found: ${fromCharacterId}`);
+      }
+
+      if (!toCharacterData.character) {
+        throw new Error(`To character not found: ${toCharacterId}`);
+      }
+
+      // Validate relationship type
+      const validRelationshipTypes = [
+        "undefined", "neutral", "friend", "ally", "rival", "enemy", 
+        "family", "romantic", "mentor", "student"
+      ];
+      if (!validRelationshipTypes.includes(relationshipType)) {
+        throw new Error(`Invalid relationship type: ${relationshipType}`);
+      }
+
+      // Sanitize description to prevent XSS attacks
+      // Import escapeHTML for XSS protection
+      const { escapeHTML } = await import("../../shared/escape-html.js");
+      const sanitizedDescription = escapeHTML(String(description || "")).trim();
+
+      // Limit description length to prevent abuse
+      const maxDescriptionLength = 500;
+      if (sanitizedDescription.length > maxDescriptionLength) {
+        throw new Error(`Description too long. Maximum ${maxDescriptionLength} characters allowed`);
+      }
+
+      const relationshipData = {
+        campaign_id: this.dataManager.currentCampaignId,
+        from_character_id: fromCharacterId,
+        to_character_id: toCharacterId,
+        relationship_type: relationshipType,
+        description: sanitizedDescription,
+      };
+
+      const response = await fetch("/api/character-relationships", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(relationshipData),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to create relationship: ${response.statusText}`
+        );
+      }
+
+      console.log(`✅ Created relationship: ${fromCharacterData.character.name} → ${toCharacterData.character.name} (${relationshipType})`);
+      return await response.json();
+    } catch (error) {
+      console.error("❌ Error creating relationship:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Add a new NPC
    */
-  handleAddNPC(form) {
+  async handleAddNPC(form) {
     try {
       const formData = new FormData(form);
       const npcData = {
@@ -484,6 +678,9 @@ export default class CharacterCore {
 
       // Add to local data
       this.importantNPCs.push(npcData);
+
+      // Auto-create undefined relationships with all existing characters
+      await this.createDefaultRelationshipsForNewCharacter(npcData);
 
       return npcData;
     } catch (error) {

@@ -3,6 +3,8 @@
  * Part of the modular session management architecture
  * Handles: form HTML generation, modal content creation
  */
+import { escapeHTML } from "../../shared/escape-html.js";
+
 export class SessionForms {
   constructor() {
     // No dependencies needed for form HTML generation
@@ -59,7 +61,7 @@ export class SessionForms {
         </div>
         
         <form id="edit-session-form">
-          <input type="hidden" name="sessionId" value="${session.id}">
+          <input type="hidden" name="sessionId" value="${escapeHTML(session.id)}">
           
           <div class="modal-body">
             ${this.createSessionFormFields(session)}
@@ -91,14 +93,14 @@ export class SessionForms {
           <label for="${idPrefix}session-title">Session Title *</label>
           <input type="text" id="${idPrefix}session-title" name="title" required 
                  value="${
-                   session?.title || ""
+                   escapeHTML(session?.title || "")
                  }" placeholder="Enter session title...">
         </div>
         
         <div class="form-group">
           <label for="${idPrefix}session-number">Session Number</label>
           <input type="number" id="${idPrefix}session-number" name="session_number" 
-                 value="${session?.session_number || ""}" 
+                 value="${escapeHTML(session?.session_number || "")}" 
                  placeholder="${
                    isEdit ? "" : "Auto-generated if empty"
                  }" min="1">
@@ -109,14 +111,14 @@ export class SessionForms {
         <div class="form-group">
           <label for="${idPrefix}session-date">Session Date</label>
           <input type="date" id="${idPrefix}session-date" name="date" 
-                 value="${session?.date ? session.date.split("T")[0] : ""}">
+                 value="${escapeHTML(session?.date ? session.date.split("T")[0] : "")}">
         </div>
         
         <div class="form-group">
           <label for="${idPrefix}session-duration">Duration (hours)</label>
           <input type="number" id="${idPrefix}session-duration" name="duration" 
                  value="${
-                   session?.duration || ""
+                   escapeHTML(session?.duration || "")
                  }" placeholder="3" min="1" max="12" step="0.5">
         </div>
       </div>
@@ -125,7 +127,7 @@ export class SessionForms {
         <label for="${idPrefix}session-summary">Session Summary</label>
         <textarea id="${idPrefix}session-summary" name="summary" rows="4" 
                   placeholder="Brief description of what will happen in this session...">${
-                    session?.summary || ""
+                    escapeHTML(session?.summary || "")
                   }</textarea>
       </div>
       
@@ -133,7 +135,7 @@ export class SessionForms {
         <label for="${idPrefix}session-goals">Session Goals</label>
         <textarea id="${idPrefix}session-goals" name="goals" rows="3" 
                   placeholder="What do you want to accomplish in this session?">${
-                    session?.goals || ""
+                    escapeHTML(session?.goals || "")
                   }</textarea>
       </div>
       
@@ -204,18 +206,18 @@ export class SessionForms {
         <div class="modal-header">
           <h3>
             <i class="fas fa-calendar-alt"></i>
-            Session ${session.session_number || "N/A"}: ${
-      session.title || "Untitled"
+            Session ${escapeHTML(session.session_number || "N/A")}: ${
+      escapeHTML(session.title || "Untitled")
     }
           </h3>
           <div class="modal-header-actions">
             <button class="btn btn-sm btn-primary" onclick="sessionManager.editSession('${
-              session.id
+              escapeHTML(session.id)
             }')">
               <i class="fas fa-edit"></i> Edit
             </button>
             <button class="btn btn-sm btn-success" onclick="sessionManager.planner.planSession('${
-              session.id
+              escapeHTML(session.id)
             }')">
               <i class="fas fa-tasks"></i> Plan
             </button>
@@ -230,8 +232,8 @@ export class SessionForms {
             <div class="meta-item">
               <label>Status</label>
               <span class="status-badge status-${
-                session.status
-              }">${sessionCore.getSessionStatus(session)}</span>
+                escapeHTML(session.status)
+              }">${escapeHTML(sessionCore.getSessionStatus(session))}</span>
             </div>
             <div class="meta-item">
               <label>Date</label>
@@ -249,7 +251,7 @@ export class SessionForms {
             </div>
             <div class="meta-item">
               <label>Type</label>
-              <span>${session.session_type || "Regular"}</span>
+              <span>${escapeHTML(session.session_type || "Regular")}</span>
             </div>
           </div>
           
@@ -258,7 +260,7 @@ export class SessionForms {
               ? `
             <div class="session-section">
               <h4>Summary</h4>
-              <p>${session.summary}</p>
+              <p>${escapeHTML(session.summary)}</p>
             </div>
           `
               : ""
@@ -269,7 +271,7 @@ export class SessionForms {
               ? `
             <div class="session-section">
               <h4>Goals</h4>
-              <p>${session.goals}</p>
+              <p>${escapeHTML(session.goals)}</p>
             </div>
           `
               : ""
@@ -279,12 +281,12 @@ export class SessionForms {
             <h4>Quick Actions</h4>
             <div class="action-buttons">
               <button class="btn btn-outline-primary" onclick="sessionManager.planner.planSession('${
-                session.id
+                escapeHTML(session.id)
               }')">
                 <i class="fas fa-tasks"></i> Plan Session
               </button>
               <button class="btn btn-outline-secondary" onclick="sessionManager.editSession('${
-                session.id
+                escapeHTML(session.id)
               }')">
                 <i class="fas fa-edit"></i> Edit Details
               </button>
@@ -318,16 +320,16 @@ export class SessionForms {
               .map(
                 (session) => `
               <div class="session-selection-item" onclick="sessionManager.planner.planSession('${
-                session.id
+                escapeHTML(session.id)
               }')">
                 <div class="session-info">
-                  <h4>Session ${session.session_number || "N/A"}: ${
-                  session.title || "Untitled"
+                  <h4>Session ${escapeHTML(session.session_number || "N/A")}: ${
+                  escapeHTML(session.title || "Untitled")
                 }</h4>
                   <div class="session-meta">
                     <span class="status-badge status-${
-                      session.status
-                    }">${sessionCore.getSessionStatus(session)}</span>
+                      escapeHTML(session.status)
+                    }">${escapeHTML(sessionCore.getSessionStatus(session))}</span>
                     <span class="session-date">
                       <i class="fas fa-calendar"></i>
                       ${
@@ -339,7 +341,7 @@ export class SessionForms {
                   </div>
                   ${
                     session.summary
-                      ? `<p class="session-summary">${session.summary}</p>`
+                      ? `<p class="session-summary">${escapeHTML(session.summary)}</p>`
                       : ""
                   }
                 </div>

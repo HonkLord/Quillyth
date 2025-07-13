@@ -2,6 +2,8 @@
  * LocationUI - Handles location UI rendering, modal dialogs, and user interactions
  * Manages HTML generation, tree view, details panel, and user interface for location management
  */
+import { escapeHTML } from "../../shared/escape-html.js";
+
 export default class LocationUI {
   constructor(locationCore) {
     this.core = locationCore;
@@ -205,10 +207,12 @@ export default class LocationUI {
           <span class="location-name" onclick="locationManager.selectLocation('${
             location.id
           }')">
-            ${location.name}
+            ${escapeHTML(location.name)}
           </span>
           
-          <span class="location-type">${location.location_type}</span>
+          <span class="location-type">${escapeHTML(
+            location.location_type
+          )}</span>
           
           <div class="location-actions">
             <button class="btn-icon" onclick="locationManager.editLocation('${
@@ -292,8 +296,10 @@ export default class LocationUI {
             <i class="fas ${this.core.getLocationIcon(
               location.location_type
             )}"></i>
-            <h3>${location.name}</h3>
-            <span class="location-type-badge">${location.location_type}</span>
+            <h3>${escapeHTML(location.name)}</h3>
+            <span class="location-type-badge">${escapeHTML(
+              location.location_type
+            )}</span>
           </div>
           
           <div class="location-actions">
@@ -332,7 +338,7 @@ export default class LocationUI {
                         ? `onclick="locationManager.selectLocation('${pathLocation.id}')"`
                         : ""
                     }>
-                ${pathLocation.name}
+                ${escapeHTML(pathLocation.name)}
               </span>
               ${
                 index < path.length - 1
@@ -354,7 +360,7 @@ export default class LocationUI {
               ? `
             <div class="info-section">
               <h4>Description</h4>
-              <p>${location.description}</p>
+              <p>${escapeHTML(location.description)}</p>
             </div>
           `
               : ""
@@ -365,7 +371,7 @@ export default class LocationUI {
               ? `
             <div class="info-section">
               <h4>Notes</h4>
-              <p>${location.notes}</p>
+              <p>${escapeHTML(location.notes)}</p>
             </div>
           `
               : ""
@@ -378,7 +384,7 @@ export default class LocationUI {
               <h4>Tags</h4>
               <div class="tag-list">
                 ${location.tags
-                  .map((tag) => `<span class="tag">${tag}</span>`)
+                  .map((tag) => `<span class="tag">${escapeHTML(tag)}</span>`)
                   .join("")}
               </div>
             </div>
@@ -403,8 +409,10 @@ export default class LocationUI {
                   <i class="fas ${this.core.getLocationIcon(
                     child.location_type
                   )}"></i>
-                  <span class="child-name">${child.name}</span>
-                  <span class="child-type">${child.location_type}</span>
+                  <span class="child-name">${escapeHTML(child.name)}</span>
+                  <span class="child-type">${escapeHTML(
+                    child.location_type
+                  )}</span>
                 </div>
               `
                 )
@@ -432,7 +440,7 @@ export default class LocationUI {
                   <i class="fas ${this.core.getLocationIcon(
                     sibling.location_type
                   )}"></i>
-                  <span>${sibling.name}</span>
+                  <span>${escapeHTML(sibling.name)}</span>
                 </div>
               `
                 )
@@ -547,9 +555,9 @@ export default class LocationUI {
         
         <div class="form-group">
           <label for="edit-location-name">Location Name *</label>
-          <input type="text" id="edit-location-name" name="name" value="${
+          <input type="text" id="edit-location-name" name="name" value="${escapeHTML(
             location.name
-          }" required>
+          )}" required>
         </div>
 
         <div class="form-row">
@@ -588,16 +596,16 @@ export default class LocationUI {
 
         <div class="form-group">
           <label for="edit-location-description">Description</label>
-          <textarea id="edit-location-description" name="description" rows="4">${
+          <textarea id="edit-location-description" name="description" rows="4">${escapeHTML(
             location.description || ""
-          }</textarea>
+          )}</textarea>
         </div>
 
         <div class="form-group">
           <label for="edit-location-notes">Notes</label>
-          <textarea id="edit-location-notes" name="notes" rows="3">${
+          <textarea id="edit-location-notes" name="notes" rows="3">${escapeHTML(
             location.notes || ""
-          }</textarea>
+          )}</textarea>
         </div>
 
         <div class="form-actions">
@@ -638,7 +646,7 @@ export default class LocationUI {
       .map(
         (location) => `
         <option value="${location.id}">
-          ${location.name} (${location.location_type})
+          ${escapeHTML(location.name)} (${escapeHTML(location.location_type)})
         </option>
       `
       )
@@ -654,11 +662,11 @@ export default class LocationUI {
       const formData = new FormData(form);
 
       const locationData = {
-        name: formData.get("name"),
-        location_type: formData.get("location_type"),
+        name: escapeHTML(formData.get("name")),
+        location_type: escapeHTML(formData.get("location_type")),
         parent_id: formData.get("parent_id") || null,
-        description: formData.get("description"),
-        notes: formData.get("notes"),
+        description: escapeHTML(formData.get("description")),
+        notes: escapeHTML(formData.get("notes")),
       };
 
       // Validate data
@@ -694,11 +702,11 @@ export default class LocationUI {
       const locationId = formData.get("locationId");
 
       const updates = {
-        name: formData.get("name"),
-        location_type: formData.get("location_type"),
+        name: escapeHTML(formData.get("name")),
+        location_type: escapeHTML(formData.get("location_type")),
         parent_id: formData.get("parent_id") || null,
-        description: formData.get("description"),
-        notes: formData.get("notes"),
+        description: escapeHTML(formData.get("description")),
+        notes: escapeHTML(formData.get("notes")),
       };
 
       // Validate data
@@ -804,7 +812,7 @@ export default class LocationUI {
       <div class="modal-overlay">
         <div class="modal-content">
           <div class="modal-header">
-            <h3>${title}</h3>
+            <h3>${escapeHTML(title)}</h3>
             <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">
               <i class="fas fa-times"></i>
             </button>
@@ -876,7 +884,7 @@ export default class LocationUI {
     notification.innerHTML = `
       <div class="notification-content">
         <i class="fas fa-${icon}"></i>
-        <span>${message}</span>
+        <span>${escapeHTML(message)}</span>
       </div>
       <button class="notification-close" onclick="this.parentElement.remove()">
         <i class="fas fa-times"></i>

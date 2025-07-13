@@ -5,6 +5,7 @@ import PlayerArcManager from "./features/player-arcs/player-arc-manager.js";
 import QuestManager from "./features/quests/quest-manager.js";
 import { NotesManager } from "./features/notes/notes-manager.js";
 import { SessionManager } from "./features/sessions/session-manager-new.js";
+import { escapeHTML } from "./shared/escape-html.js";
 // --- Global Search Initialization ---
 // The Global Search feature is currently disabled to prevent duplicate search interfaces in the application.
 // There is an existing search UI elsewhere, and enabling this would result in two overlapping or redundant search bars,
@@ -200,6 +201,32 @@ class CampaignManager {
         case "toggle-scene-tree":
           this.toggleSceneTreePanel();
           break;
+        case "navigate-to-scene": {
+          const sceneId = target?.dataset.sceneId;
+          if (sceneId && this.sceneManager) {
+            console.log(`🎬 Opening scene modal: ${sceneId}`);
+            
+            // Try to find scene by ID first, then by name
+            let scene = this.sceneManager.core.findSceneById(sceneId);
+            if (!scene) {
+              // If not found by ID, try to find by name (for cases where display names are used)
+              const scenes = this.sceneManager.core.getAllScenes();
+              scene = scenes.find(s => s.name === sceneId);
+              if (scene) {
+                console.log(`🎬 Found scene by name "${sceneId}", using ID: ${scene.id}`);
+              } else {
+                console.warn(`🎬 Scene not found by ID or name: "${sceneId}"`);
+                console.log(`🎬 Available scenes:`, scenes.map(s => `${s.name} (${s.id})`));
+                alert(`Scene "${sceneId}" not found.\n\nThis might be because:\n1. The scene doesn't exist yet and needs to be created\n2. The scene name in the character data doesn't match the actual scene name\n\nCheck the browser console for available scenes.`);
+                return;
+              }
+            }
+            
+            // Show scene in modal instead of navigating away
+            this.showSceneModal(scene);
+          }
+          break;
+        }
         // Character actions
         case "add-character":
           this.characterManager?.ui?.showAddCharacterDialog();
@@ -208,14 +235,19 @@ class CampaignManager {
           this.characterManager?.ui?.showAddNPCDialog();
           break;
         case "edit-character":
-        case "edit-npc":
-          const characterCard = event.target.closest(".card-character");
-          const characterId = characterCard?.dataset.characterId;
+        case "edit-npc": {
+          let characterCard = event.target.closest(".card-character");
+          let characterId = characterCard?.dataset.characterId;
+          // Fallback: check the button's own data-character-id if not found on parent
+          if (!characterId) {
+            characterId = target?.dataset.characterId;
+          }
           if (characterId && this.characterManager?.ui) {
             console.log("🎭 App.js: Edit character action for:", characterId);
             this.characterManager.ui.showEditCharacterDialog(characterId);
           }
           break;
+        }
         case "view-character":
         case "view-npc":
           const viewCharacterCard = event.target.closest(".card-character");
@@ -802,6 +834,106 @@ class CampaignManager {
       panel.classList.toggle("visible");
       panel.classList.toggle("hidden");
     }
+  }
+
+  /**
+   * Show scene details in a modal
+   */
+  showSceneModal(scene) {
+    const modalOverlay = document.createElement("div");
+    modalOverlay.className = "modal-overlay scene-modal-overlay";
+    modalOverlay.innerHTML = `
+      <div class="modal scene-modal">
+        <div class="modal-header">
+          <h3><i class="fas fa-theater-masks"></i> ${escapeHTML(scene.name)}</h3>
+          <button class="modal-close" data-action="close-modal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="scene-modal-content">
+            <div class="scene-meta">
+              <div class="scene-meta-item">
+                <strong>Type:</strong> ${escapeHTML(scene.scene_type || 'encounter')}
+              </div>
+              <div class="scene-meta-item">
+                <strong>Status:</strong> ${escapeHTML(scene.scene_status || 'planned')}
+              </div>
+              ${scene.location_name ? `
+                <div class="scene-meta-item">
+                  <strong>Location:</strong> ${escapeHTML(scene.location_name)}
+                </div>
+              ` : ''}
+              ${scene.session_name ? `
+                <div class="scene-meta-item">
+                  <strong>Session:</strong> ${escapeHTML(scene.session_name)}
+                </div>
+              ` : ''}
+            </div>
+            
+            ${scene.description ? `
+              <div class="scene-section">
+                <h4>Description</h4>
+                <p>${escapeHTML(scene.description)}</p>
+              </div>
+            ` : ''}
+            
+            ${scene.read_aloud ? `
+              <div class="scene-section">
+                <h4>Read Aloud</h4>
+                <div class="read-aloud-text">${escapeHTML(scene.read_aloud)}</div>
+              </div>
+            ` : ''}
+            
+            ${scene.current_setup ? `
+              <div class="scene-section">
+                <h4>Current Setup</h4>
+                <p>${escapeHTML(scene.current_setup)}</p>
+              </div>
+            ` : ''}
+            
+            ${scene.dm_notes ? `
+              <div class="scene-section">
+                <h4>DM Notes</h4>
+                <p>${escapeHTML(scene.dm_notes)}</p>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-action="close-modal">
+            <i class="fas fa-times"></i> Close
+          </button>
+          <button class="btn btn-primary" data-action="navigate-to-scene-full" data-scene-id="${scene.id}">
+            <i class="fas fa-external-link-alt"></i> Open Full Scene
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Add event listeners for modal
+    modalOverlay.addEventListener("click", (e) => {
+      if (e.target === modalOverlay || e.target.closest('[data-action="close-modal"]')) {
+        modalOverlay.remove();
+      }
+      if (e.target.closest('[data-action="navigate-to-scene-full"]')) {
+        const sceneId = e.target.closest('[data-action="navigate-to-scene-full"]').dataset.sceneId;
+        modalOverlay.remove();
+        this.showScenesWorkspace();
+        this.sceneManager.navigateToScene(sceneId);
+      }
+    });
+
+    // Add ESC key listener
+    const handleEsc = (e) => {
+      if (e.key === "Escape") {
+        modalOverlay.remove();
+        document.removeEventListener("keydown", handleEsc);
+      }
+    };
+    document.addEventListener("keydown", handleEsc);
+
+    document.body.appendChild(modalOverlay);
   }
 }
 
