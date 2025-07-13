@@ -5,6 +5,7 @@ import PlayerArcManager from "./features/player-arcs/player-arc-manager.js";
 import QuestManager from "./features/quests/quest-manager.js";
 import { NotesManager } from "./features/notes/notes-manager.js";
 import { SessionManager } from "./features/sessions/session-manager-new.js";
+import { escapeHTML } from "./shared/escape-html.js";
 // --- Global Search Initialization ---
 // The Global Search feature is currently disabled to prevent duplicate search interfaces in the application.
 // There is an existing search UI elsewhere, and enabling this would result in two overlapping or redundant search bars,
@@ -200,7 +201,7 @@ class CampaignManager {
         case "toggle-scene-tree":
           this.toggleSceneTreePanel();
           break;
-        case "navigate-to-scene":
+        case "navigate-to-scene": {
           const sceneId = target?.dataset.sceneId;
           if (sceneId && this.sceneManager) {
             console.log(`🎬 Opening scene modal: ${sceneId}`);
@@ -225,6 +226,7 @@ class CampaignManager {
             this.showSceneModal(scene);
           }
           break;
+        }
         // Character actions
         case "add-character":
           this.characterManager?.ui?.showAddCharacterDialog();
@@ -233,7 +235,7 @@ class CampaignManager {
           this.characterManager?.ui?.showAddNPCDialog();
           break;
         case "edit-character":
-        case "edit-npc":
+        case "edit-npc": {
           let characterCard = event.target.closest(".card-character");
           let characterId = characterCard?.dataset.characterId;
           // Fallback: check the button's own data-character-id if not found on parent
@@ -245,6 +247,7 @@ class CampaignManager {
             this.characterManager.ui.showEditCharacterDialog(characterId);
           }
           break;
+        }
         case "view-character":
         case "view-npc":
           const viewCharacterCard = event.target.closest(".card-character");
@@ -842,7 +845,7 @@ class CampaignManager {
     modalOverlay.innerHTML = `
       <div class="modal scene-modal">
         <div class="modal-header">
-          <h3><i class="fas fa-theater-masks"></i> ${scene.name}</h3>
+          <h3><i class="fas fa-theater-masks"></i> ${escapeHTML(scene.name)}</h3>
           <button class="modal-close" data-action="close-modal">
             <i class="fas fa-times"></i>
           </button>
@@ -851,19 +854,19 @@ class CampaignManager {
           <div class="scene-modal-content">
             <div class="scene-meta">
               <div class="scene-meta-item">
-                <strong>Type:</strong> ${scene.scene_type || 'encounter'}
+                <strong>Type:</strong> ${escapeHTML(scene.scene_type || 'encounter')}
               </div>
               <div class="scene-meta-item">
-                <strong>Status:</strong> ${scene.scene_status || 'planned'}
+                <strong>Status:</strong> ${escapeHTML(scene.scene_status || 'planned')}
               </div>
               ${scene.location_name ? `
                 <div class="scene-meta-item">
-                  <strong>Location:</strong> ${scene.location_name}
+                  <strong>Location:</strong> ${escapeHTML(scene.location_name)}
                 </div>
               ` : ''}
               ${scene.session_name ? `
                 <div class="scene-meta-item">
-                  <strong>Session:</strong> ${scene.session_name}
+                  <strong>Session:</strong> ${escapeHTML(scene.session_name)}
                 </div>
               ` : ''}
             </div>
@@ -871,28 +874,28 @@ class CampaignManager {
             ${scene.description ? `
               <div class="scene-section">
                 <h4>Description</h4>
-                <p>${scene.description}</p>
+                <p>${escapeHTML(scene.description)}</p>
               </div>
             ` : ''}
             
             ${scene.read_aloud ? `
               <div class="scene-section">
                 <h4>Read Aloud</h4>
-                <div class="read-aloud-text">${scene.read_aloud}</div>
+                <div class="read-aloud-text">${escapeHTML(scene.read_aloud)}</div>
               </div>
             ` : ''}
             
             ${scene.current_setup ? `
               <div class="scene-section">
                 <h4>Current Setup</h4>
-                <p>${scene.current_setup}</p>
+                <p>${escapeHTML(scene.current_setup)}</p>
               </div>
             ` : ''}
             
             ${scene.dm_notes ? `
               <div class="scene-section">
                 <h4>DM Notes</h4>
-                <p>${scene.dm_notes}</p>
+                <p>${escapeHTML(scene.dm_notes)}</p>
               </div>
             ` : ''}
           </div>

@@ -1556,20 +1556,6 @@
   min-width: 40px;
 }
 
-.npc-scenes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--cm-space-xs);
-}
-
-.scene-tag {
-  background: var(--cm-primary-light);
-  color: var(--cm-bg-white);
-  padding: var(--cm-space-xs) var(--cm-space-sm);
-  border-radius: var(--cm-radius-sm);
-  font-size: var(--cm-font-size-xs);
-  font-weight: var(--cm-font-weight-medium);
-}
 
 .npc-details-view .npc-actions {
   background: var(--cm-bg-cream);
@@ -2607,6 +2593,13 @@
   display: block;
 }
 
+/* Scene tags for NPC scenes */
+.npc-scenes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cm-space-xs);
+}
+
 .scene-tag {
   display: inline-block;
   background: var(--cm-primary-alpha);
@@ -2636,12 +2629,6 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); /* blue glow for accessibility */
   background: var(--cm-primary);
   color: var(--cm-bg-white);
-}
-
-.npc-scenes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--cm-space-xs);
 }
 
 /* === SCENE MODAL === */
