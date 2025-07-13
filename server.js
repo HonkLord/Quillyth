@@ -214,6 +214,26 @@ async function createEnhancedTables(db) {
       )
     `);
 
+    // NPCs table
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS npcs (
+        id TEXT PRIMARY KEY,
+        campaign_id TEXT,
+        name TEXT NOT NULL,
+        role TEXT,
+        motivation TEXT,
+        description TEXT,
+        favorability INTEGER DEFAULT 50,
+        importance_level TEXT CHECK(importance_level IN ('minor', 'moderate', 'major')) DEFAULT 'minor',
+        status TEXT CHECK(status IN ('active', 'inactive', 'deceased')) DEFAULT 'active',
+        first_appearance_scene TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id),
+        FOREIGN KEY (first_appearance_scene) REFERENCES scenes(id)
+      )
+    `);
+
     // Quest tracking table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS quests (
@@ -325,11 +345,68 @@ async function createEnhancedTables(db) {
       )
     `);
 
-    // Add campaign_id to player_arcs if it doesn't exist (migration)
+    // Migrate player_arcs to include campaign_id with foreign key constraint
     try {
-      await db.exec(`ALTER TABLE player_arcs ADD COLUMN campaign_id TEXT`);
+      // Check if campaign_id column exists but without foreign key constraint
+      const tableInfo = await db
+        .prepare("PRAGMA table_info(player_arcs)")
+        .all();
+      const hasCampaignId = tableInfo.some((col) => col.name === "campaign_id");
+
+      if (!hasCampaignId) {
+        // Simple case: add column with foreign key constraint
+        await db.exec(
+          `ALTER TABLE player_arcs ADD COLUMN campaign_id TEXT REFERENCES campaigns(id)`
+        );
+      } else {
+        // Complex case: column exists but may not have foreign key constraint
+        // Check if foreign key constraint exists
+        const foreignKeys = await db
+          .prepare("PRAGMA foreign_key_list(player_arcs)")
+          .all();
+        const hasCampaignFk = foreignKeys.some(
+          (fk) => fk.from === "campaign_id" && fk.table === "campaigns"
+        );
+
+        if (!hasCampaignFk) {
+          // Need to recreate table with proper foreign key constraint
+          await db.exec(`
+            BEGIN TRANSACTION;
+            
+            -- Create new table with proper foreign key constraint
+            CREATE TABLE player_arcs_new (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              player_id TEXT NOT NULL,
+              arc_type TEXT,
+              title TEXT,
+              content TEXT,
+              status TEXT,
+              importance_weight INTEGER,
+              session_notes TEXT,
+              campaign_id TEXT,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (player_id) REFERENCES players(id),
+              FOREIGN KEY (campaign_id) REFERENCES campaigns(id)
+            );
+            
+            -- Copy data from old table
+            INSERT INTO player_arcs_new 
+            SELECT id, player_id, arc_type, title, content, status, importance_weight, 
+                   session_notes, campaign_id, created_at, updated_at
+            FROM player_arcs;
+            
+            -- Drop old table and rename new one
+            DROP TABLE player_arcs;
+            ALTER TABLE player_arcs_new RENAME TO player_arcs;
+            
+            COMMIT;
+          `);
+        }
+      }
     } catch (e) {
-      // Column likely already exists
+      console.error("Error migrating player_arcs foreign key constraint:", e);
+      // Don't throw to prevent server startup failure
     }
 
     await db.exec(`
@@ -422,7 +499,9 @@ app.use("/api/quests", questRoutes);
 const noteRoutes = require("./routes/notes")(db);
 app.use("/api/notes", noteRoutes);
 
-const characterRelationshipRoutes = require("./routes/character-relationships")(db);
+const characterRelationshipRoutes = require("./routes/character-relationships")(
+  db
+);
 app.use("/api/character-relationships", characterRelationshipRoutes);
 
 const playerArcRoutes = require("./routes/player-arcs")(db);
@@ -442,4 +521,3 @@ async function startServer() {
 }
 
 startServer();
-
