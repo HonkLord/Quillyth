@@ -2,8 +2,11 @@
  * SessionCore - Core session data management and CRUD operations
  * Extracted from the massive SessionManager to improve modularity
  */
+import { DataManager } from "../../data-manager.js";
+
 export class SessionCore {
-  constructor() {
+  constructor(dataManager = null) {
+    this.dataManager = dataManager || new DataManager();
     this.sessions = [];
     this.currentSession = null;
     this.apiBase = "/api";
@@ -15,6 +18,11 @@ export class SessionCore {
   async init() {
     console.log("🎯 SessionCore: Initializing...");
     try {
+      // Load current campaign to get campaign context (only if not already loaded)
+      if (!this.dataManager.currentCampaignId) {
+        await this.dataManager.loadCurrentCampaign();
+      }
+      
       await this.loadSessions();
       console.log("✅ SessionCore: Initialized successfully");
     } catch (error) {
@@ -27,7 +35,7 @@ export class SessionCore {
    */
   async loadSessions() {
     try {
-      const response = await fetch(`${this.apiBase}/sessions`);
+      const response = await fetch(`${this.apiBase}/sessions?campaign_id=${this.dataManager.currentCampaignId}`);
       if (!response.ok) throw new Error("Failed to fetch sessions");
 
       this.sessions = await response.json();

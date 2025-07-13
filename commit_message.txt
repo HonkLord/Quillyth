@@ -1,14 +1,1 @@
-refactor: Overhaul project and remove legacy code
-
-This commit represents a major refactoring of the campaign-manager application.
-
-Key changes:
-- Replaced the entire content of the repository with the `campaign-manager` project.
-- Removed hard-coded campaign IDs from both frontend and backend, making the application multi-campaign capable.
-- Added a `/api/campaigns/current` endpoint to dynamically fetch the active campaign.
-- Centralized frontend data fetching in `DataManager`.
-- Eliminated redundant database table creation statements and consolidated them into a single initialization function.
-- Removed dead-end UI elements and their corresponding placeholder functions (e.g., "manage events", "backup campaign", "reset campaign").
-- Deleted unused AI-related placeholder functions from the character manager.
-- Cleaned up `js/app.js` by removing unused DM tools, search functionality, and other legacy code.
-- Fixed broken CSS imports pointing to a non-existent legacy directory.
+Initial commit

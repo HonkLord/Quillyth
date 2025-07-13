@@ -44,8 +44,12 @@ The main goal is to provide a cohesive, integrated system for Dungeon Masters (D
 ## 5. Development Workflow & Key Tasks
 
 ### Running the Application
+YOU DO NOT NEED TO START THE SERVER.
+IF YOU NEED THE SERVER STARTED KILL OFF THE CURRENT PORT AND THEN ASK THE USER TO RUN THE SERVER.  
+YOU WILL LOCK UP IF YOU TRY TO START THE SERVER YOURSELF.
+
 - **Start Server:** `npm start` or `node server.js`. The server runs on `http://localhost:3000`.
-- **Run Tests:** Use the `run-tests.bat` script or run `npm test`. The server must be running for the tests to execute.
+- **Run Tests:** Use the `run-tests.bat` script or run `npm test`. The server must be running for the tests to execute.  Do not require a server restart unless you encounter errors related to the server that explicitly lead to believe a server restart is required.  Attempt your changes thoroughly before asking for a restart.
 
 ### Common Tasks
 - **Adding a Feature:**

@@ -2,15 +2,23 @@
  * CharacterRelationships - Character relationship matrix and management
  * Handles relationship tracking, social dynamics, and character connections
  */
+import { DataManager } from "../../data-manager.js";
+
 export class CharacterRelationships {
-  constructor(characterCore) {
+  constructor(characterCore, dataManager = null) {
     this.characterCore = characterCore;
+    this.dataManager = dataManager || new DataManager();
     this.relationshipMatrix = {};
   }
 
   async init() {
     try {
       console.log("🤝 CharacterRelationships: Initializing...");
+
+      // Load current campaign to get campaign context (only if not already loaded)
+      if (!this.dataManager.currentCampaignId) {
+        await this.dataManager.loadCurrentCampaign();
+      }
 
       // Wait for character core to be fully initialized
       let attempts = 0;
@@ -36,30 +44,44 @@ export class CharacterRelationships {
 
   async loadRelationshipData() {
     try {
-      const response = await fetch("/api/character-relationships");
+      const response = await fetch(`/api/character-relationships?campaign_id=${this.dataManager.currentCampaignId}`);
       if (response.ok) {
-        this.relationshipMatrix = await response.json();
+        const relationships = await response.json();
+        // Convert API format to matrix format
+        this.relationshipMatrix = this.convertApiToMatrix(relationships);
         // Save to localStorage for offline use
         localStorage.setItem('character-relationships', JSON.stringify(this.relationshipMatrix));
+        console.log("🤝 Character relationships loaded from API");
       } else {
-        console.log(
-          "📝 Character relationships endpoint not available, using localStorage"
-        );
-        // Try to load from localStorage
+        console.log("📝 Character relationships endpoint returned error, using localStorage");
         const stored = localStorage.getItem('character-relationships');
         this.relationshipMatrix = stored ? JSON.parse(stored) : {};
       }
     } catch (error) {
-      console.log(
-        "📝 Character relationships endpoint not available, using localStorage"
-      );
-      // Try to load from localStorage
+      console.log("📝 Character relationships endpoint error, using localStorage");
       const stored = localStorage.getItem('character-relationships');
       this.relationshipMatrix = stored ? JSON.parse(stored) : {};
     }
 
     // Apply loaded relationships to characters
     this.applyRelationshipsToCharacters();
+  }
+
+  /**
+   * Convert API relationship format to matrix format
+   */
+  convertApiToMatrix(relationships) {
+    const matrix = {};
+    relationships.forEach(rel => {
+      if (!matrix[rel.from_character_id]) {
+        matrix[rel.from_character_id] = {};
+      }
+      matrix[rel.from_character_id][rel.to_character_id] = {
+        type: rel.relationship_type,
+        description: rel.description
+      };
+    });
+    return matrix;
   }
 
   /**

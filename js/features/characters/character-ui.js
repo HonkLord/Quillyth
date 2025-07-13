@@ -46,12 +46,6 @@ export class CharacterUI {
             <button class="btn btn-secondary" data-action="add-npc" title="Add NPC">
               <i class="fas fa-users"></i> Add NPC
             </button>
-            <button class="btn btn-outline-info" data-action="view-relationships" title="View All Relationships">
-              <i class="fas fa-project-diagram"></i> Relationships
-            </button>
-            <button class="btn btn-outline-success" data-action="view-progression" title="Campaign Progression">
-              <i class="fas fa-chart-line"></i> Progression
-            </button>
           </div>
         </div>
 
@@ -61,7 +55,6 @@ export class CharacterUI {
           </div>
           
           <div class="workspace-panel workspace-panel-secondary">
-            ${this.renderCharacterDetailTabs()}
             <div id="character-detail-content" class="character-detail-content">
               ${this.renderCharacterDetailsPlaceholder()}
             </div>
@@ -247,10 +240,10 @@ export class CharacterUI {
           <h4>Select a Character</h4>
           <p>Choose a character from the list to view their details, relationships, and progression.</p>
           <div class="placeholder-actions">
-            <button class="btn btn-outline-info" onclick="characterManager.ui.switchCharacterDetailTab('relationships')">
+            <button class="btn btn-outline-primary" data-action="switch-tab" data-tab="relationships">
               <i class="fas fa-project-diagram"></i> View All Relationships
             </button>
-            <button class="btn btn-outline-success" onclick="characterManager.ui.switchCharacterDetailTab('progression')">
+            <button class="btn btn-outline-secondary" data-action="switch-tab" data-tab="progression">
               <i class="fas fa-chart-line"></i> View Campaign Progression
             </button>
           </div>
@@ -289,24 +282,6 @@ export class CharacterUI {
     `;
   }
 
-  /**
-   * Render character detail tabs
-   */
-  renderCharacterDetailTabs() {
-    return `
-      <div class="character-detail-tabs">
-        <button class="character-detail-tab active" data-tab="overview">
-          <i class="fas fa-eye"></i> Character Details
-        </button>
-        <button class="character-detail-tab" data-tab="relationships">
-          <i class="fas fa-project-diagram"></i> Character Relationships
-        </button>
-        <button class="character-detail-tab" data-tab="progression">
-          <i class="fas fa-chart-line"></i> Character Progression
-        </button>
-      </div>
-    `;
-  }
 
   /**
    * Render session tracker
@@ -407,8 +382,10 @@ export class CharacterUI {
   }
 
   handleCharacterDetailTabClick(event) {
-    if (event.target.classList.contains("character-detail-tab")) {
-      const tabName = event.target.dataset.tab;
+    // Handle switch-tab action buttons (header buttons)
+    if (event.target.closest('[data-action="switch-tab"]')) {
+      const button = event.target.closest('[data-action="switch-tab"]');
+      const tabName = button.dataset.tab;
       this.switchCharacterDetailTab(tabName);
     }
   }
@@ -467,13 +444,13 @@ export class CharacterUI {
   switchCharacterDetailTab(tabName) {
     console.log("🎭 UI: switchCharacterDetailTab called with:", tabName);
 
-    // Update active tab
-    document.querySelectorAll(".character-detail-tab").forEach((tab) => {
-      tab.classList.remove("active");
+    // Update active state on header buttons
+    document.querySelectorAll('[data-action="switch-tab"]').forEach((button) => {
+      button.classList.remove("active");
     });
-    const targetTab = document.querySelector(`[data-tab="${tabName}"]`);
-    if (targetTab) {
-      targetTab.classList.add("active");
+    const targetButton = document.querySelector(`[data-action="switch-tab"][data-tab="${tabName}"]`);
+    if (targetButton) {
+      targetButton.classList.add("active");
     }
 
     // Update content based on tab
@@ -625,15 +602,25 @@ export class CharacterUI {
     return `
       <div class="character-details-view">
         <div class="character-header">
-          <h4>${character.name}</h4>
-          <div class="character-meta">
-            <span class="character-class">${
-              character.class || "Unknown Class"
-            }</span>
-            <span class="character-level">Level ${character.level || 1}</span>
-            <span class="character-race">${
-              character.race || "Unknown Race"
-            }</span>
+          <div class="character-header-info">
+            <h4>${character.name}</h4>
+            <div class="character-meta">
+              <span class="character-class">${
+                character.class || "Unknown Class"
+              }</span>
+              <span class="character-level">Level ${character.level || 1}</span>
+              <span class="character-race">${
+                character.race || "Unknown Race"
+              }</span>
+            </div>
+          </div>
+          <div class="character-header-actions">
+            <button class="btn btn-outline-primary" data-action="switch-tab" data-tab="relationships">
+              <i class="fas fa-project-diagram"></i> Relationships
+            </button>
+            <button class="btn btn-outline-secondary" data-action="switch-tab" data-tab="progression">
+              <i class="fas fa-chart-line"></i> Progression
+            </button>
           </div>
         </div>
 
@@ -662,14 +649,10 @@ export class CharacterUI {
         </div>
 
         <div class="character-actions">
-          <button class="btn btn-primary" onclick="characterManager.showEditCharacterDialog('${
-            character.id
-          }')">
+          <button class="btn btn-primary" data-action="edit-character" data-character-id="${character.id}">
             <i class="fas fa-edit"></i> Edit Character
           </button>
-          <button class="btn btn-secondary" onclick="characterManager.showCharacterNotesDialog('${
-            character.id
-          }')">
+          <button class="btn btn-secondary" data-action="character-notes" data-character-id="${character.id}">
             <i class="fas fa-sticky-note"></i> Notes
           </button>
         </div>
@@ -693,15 +676,8 @@ export class CharacterUI {
         try {
           goals = JSON.parse(character.goals || "[]");
         } catch (parseError) {
-          console.warn(
-            "🎭 UI: Failed to parse character goals JSON for",
-            character.name,
-            ":",
-            parseError
-          );
-          console.warn("🎭 UI: Raw goals data:", character.goals);
-          // If JSON parsing fails, treat as plain text
-          goals = [{ text: character.goals, status: "active" }];
+          // If JSON parsing fails, treat as plain text goal
+          goals = character.goals ? [{ text: character.goals, status: "active" }] : [];
         }
       } else {
         goals = character.goals;
@@ -799,14 +775,10 @@ export class CharacterUI {
         </div>
 
         <div class="npc-actions">
-          <button class="btn btn-primary" onclick="characterManager.showEditCharacterDialog('${
-            npc.id
-          }')">
+          <button class="btn btn-primary" data-action="edit-character" data-character-id="${npc.id}">
             <i class="fas fa-edit"></i> Edit NPC
           </button>
-          <button class="btn btn-secondary" onclick="characterManager.showCharacterExportDialog(${JSON.stringify(
-            npc
-          ).replace(/"/g, "&quot;")})">
+          <button class="btn btn-secondary" data-action="export-character" data-character-id="${npc.id}">
             <i class="fas fa-download"></i> Export
           </button>
         </div>
@@ -1084,12 +1056,18 @@ export class CharacterUI {
     `;
 
     this.showModal(modalContent, async (form) => {
+      console.log("🎭 Form submitted for character:", character?.id, "isEdit:", isEdit);
+      
       if (isEdit) {
         // Get the character manager reference
         const characterManager = window.characterManager;
+        console.log("🎭 Character manager available:", !!characterManager);
+        
         if (characterManager) {
+          console.log("🎭 Calling characterManager.handleEditCharacter");
           return await characterManager.handleEditCharacter(form, character.id, isPlayerCharacter);
         } else {
+          console.log("🎭 Calling this.handleEditCharacter as fallback");
           return await this.handleEditCharacter(form, character.id, isPlayerCharacter);
         }
       } else {
@@ -1140,9 +1118,7 @@ export class CharacterUI {
           <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">
             Close
           </button>
-          <button type="button" class="btn btn-primary" onclick="characterManager.saveCharacterNotes('${
-            character.id
-          }', this.closest('.modal-overlay'))">
+          <button type="button" class="btn btn-primary" data-action="save-character-notes" data-character-id="${character.id}">
             Save Notes
           </button>
         </div>
@@ -1464,8 +1440,7 @@ export class CharacterUI {
       `Character ${characterData.name} created successfully!`
     );
 
-    // Refresh the character display
-    this.showCharacterOverview();
+    // Character list will refresh automatically
     return result;
   }
 
@@ -1480,8 +1455,7 @@ export class CharacterUI {
     const result = await this.characterCore.handleAddNPC(form);
     this.showSuccessMessage(`NPC ${npcData.name} created successfully!`);
 
-    // Refresh the character display
-    this.showCharacterOverview();
+    // Character list will refresh automatically
     return result;
   }
 
@@ -1500,8 +1474,7 @@ export class CharacterUI {
     );
     this.showSuccessMessage(`Character updated successfully!`);
 
-    // Refresh the character display
-    this.showCharacterOverview();
+    // Character list will refresh automatically
     return result;
   }
 }

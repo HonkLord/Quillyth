@@ -18,7 +18,13 @@
       "Bash(git config:*)",
       "Bash(git commit:*)",
       "Bash(git rm:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(cd:*)",
+      "Bash(npm init:*)",
+      "Bash(curl:*)",
+      "Bash(npm run migrate:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(ss:*)"
     ],
     "deny": []
   }

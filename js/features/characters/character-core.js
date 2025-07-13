@@ -5,10 +5,10 @@
 import { DataManager } from "../../data-manager.js";
 
 export default class CharacterCore {
-  constructor() {
+  constructor(dataManager = null) {
     this.apiService = null; // Will be injected
     this.geminiService = null; // Will be injected
-    this.dataManager = new DataManager();
+    this.dataManager = dataManager || new DataManager();
 
     this.playerCharacters = [];
     this.importantNPCs = [];
@@ -20,7 +20,11 @@ export default class CharacterCore {
   async init() {
     try {
       console.log("🎭 CharacterCore: Initializing...");
-      await this.dataManager.loadCurrentCampaign();
+      
+      // Load current campaign to get campaign context (only if not already loaded)
+      if (!this.dataManager.currentCampaignId) {
+        await this.dataManager.loadCurrentCampaign();
+      }
 
       // Load character data
       await this.loadCharacterData();
@@ -37,14 +41,25 @@ export default class CharacterCore {
     try {
       // Load player characters
       try {
-        const playersResponse = await fetch(`/api/players?campaign_id=${this.dataManager.currentCampaignId}`);
+        console.log("🎭 CharacterCore: Loading player characters from API...");
+        const playersResponse = await fetch(`/api/characters?campaign_id=${this.dataManager.currentCampaignId}`);
+        console.log("🎭 CharacterCore: Players API response status:", playersResponse.status);
+        
         if (playersResponse.ok) {
-          this.playerCharacters = await playersResponse.json();
+          const rawData = await playersResponse.json();
+          console.log("🎭 CharacterCore: Raw player characters from API:", rawData);
+          
+          // The API returns {players: [...], npcs: [...]}, we need just the players array
+          this.playerCharacters = rawData.players || rawData;
+          console.log("🎭 CharacterCore: Extracted player characters:", this.playerCharacters);
+          
           // Parse character descriptions to extract individual fields and mark as PC
           this.playerCharacters = this.playerCharacters.map((char) => {
             const parsed = this.parseCharacterDescription(char);
             return { ...parsed, type: "pc", isPlayerCharacter: true };
           });
+          
+          console.log("🎭 CharacterCore: Processed player characters:", this.playerCharacters);
         } else {
           console.log("📝 Players API not available, using default characters");
           this.playerCharacters = this.getDefaultPlayerCharacters();
@@ -499,6 +514,16 @@ export default class CharacterCore {
       }
 
       // Send to API
+      console.log("🎭 CharacterCore: Sending API request to update character:", characterId);
+      console.log("🎭 CharacterCore: Character data being sent:", characterData);
+      
+      // Store debug info globally so it persists
+      window.lastCharacterSave = {
+        characterId,
+        dataSent: characterData,
+        timestamp: new Date().toISOString()
+      };
+      
       const response = await fetch(`/api/characters/${characterId}`, {
         method: "PUT",
         headers: {
@@ -507,11 +532,29 @@ export default class CharacterCore {
         body: JSON.stringify(characterData),
       });
 
+      console.log("🎭 CharacterCore: API response status:", response.status);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("🎭 CharacterCore: API error response:", errorText);
         throw new Error(`Failed to update character: ${response.statusText}`);
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log("🎭 CharacterCore: API success response:", result);
+      
+      // Debug: Check what the character looks like in memory after update
+      const updatedChar = isPlayerCharacter 
+        ? this.playerCharacters.find(char => char.id === characterId)
+        : this.importantNPCs.find(npc => npc.id === characterId);
+      console.log("🎭 CharacterCore: Character in memory after update:", updatedChar);
+      
+      // Store complete debug info globally
+      window.lastCharacterSave.apiResponse = result;
+      window.lastCharacterSave.characterInMemory = updatedChar;
+      window.lastCharacterSave.responseStatus = response.status;
+      
+      return result;
     } catch (error) {
       console.error("❌ Error updating character:", error);
       throw error;

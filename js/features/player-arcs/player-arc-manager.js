@@ -8,8 +8,8 @@ import PlayerArcProgression from "./player-arc-progression.js";
 import PlayerArcUI from "./player-arc-ui.js";
 
 export default class PlayerArcManager {
-  constructor() {
-    this.core = new PlayerArcCore();
+  constructor(dataManager = null) {
+    this.core = new PlayerArcCore(dataManager);
     this.progression = new PlayerArcProgression(this.core);
     this.ui = new PlayerArcUI(this.core, this.progression);
     this.initialized = false;

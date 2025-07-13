@@ -64,8 +64,6 @@ export class SessionUI {
                 <option value="completed">Completed</option>
                 <option value="in-progress">In Progress</option>
               </select>
-              <input type="text" class="form-control" id="session-search" placeholder="Search sessions..." 
-                     oninput="sessionManager.searchSessions(this.value)">
             </div>
           </div>
           <div class="workspace-section-content">

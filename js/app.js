@@ -5,7 +5,7 @@ import PlayerArcManager from "./features/player-arcs/player-arc-manager.js";
 import QuestManager from "./features/quests/quest-manager.js";
 import { NotesManager } from "./features/notes/notes-manager.js";
 import { SessionManager } from "./features/sessions/session-manager-new.js";
-import { GlobalSearch } from "./components/global-search.js";
+// import { GlobalSearch } from "./components/global-search.js"; // DISABLED
 import ExportImportPanel from "./components/export-import-panel.js";
 import LocationManager from "./features/locations/location-manager.js";
 
@@ -41,44 +41,33 @@ class CampaignManager {
       console.error("❌ campaign-content NOT found at startup!");
     }
     
-    // Add test function to window for debugging
-    window.testCharacterEdit = () => {
-      console.log("🧪 Testing character edit functionality:");
-      console.log("Character Manager:", this.characterManager);
-      console.log("Character Manager UI:", this.characterManager?.ui);
-      console.log("Character Core:", this.characterManager?.core);
-      console.log("Player Characters:", this.characterManager?.core?.playerCharacters);
-      if (this.characterManager?.core?.playerCharacters?.length > 0) {
-        const firstCharacter = this.characterManager.core.playerCharacters[0];
-        console.log("Testing edit dialog for:", firstCharacter.name, firstCharacter.id);
-        this.characterManager.ui.showEditCharacterDialog(firstCharacter.id);
-      }
-    };
+    
 
-    // Initialize managers
-    this.sceneManager = new SceneManager();
+    // Initialize shared Data Manager first (load campaign once)
+    this.dataManager = new DataManager();
+    await this.dataManager.loadCurrentCampaign();
+
+    // Initialize managers with shared DataManager
+    this.sceneManager = new SceneManager(this.dataManager);
     await this.sceneManager.init();
 
-    this.characterManager = new CharacterManager();
+    this.characterManager = new CharacterManager(this.dataManager);
     await this.characterManager.init();
 
-    // Initialize Data Manager
-    this.dataManager = new DataManager();
-
     // Initialize Player Arc Manager
-    this.playerArcManager = new PlayerArcManager();
+    this.playerArcManager = new PlayerArcManager(this.dataManager);
     await this.playerArcManager.init();
 
     // Initialize Quest Manager
-    this.questManager = new QuestManager();
+    this.questManager = new QuestManager(this.dataManager);
     await this.questManager.init();
 
     // Initialize Notes Manager
-    this.notesManager = new NotesManager();
+    this.notesManager = new NotesManager(this.dataManager);
     await this.notesManager.init();
 
     // Initialize Session Manager
-    this.sessionManager = new SessionManager();
+    this.sessionManager = new SessionManager(this.dataManager);
     await this.sessionManager.init();
 
     // Initialize Location Manager
@@ -88,8 +77,8 @@ class CampaignManager {
     );
     await this.locationManager.init();
 
-    // Initialize Global Search
-    this.globalSearch = new GlobalSearch();
+    // Initialize Global Search - DISABLED to prevent duplicate search interfaces
+    // this.globalSearch = new GlobalSearch();
 
     // Initialize Export/Import Panel
     this.exportImportPanel = new ExportImportPanel();
@@ -238,6 +227,28 @@ class CampaignManager {
           break;
         case "view-progression":
           this.characterManager?.ui?.switchCharacterDetailTab("progression");
+          break;
+        case "switch-tab":
+          const tabName = event.target.closest('[data-tab]')?.dataset.tab;
+          if (tabName && this.characterManager?.ui) {
+            this.characterManager.ui.switchCharacterDetailTab(tabName);
+          }
+          break;
+        case "export-character":
+          const exportCharacterId = event.target.closest('[data-character-id]')?.dataset.characterId;
+          if (exportCharacterId && this.characterManager?.ui) {
+            const { character } = this.characterManager.core.getCharacterById(exportCharacterId);
+            if (character) {
+              this.characterManager.ui.showCharacterExportDialog(character);
+            }
+          }
+          break;
+        case "save-character-notes":
+          const notesModal = event.target.closest('.modal-overlay');
+          const saveCharacterId = event.target.dataset.characterId;
+          if (saveCharacterId && this.characterManager && notesModal) {
+            this.characterManager.saveCharacterNotes(saveCharacterId, notesModal);
+          }
           break;
       }
     });

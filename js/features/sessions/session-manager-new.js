@@ -9,10 +9,10 @@ import { DataManager } from "../../data-manager.js";
  * Handles: feature coordination & public API (under 300 lines)
  */
 export class SessionManager {
-  constructor() {
+  constructor(dataManager = null) {
     // Initialize core modules
-    this.dataManager = new DataManager();
-    this.core = new SessionCore();
+    this.dataManager = dataManager || new DataManager();
+    this.core = new SessionCore(dataManager);
     this.planner = new SessionPlanner(this.core);
     this.ui = new SessionUI(this.core);
 
@@ -26,7 +26,10 @@ export class SessionManager {
   async init() {
     console.log("🎯 SessionManager: Initializing modular version...");
     try {
-      await this.dataManager.loadCurrentCampaign();
+      // Load current campaign only if not already loaded
+      if (!this.dataManager.currentCampaignId) {
+        await this.dataManager.loadCurrentCampaign();
+      }
       this.core.campaignId = this.dataManager.currentCampaignId;
       await this.core.init();
       this.isInitialized = true;

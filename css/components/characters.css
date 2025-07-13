@@ -1998,6 +1998,43 @@
 
 .char-npc .char-type {
   background: var(--cm-bg-paper);
+
+/* === NEW CHARACTER DETAILS HEADER STYLES === */
+.character-details-view .character-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.character-header-info {
+  flex-grow: 1;
+}
+
+.character-header-actions {
+  display: flex;
+  gap: var(--cm-space-sm);
+  flex-shrink: 0;
+}
+
+.character-header-actions .btn {
+  font-size: var(--cm-font-size-sm);
+  padding: var(--cm-space-sm) var(--cm-space-md);
+  font-weight: var(--cm-font-weight-medium);
+  border-radius: var(--cm-radius);
+  transition: var(--cm-transition-all);
+}
+
+.character-header-actions .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--cm-shadow-sm);
+}
+
+.character-header-actions .btn.active {
+  font-weight: var(--cm-font-weight-semibold);
+}
+
+.char-npc .char-type {
+  background: var(--cm-bg-paper);
   color: var(--cm-text-dark);
   border: 1px solid var(--cm-border-light);
   padding: 2px 6px;

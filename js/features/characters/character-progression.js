@@ -14,19 +14,16 @@ export class CharacterProgression {
 
       // Load character progression data
       try {
-        const progressionResponse = await fetch("/api/characters/progression");
+        const progressionResponse = await fetch(`/api/characters/progression?campaign_id=${this.dataManager.currentCampaignId}`);
         if (progressionResponse.ok) {
           this.characterProgression = await progressionResponse.json();
+          console.log("📈 Character progression data loaded successfully");
         } else {
-          console.log(
-            "📝 Character progression endpoint not available, using empty object"
-          );
+          console.log("📝 Character progression endpoint returned error, using empty object");
           this.characterProgression = {};
         }
       } catch (error) {
-        console.log(
-          "📝 Character progression endpoint not available, using empty object"
-        );
+        console.log("📝 Character progression endpoint error, using empty object");
         this.characterProgression = {};
       }
 

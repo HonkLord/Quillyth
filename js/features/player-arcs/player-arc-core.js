@@ -2,8 +2,11 @@
  * PlayerArcCore - Data management and CRUD operations for player arcs
  * Handles API calls, data loading, and basic player arc operations
  */
+import { DataManager } from "../../data-manager.js";
+
 export default class PlayerArcCore {
-  constructor() {
+  constructor(dataManager = null) {
+    this.dataManager = dataManager || new DataManager();
     this.playerArcs = new Map();
     this.apiBase = "/api";
     this.initialized = false;
@@ -16,6 +19,11 @@ export default class PlayerArcCore {
     console.log("🎭 PlayerArcCore: Initializing...");
 
     try {
+      // Load current campaign to get campaign context (only if not already loaded)
+      if (!this.dataManager.currentCampaignId) {
+        await this.dataManager.loadCurrentCampaign();
+      }
+      
       await this.loadPlayerArcs();
       this.initialized = true;
       console.log("✅ PlayerArcCore: Initialized successfully");
@@ -32,9 +40,16 @@ export default class PlayerArcCore {
     try {
       console.log("🔄 Loading player arcs from API...");
 
-      const response = await fetch(`${this.apiBase}/player-arcs`);
+      const response = await fetch(`${this.apiBase}/player-arcs?campaign_id=${this.dataManager.currentCampaignId}`);
       if (!response.ok) {
-        throw new Error(`Failed to load player arcs: ${response.status}`);
+        if (response.status === 500) {
+          console.log("📝 Player arcs API server error (500), using empty data - server may need restart");
+        } else {
+          throw new Error(`Failed to load player arcs: ${response.status}`);
+        }
+        // Initialize with empty data if server error
+        this.playerArcs.clear();
+        return [];
       }
 
       const arcs = await response.json();
@@ -42,13 +57,13 @@ export default class PlayerArcCore {
       // Store arcs in the map
       this.playerArcs.clear();
       arcs.forEach((arc) => {
-        this.playerArcs.set(arc.playerId, arc);
+        this.playerArcs.set(arc.player_id, arc);
       });
 
       console.log(`✅ Loaded ${arcs.length} player arcs`);
       return arcs;
     } catch (error) {
-      console.error("❌ Error loading player arcs:", error);
+      console.log("📝 Player arcs API error, using empty data:", error.message);
       // Initialize with empty data if API fails
       this.playerArcs.clear();
       return [];

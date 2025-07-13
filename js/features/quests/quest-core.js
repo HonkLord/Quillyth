@@ -2,8 +2,11 @@
  * QuestCore - Data management and CRUD operations for quests
  * Handles API calls, data loading, and basic quest operations
  */
+import { DataManager } from "../../data-manager.js";
+
 export default class QuestCore {
-  constructor() {
+  constructor(dataManager = null) {
+    this.dataManager = dataManager || new DataManager();
     this.quests = new Map();
     this.questCategories = [
       "main",
@@ -31,6 +34,11 @@ export default class QuestCore {
     console.log("🎯 QuestCore: Initializing...");
 
     try {
+      // Load current campaign to get campaign context (only if not already loaded)
+      if (!this.dataManager.currentCampaignId) {
+        await this.dataManager.loadCurrentCampaign();
+      }
+      
       await this.loadQuests();
       console.log("✅ QuestCore: Initialized successfully");
     } catch (error) {
@@ -44,7 +52,7 @@ export default class QuestCore {
    */
   async loadQuests() {
     try {
-      const response = await fetch(`${this.apiBase}/quests`);
+      const response = await fetch(`${this.apiBase}/quests?campaign_id=${this.dataManager.currentCampaignId}`);
       if (!response.ok) {
         throw new Error(`Failed to load quests: ${response.status}`);
       }
