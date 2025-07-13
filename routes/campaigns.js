@@ -1,4 +1,3 @@
-
 const express = require("express");
 const router = express.Router();
 
@@ -17,7 +16,9 @@ module.exports = (db) => {
   // GET /api/campaigns/current
   router.get("/current", (req, res) => {
     try {
-      const campaign = db.prepare("SELECT * FROM campaigns ORDER BY created_at DESC LIMIT 1").get();
+      const campaign = db
+        .prepare("SELECT * FROM campaigns ORDER BY created_at DESC LIMIT 1")
+        .get();
       if (!campaign) {
         return res.status(404).json({ error: "No campaigns found" });
       }
@@ -66,6 +67,25 @@ module.exports = (db) => {
         status,
         metadata,
       } = req.body;
+
+      // Validation: Ensure at least one updateable field is present
+      if (
+        name === undefined &&
+        description === undefined &&
+        setting === undefined &&
+        current_session === undefined &&
+        current_location === undefined &&
+        dm_name === undefined &&
+        status === undefined &&
+        metadata === undefined
+      ) {
+        return res
+          .status(400)
+          .json({
+            error:
+              "No update data provided. At least one field must be present in the request body.",
+          });
+      }
 
       const stmt = db.prepare(`
         UPDATE campaigns 

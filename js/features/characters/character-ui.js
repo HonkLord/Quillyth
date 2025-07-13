@@ -156,7 +156,8 @@ export class CharacterUI {
                 </div>
                 <div class="card-body">
                   <p class="card-description">${
-                    character.description || character.personality ||
+                    character.description ||
+                    character.personality ||
                     "No description available."
                   }</p>
                 </div>
@@ -282,7 +283,6 @@ export class CharacterUI {
     `;
   }
 
-
   /**
    * Render session tracker
    */
@@ -345,20 +345,21 @@ export class CharacterUI {
   setupCharacterOverviewListeners() {
     // Only setup tab switching and card selection listeners
     // Character actions are handled by main app.js event delegation
-    
+
     // Remove any existing listeners to prevent duplicates
     this.removeCharacterListeners();
-    
+
     // Create bound methods for event handling
     this.handleCharacterTabClick = this.handleCharacterTabClick.bind(this);
-    this.handleCharacterDetailTabClick = this.handleCharacterDetailTabClick.bind(this);
+    this.handleCharacterDetailTabClick =
+      this.handleCharacterDetailTabClick.bind(this);
     this.handleCharacterCardClick = this.handleCharacterCardClick.bind(this);
 
     // Add event listeners (character actions are handled by app.js)
     document.addEventListener("click", this.handleCharacterTabClick);
     document.addEventListener("click", this.handleCharacterDetailTabClick);
     document.addEventListener("click", this.handleCharacterCardClick);
-    
+
     console.log("🎭 CharacterUI: Event listeners setup complete");
   }
 
@@ -445,10 +446,14 @@ export class CharacterUI {
     console.log("🎭 UI: switchCharacterDetailTab called with:", tabName);
 
     // Update active state on header buttons
-    document.querySelectorAll('[data-action="switch-tab"]').forEach((button) => {
-      button.classList.remove("active");
-    });
-    const targetButton = document.querySelector(`[data-action="switch-tab"][data-tab="${tabName}"]`);
+    document
+      .querySelectorAll('[data-action="switch-tab"]')
+      .forEach((button) => {
+        button.classList.remove("active");
+      });
+    const targetButton = document.querySelector(
+      `[data-action="switch-tab"][data-tab="${tabName}"]`
+    );
     if (targetButton) {
       targetButton.classList.add("active");
     }
@@ -649,10 +654,14 @@ export class CharacterUI {
         </div>
 
         <div class="character-actions">
-          <button class="btn btn-primary" data-action="edit-character" data-character-id="${character.id}">
+          <button class="btn btn-primary" data-action="edit-character" data-character-id="${
+            character.id
+          }">
             <i class="fas fa-edit"></i> Edit Character
           </button>
-          <button class="btn btn-secondary" data-action="character-notes" data-character-id="${character.id}">
+          <button class="btn btn-secondary" data-action="character-notes" data-character-id="${
+            character.id
+          }">
             <i class="fas fa-sticky-note"></i> Notes
           </button>
         </div>
@@ -677,7 +686,9 @@ export class CharacterUI {
           goals = JSON.parse(character.goals || "[]");
         } catch (parseError) {
           // If JSON parsing fails, treat as plain text goal
-          goals = character.goals ? [{ text: character.goals, status: "active" }] : [];
+          goals = character.goals
+            ? [{ text: character.goals, status: "active" }]
+            : [];
         }
       } else {
         goals = character.goals;
@@ -775,10 +786,14 @@ export class CharacterUI {
         </div>
 
         <div class="npc-actions">
-          <button class="btn btn-primary" data-action="edit-character" data-character-id="${npc.id}">
+          <button class="btn btn-primary" data-action="edit-character" data-character-id="${
+            npc.id
+          }">
             <i class="fas fa-edit"></i> Edit NPC
           </button>
-          <button class="btn btn-secondary" data-action="export-character" data-character-id="${npc.id}">
+          <button class="btn btn-secondary" data-action="export-character" data-character-id="${
+            npc.id
+          }">
             <i class="fas fa-download"></i> Export
           </button>
         </div>
@@ -818,16 +833,16 @@ export class CharacterUI {
   showEditCharacterDialog(characterId) {
     console.log("🎭 Show edit character dialog for:", characterId);
     console.log("🎭 CharacterCore available:", !!this.characterCore);
-    
+
     if (!this.characterCore) {
       console.error("🎭 CharacterCore not available!");
       alert("Character system not initialized. Please refresh the page.");
       return;
     }
-    
+
     const result = this.characterCore.getCharacterById(characterId);
     console.log("🎭 Character lookup result:", result);
-    
+
     if (result && result.character) {
       console.log("🎭 Showing character modal for:", result.character.name);
       this.showCharacterModal(result.character, result.isPlayerCharacter);
@@ -862,8 +877,16 @@ export class CharacterUI {
   /**
    * Show relationship modal (add or edit)
    */
-  showRelationshipModal(relationship = null, fromCharacterId = null, toCharacterId = null) {
-    console.log("🎭 showRelationshipModal called with:", { relationship, fromCharacterId, toCharacterId });
+  showRelationshipModal(
+    relationship = null,
+    fromCharacterId = null,
+    toCharacterId = null
+  ) {
+    console.log("🎭 showRelationshipModal called with:", {
+      relationship,
+      fromCharacterId,
+      toCharacterId,
+    });
     const allCharacters = this.characterCore.getAllCharacters();
     const isEditing = relationship !== null;
 
@@ -910,7 +933,9 @@ export class CharacterUI {
             <div class="form-group">
               <label for="toCharacter">To Character</label>
               <select id="toCharacter" name="toCharacter" required ${
-                isEditing || toCharacterId ? "readonly style='pointer-events: none; background-color: #f8f9fa;'" : ""
+                isEditing || toCharacterId
+                  ? "readonly style='pointer-events: none; background-color: #f8f9fa;'"
+                  : ""
               }>
                 <option value="">Select character...</option>
                 ${toCharacterOptions}
@@ -1056,22 +1081,33 @@ export class CharacterUI {
     `;
 
     this.showModal(modalContent, async (form) => {
-      console.log("🎭 Form submitted for character:", character?.id, "isEdit:", isEdit);
-      
+      console.log(
+        "🎭 Form submitted for character:",
+        character?.id,
+        "isEdit:",
+        isEdit
+      );
+
+      // Resolve characterManager once
+      const characterManager = window.characterManager || null;
+
       if (isEdit) {
-        // Get the character manager reference
-        const characterManager = window.characterManager;
-        console.log("🎭 Character manager available:", !!characterManager);
-        
         if (characterManager) {
           console.log("🎭 Calling characterManager.handleEditCharacter");
-          return await characterManager.handleEditCharacter(form, character.id, isPlayerCharacter);
+          return await characterManager.handleEditCharacter(
+            form,
+            character.id,
+            isPlayerCharacter
+          );
         } else {
           console.log("🎭 Calling this.handleEditCharacter as fallback");
-          return await this.handleEditCharacter(form, character.id, isPlayerCharacter);
+          return await this.handleEditCharacter(
+            form,
+            character.id,
+            isPlayerCharacter
+          );
         }
       } else {
-        const characterManager = window.characterManager;
         if (characterManager) {
           return isPlayerCharacter
             ? await characterManager.handleAddCharacter(form)
@@ -1118,7 +1154,9 @@ export class CharacterUI {
           <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">
             Close
           </button>
-          <button type="button" class="btn btn-primary" data-action="save-character-notes" data-character-id="${character.id}">
+          <button type="button" class="btn btn-primary" data-action="save-character-notes" data-character-id="${
+            character.id
+          }">
             Save Notes
           </button>
         </div>
@@ -1135,15 +1173,17 @@ export class CharacterUI {
 
   setupRelationshipsListeners() {
     console.log("🎭 Setup relationships listeners");
-    
+
     // Set up event listeners for relationship forms and buttons in the character-specific relationships view
     const centerPanel = document.getElementById("character-detail-content");
     if (!centerPanel) return;
 
     // Handle Add Relationship button clicks (for character-specific relationships)
-    const addRelationshipBtns = centerPanel.querySelectorAll('[data-action="add-relationship"]');
-    addRelationshipBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
+    const addRelationshipBtns = centerPanel.querySelectorAll(
+      '[data-action="add-relationship"]'
+    );
+    addRelationshipBtns.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
         e.preventDefault();
         const fromCharacterId = btn.dataset.fromCharacterId;
         const toCharacterId = btn.dataset.toCharacterId;
@@ -1152,18 +1192,24 @@ export class CharacterUI {
     });
 
     // Handle clicking on relationship cards to quick-add relationships
-    const relationshipCards = centerPanel.querySelectorAll('.card-character');
-    relationshipCards.forEach(card => {
-      card.addEventListener('click', (e) => {
+    const relationshipCards =
+      centerPanel.querySelectorAll(".relationship-card");
+    relationshipCards.forEach((card) => {
+      card.addEventListener("click", (e) => {
         // Don't trigger card click if clicking on buttons, selects, or card actions
-        if (e.target.closest('button') || e.target.closest('select') || e.target.closest('.card-actions')) {
+        if (
+          e.target.closest("button") ||
+          e.target.closest("select") ||
+          e.target.closest(".card-actions")
+        ) {
           return;
         }
-        
+
         const fromCharacterId = card.dataset.fromCharacterId;
         const toCharacterId = card.dataset.toCharacterId;
-        const hasRelationship = card.querySelector('.relationship-type-select') !== null;
-        
+        const hasRelationship =
+          card.querySelector(".relationship-type-select") !== null;
+
         if (!hasRelationship) {
           // Quick-add relationship for cards with no relationship
           this.showAddRelationshipDialog(fromCharacterId, toCharacterId);
@@ -1175,18 +1221,22 @@ export class CharacterUI {
     });
 
     // Handle relationship type select changes
-    const relationshipSelects = centerPanel.querySelectorAll('.relationship-type-select');
-    relationshipSelects.forEach(select => {
-      select.addEventListener('change', async (e) => {
+    const relationshipSelects = centerPanel.querySelectorAll(
+      ".relationship-type-select"
+    );
+    relationshipSelects.forEach((select) => {
+      select.addEventListener("change", async (e) => {
         e.stopPropagation(); // Prevent card click
         await window.characterManager.updateRelationshipType(select);
       });
     });
 
     // Handle Edit Relationship button clicks
-    const editRelationshipBtns = centerPanel.querySelectorAll('[data-action="edit-relationship"]');
-    editRelationshipBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
+    const editRelationshipBtns = centerPanel.querySelectorAll(
+      '[data-action="edit-relationship"]'
+    );
+    editRelationshipBtns.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
         e.preventDefault();
         const fromCharacterId = btn.dataset.fromCharacterId;
         const toCharacterId = btn.dataset.toCharacterId;
@@ -1195,19 +1245,24 @@ export class CharacterUI {
     });
 
     // Handle Delete Relationship button clicks
-    const deleteRelationshipBtns = centerPanel.querySelectorAll('[data-action="delete-relationship"]');
-    deleteRelationshipBtns.forEach(btn => {
-      btn.addEventListener('click', async (e) => {
+    const deleteRelationshipBtns = centerPanel.querySelectorAll(
+      '[data-action="delete-relationship"]'
+    );
+    deleteRelationshipBtns.forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
         e.preventDefault();
         const fromCharacterId = btn.dataset.fromCharacterId;
         const toCharacterId = btn.dataset.toCharacterId;
-        
-        if (confirm('Are you sure you want to delete this relationship?')) {
+
+        if (confirm("Are you sure you want to delete this relationship?")) {
           try {
-            await this.characterRelationships.deleteRelationship(fromCharacterId, toCharacterId);
+            await this.characterRelationships.deleteRelationship(
+              fromCharacterId,
+              toCharacterId
+            );
             // Refresh the relationships view
             this.switchCharacterDetailTab("relationships");
-            this.showSuccessMessage('Relationship deleted successfully');
+            this.showSuccessMessage("Relationship deleted successfully");
           } catch (error) {
             this.showError(`Failed to delete relationship: ${error.message}`);
           }
@@ -1372,7 +1427,7 @@ export class CharacterUI {
    */
   showModal(content, formHandler = null) {
     console.log("💬 Creating modal with content length:", content.length);
-    
+
     const modalOverlay = document.createElement("div");
     modalOverlay.className = "modal-overlay";
     modalOverlay.innerHTML = `
@@ -1387,7 +1442,7 @@ export class CharacterUI {
     `;
 
     // Add click handler to close modal when clicking overlay
-    modalOverlay.addEventListener('click', (e) => {
+    modalOverlay.addEventListener("click", (e) => {
       if (e.target === modalOverlay) {
         modalOverlay.remove();
       }
@@ -1413,7 +1468,7 @@ export class CharacterUI {
 
     // Show the modal with animation
     requestAnimationFrame(() => {
-      modalOverlay.classList.add('show');
+      modalOverlay.classList.add("show");
       console.log("💬 Modal show class added");
     });
 

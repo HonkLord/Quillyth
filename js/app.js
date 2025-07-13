@@ -5,6 +5,11 @@ import PlayerArcManager from "./features/player-arcs/player-arc-manager.js";
 import QuestManager from "./features/quests/quest-manager.js";
 import { NotesManager } from "./features/notes/notes-manager.js";
 import { SessionManager } from "./features/sessions/session-manager-new.js";
+// --- Global Search Initialization ---
+// The Global Search feature is currently disabled to prevent duplicate search interfaces in the application.
+// There is an existing search UI elsewhere, and enabling this would result in two overlapping or redundant search bars,
+// which can confuse users and clutter the UI. Before re-enabling, the search system should be refactored to ensure
+// a single, unified search experience. Future plans: revisit the search architecture to merge or coordinate all search UIs.
 // import { GlobalSearch } from "./components/global-search.js"; // DISABLED
 import ExportImportPanel from "./components/export-import-panel.js";
 import LocationManager from "./features/locations/location-manager.js";
@@ -40,8 +45,6 @@ class CampaignManager {
     } else {
       console.error("❌ campaign-content NOT found at startup!");
     }
-    
-    
 
     // Initialize shared Data Manager first (load campaign once)
     this.dataManager = new DataManager();
@@ -102,7 +105,9 @@ class CampaignManager {
     this.setupEventListeners();
 
     console.log("🚀 CampaignManager: Application started successfully!");
-    console.log("🧪 Debug: Type 'testCharacterEdit()' in console to test character editing");
+    console.log(
+      "🧪 Debug: Type 'testCharacterEdit()' in console to test character editing"
+    );
   }
 
   setupMainUI() {
@@ -135,13 +140,17 @@ class CampaignManager {
       if (!action) return;
 
       // Add debug logging for character actions
-      if (action.includes("character") || action.includes("edit") || action.includes("npc")) {
+      if (
+        action.includes("character") ||
+        action.includes("edit") ||
+        action.includes("npc")
+      ) {
         console.log(`🎭 Character action triggered: ${action}`, {
           target: target,
           originalTarget: event.target,
           eventType: event.type,
           characterManager: !!this.characterManager,
-          characterManagerUI: !!this.characterManager?.ui
+          characterManagerUI: !!this.characterManager?.ui,
         });
       } else {
         console.log(`🔘 Navigation action triggered: ${action}`, {
@@ -229,25 +238,30 @@ class CampaignManager {
           this.characterManager?.ui?.switchCharacterDetailTab("progression");
           break;
         case "switch-tab":
-          const tabName = event.target.closest('[data-tab]')?.dataset.tab;
+          const tabName = event.target.closest("[data-tab]")?.dataset.tab;
           if (tabName && this.characterManager?.ui) {
             this.characterManager.ui.switchCharacterDetailTab(tabName);
           }
           break;
         case "export-character":
-          const exportCharacterId = event.target.closest('[data-character-id]')?.dataset.characterId;
+          const exportCharacterId = event.target.closest("[data-character-id]")
+            ?.dataset.characterId;
           if (exportCharacterId && this.characterManager?.ui) {
-            const { character } = this.characterManager.core.getCharacterById(exportCharacterId);
+            const { character } =
+              this.characterManager.core.getCharacterById(exportCharacterId);
             if (character) {
               this.characterManager.ui.showCharacterExportDialog(character);
             }
           }
           break;
         case "save-character-notes":
-          const notesModal = event.target.closest('.modal-overlay');
+          const notesModal = event.target.closest(".modal-overlay");
           const saveCharacterId = event.target.dataset.characterId;
           if (saveCharacterId && this.characterManager && notesModal) {
-            this.characterManager.saveCharacterNotes(saveCharacterId, notesModal);
+            this.characterManager.saveCharacterNotes(
+              saveCharacterId,
+              notesModal
+            );
           }
           break;
       }
@@ -509,11 +523,13 @@ class CampaignManager {
 
     // Initialize with relationships matrix interface
     if (this.characterManager && this.characterManager.relationships) {
-      const relationshipsContent = document.getElementById("relationships-content");
+      const relationshipsContent = document.getElementById(
+        "relationships-content"
+      );
       if (relationshipsContent) {
-        relationshipsContent.innerHTML = 
+        relationshipsContent.innerHTML =
           this.characterManager.relationships.renderRelationshipsMatrixView();
-        
+
         // Set up event listeners for the matrix view
         this.setupRelationshipsWorkspaceListeners();
       }
@@ -759,14 +775,18 @@ class CampaignManager {
 
   setupRelationshipsWorkspaceListeners() {
     console.log("🤝 Setting up relationships workspace event listeners");
-    
-    const relationshipsContent = document.getElementById("relationships-content");
+
+    const relationshipsContent = document.getElementById(
+      "relationships-content"
+    );
     if (!relationshipsContent) return;
 
     // Handle Add Relationship button clicks in the matrix view
-    const addRelationshipBtns = relationshipsContent.querySelectorAll('[data-action="add-relationship"]');
-    addRelationshipBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
+    const addRelationshipBtns = relationshipsContent.querySelectorAll(
+      '[data-action="add-relationship"]'
+    );
+    addRelationshipBtns.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
         e.preventDefault();
         const fromCharacterId = btn.dataset.fromCharacterId;
         this.characterManager.showAddRelationshipDialog(fromCharacterId);

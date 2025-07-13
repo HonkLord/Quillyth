@@ -2,15 +2,23 @@
  * CharacterProgression - Character progression tracking and timeline management
  * Handles progression tracking, campaign milestones, and character development
  */
+import { DataManager } from "../../data-manager.js";
+
 export class CharacterProgression {
-  constructor(characterCore) {
+  constructor(characterCore, dataManager = null) {
     this.characterCore = characterCore;
+    this.dataManager = dataManager || new DataManager();
     this.characterProgression = {};
   }
 
   async init() {
     try {
       console.log("📈 CharacterProgression: Initializing...");
+
+      // Load current campaign to get campaign context (only if not already loaded)
+      if (!this.dataManager.currentCampaignId) {
+        await this.dataManager.loadCurrentCampaign();
+      }
 
       // Load character progression data
       try {

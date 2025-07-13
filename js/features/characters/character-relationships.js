@@ -176,7 +176,7 @@ export class CharacterRelationships {
       const isPC = targetCharacter.type === "pc" || targetCharacter.isPlayerCharacter || targetCharacter.player_character;
       
       return `
-        <div class="card card-character clickable ${charTypeClass}" 
+        <div class="card relationship-card ${charTypeClass}" 
              data-character-id="${targetCharacter.id}"
              data-from-character-id="${fromCharacter.id}"
              data-to-character-id="${targetCharacter.id}">

@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
 function safeJsonParse(jsonString, defaultValue = []) {
@@ -18,16 +18,18 @@ module.exports = (db) => {
         return res.status(400).json({ error: "Campaign ID is required" });
       }
       const notes = db
-        .prepare("SELECT * FROM notes WHERE campaign_id = ? ORDER BY updated_at DESC")
+        .prepare(
+          "SELECT * FROM notes WHERE campaign_id = ? ORDER BY updated_at DESC"
+        )
         .all(campaignId);
 
-      const parsedNotes = notes.map(note => ({
+      const parsedNotes = notes.map((note) => ({
         ...note,
         tags: safeJsonParse(note.tags, []),
         note_references: safeJsonParse(note.note_references, []),
       }));
 
-      res.json(parsedNotes.map(n => ({...n, tags: Array.isArray(n.tags) ? n.tags : [n.tags]})));
+      res.json(parsedNotes);
     } catch (error) {
       console.error("Error fetching notes:", error);
       res.status(500).json({ error: "Failed to fetch notes" });
@@ -36,7 +38,9 @@ module.exports = (db) => {
 
   router.get("/:id", (req, res) => {
     try {
-      const note = db.prepare("SELECT * FROM notes WHERE id = ?").get(req.params.id);
+      const note = db
+        .prepare("SELECT * FROM notes WHERE id = ?")
+        .get(req.params.id);
       if (!note) {
         return res.status(404).json({ error: "Note not found" });
       }

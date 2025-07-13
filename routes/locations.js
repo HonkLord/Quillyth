@@ -1,4 +1,5 @@
-const express = require('express');
+const express = require("express");
+const { randomUUID } = require("crypto");
 const router = express.Router();
 
 module.exports = (db) => {
@@ -46,19 +47,44 @@ module.exports = (db) => {
         location_type,
         parent_id,
       } = req.body;
+
+      // Validate required fields
       if (!campaign_id) {
         return res.status(400).json({ error: "Campaign ID is required" });
       }
+      // Robust validation for 'name' field
+      if (!name || typeof name !== "string" || name.trim().length === 0) {
+        return res.status(400).json({
+          error: "Location name is required and must be a non-empty string",
+        });
+      }
+      if (name.trim().length > 255) {
+        return res
+          .status(400)
+          .json({ error: "Location name must be 255 characters or less" });
+      }
+      // Improved unique ID generation (simplified, no collision check)
+      const generateLocationId = (baseName) => {
+        const baseId = baseName
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "-")
+          .substring(0, 50);
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 8);
+        return `loc_${baseId}_${timestamp}_${random}`;
+      };
+
+      // Generate the ID once, no collision check
+      const id = generateLocationId(name);
       const stmt = db.prepare(`
               INSERT INTO locations (id, campaign_id, name, description, read_aloud, atmosphere, location_type, parent_id, hierarchy_level, coordinates, metadata)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
           `);
-
-      const id = name.toLowerCase().replace(/[^a-z0-9]/g, "-");
       const result = stmt.run(
         id,
         campaign_id,
-        name,
+        name.trim(),
         description || "",
         read_aloud || "",
         atmosphere || "",
@@ -68,7 +94,6 @@ module.exports = (db) => {
         "{}",
         "{}"
       );
-
       res.json({ id: id, success: true, changes: result.changes });
     } catch (error) {
       console.error("Error creating location:", error);
@@ -93,8 +118,27 @@ module.exports = (db) => {
 
       for (const field of allowedFields) {
         if (req.body[field] !== undefined) {
-          updateFields.push(`${field} = ?`);
-          updateValues.push(req.body[field]);
+          // Validate name field specifically
+          if (field === "name") {
+            if (
+              typeof req.body[field] !== "string" ||
+              req.body[field].trim().length === 0
+            ) {
+              return res
+                .status(400)
+                .json({ error: "Location name must be a non-empty string" });
+            }
+            if (req.body[field].trim().length > 255) {
+              return res.status(400).json({
+                error: "Location name must be 255 characters or less",
+              });
+            }
+            updateFields.push(`${field} = ?`);
+            updateValues.push(req.body[field].trim());
+          } else {
+            updateFields.push(`${field} = ?`);
+            updateValues.push(req.body[field]);
+          }
         }
       }
 
@@ -107,8 +151,10 @@ module.exports = (db) => {
       updateFields.push("updated_at = CURRENT_TIMESTAMP");
       updateValues.push(req.params.id);
 
-      const sql = `UPDATE locations SET ${updateFields.join(", ")} WHERE id = ?`;
-      
+      const sql = `UPDATE locations SET ${updateFields.join(
+        ", "
+      )} WHERE id = ?`;
+
       const stmt = db.prepare(sql);
       const result = stmt.run(...updateValues);
 

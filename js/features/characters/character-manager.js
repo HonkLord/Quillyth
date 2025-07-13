@@ -11,7 +11,7 @@ export default class CharacterManager {
   constructor(dataManager = null) {
     // Initialize modules
     this.core = new CharacterCore(dataManager);
-    this.progression = new CharacterProgression(this.core);
+    this.progression = new CharacterProgression(this.core, dataManager);
     this.relationships = new CharacterRelationships(this.core, dataManager);
     this.ui = new CharacterUI(this.core, this.progression, this.relationships);
 

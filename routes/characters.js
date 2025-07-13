@@ -1,5 +1,6 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
+const { v4: uuidv4 } = require("uuid");
 
 module.exports = (db) => {
   // Get all characters (players + NPCs)
@@ -16,7 +17,15 @@ module.exports = (db) => {
         )
         .all(campaignId);
 
+      // Get NPCs from dedicated table
       const npcs = db
+        .prepare(
+          "SELECT * FROM npcs WHERE campaign_id = ? AND status = 'active' ORDER BY importance_level DESC, name"
+        )
+        .all(campaignId);
+
+      // Fallback: Get NPCs from scene_characters for backwards compatibility
+      const sceneNpcs = db
         .prepare(
           `
           SELECT 
@@ -45,15 +54,43 @@ module.exports = (db) => {
           background: p.background,
           description: p.description,
           type: "player",
+          isPlayerCharacter: true,
         })),
-        npcs: npcs.map((n) => ({
-          id: n.name.toLowerCase().replace(/[^a-z0-9]/g, "-"),
-          name: n.name,
-          role: n.role,
-          motivation: n.motivation,
-          favorability: Math.round(n.favorability || 50),
-          type: "npc",
-        })),
+        npcs: [
+          // Dedicated NPCs with proper IDs
+          ...npcs.map((n) => ({
+            id: n.id,
+            name: n.name,
+            role: n.role,
+            motivation: n.motivation,
+            description: n.description,
+            favorability: n.favorability,
+            importance_level: n.importance_level,
+            status: n.status,
+            type: "npc",
+            isPlayerCharacter: false,
+          })),
+          // Legacy NPCs from scene_characters (with generated IDs for compatibility)
+          ...sceneNpcs
+            .filter(
+              (sn) =>
+                !npcs.some(
+                  (n) => n.name.toLowerCase() === sn.name.toLowerCase()
+                )
+            )
+            .map((n) => ({
+              id: `legacy-npc-${n.name
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, "-")}`,
+              name: n.name,
+              role: n.role,
+              motivation: n.motivation,
+              favorability: Math.round(n.favorability || 50),
+              type: "npc",
+              isPlayerCharacter: false,
+              isLegacy: true,
+            })),
+        ],
       };
 
       res.json(characters);
@@ -179,7 +216,22 @@ module.exports = (db) => {
         return;
       }
 
+      // Look up NPC in dedicated NPCs table
       const npc = db
+        .prepare("SELECT * FROM npcs WHERE id = ?")
+        .get(characterId);
+
+      if (npc) {
+        res.json({
+          ...npc,
+          type: "npc",
+          isPlayerCharacter: false,
+        });
+        return;
+      }
+
+      // Fallback: Look up NPC in scene_characters for backwards compatibility
+      const sceneNpc = db
         .prepare(
           `
           SELECT 
@@ -190,20 +242,21 @@ module.exports = (db) => {
             COUNT(*) as scene_count
           FROM scene_characters sc
           JOIN scenes s ON sc.scene_id = s.id
-          WHERE sc.character_name = ? AND sc.character_type = 'npc'
+          WHERE sc.character_id = ? AND sc.character_type = 'npc'
           GROUP BY sc.character_name
         `
         )
-        .get(characterId.replace(/-/g, " "));
+        .get(characterId);
 
-      if (npc) {
+      if (sceneNpc) {
         res.json({
           id: characterId,
-          name: npc.name,
-          role: npc.role,
-          motivation: npc.motivation,
-          favorability: Math.round(npc.favorability || 50),
+          name: sceneNpc.name,
+          role: sceneNpc.role,
+          motivation: sceneNpc.motivation,
+          favorability: Math.round(sceneNpc.favorability || 50),
           type: "npc",
+          isPlayerCharacter: false,
         });
         return;
       }
@@ -241,7 +294,9 @@ module.exports = (db) => {
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         `);
 
-        const id = name.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        const id = `player-${Date.now()}-${Math.random()
+          .toString(36)
+          .substr(2, 9)}`;
         const result = stmt.run(
           id,
           campaign_id,
@@ -419,8 +474,10 @@ module.exports = (db) => {
         changes: result.changes,
       });
     } catch (error) {
-      console.error("!!!!!!!!!! [ARCS] CRITICAL ERROR !!!!!!!!!!", error);
-      res.status(500).json({ error: "Failed to create player arc", details: error.message });
+      console.error("CRITICAL ERROR", error);
+      res
+        .status(500)
+        .json({ error: "Failed to create player arc", details: error.message });
     }
   });
 
@@ -480,10 +537,7 @@ module.exports = (db) => {
   router.get("/:characterId/notes", (req, res) => {
     try {
       const { characterId } = req.params;
-      const {
-        character_type = "player",
-        campaign_id,
-      } = req.query;
+      const { character_type = "player", campaign_id } = req.query;
 
       if (!campaign_id) {
         return res.status(400).json({ error: "Campaign ID is required" });
@@ -523,7 +577,7 @@ module.exports = (db) => {
         return res.status(400).json({ error: "Campaign ID is required" });
       }
 
-      const id = `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const id = uuidv4();
 
       const stmt = db.prepare(`
         INSERT INTO character_notes (id, character_id, character_type, campaign_id, category, title, content, session_number, is_public)
@@ -595,6 +649,168 @@ module.exports = (db) => {
     } catch (error) {
       console.error("Error deleting character note:", error);
       res.status(500).json({ error: "Failed to delete character note" });
+    }
+  });
+
+  // ===== NPC MANAGEMENT ENDPOINTS =====
+
+  // Create new NPC
+  router.post("/npcs", (req, res) => {
+    try {
+      const {
+        campaign_id,
+        name,
+        role,
+        motivation,
+        description,
+        favorability = 50,
+        importance_level = "minor",
+        first_appearance_scene = null,
+      } = req.body;
+
+      // Favorability validation
+      const favorabilityNum = Number(favorability);
+      if (
+        isNaN(favorabilityNum) ||
+        favorabilityNum < 0 ||
+        favorabilityNum > 100
+      ) {
+        return res.status(400).json({
+          error: "Favorability must be a number between 0 and 100",
+        });
+      }
+
+      if (!name || !campaign_id) {
+        return res
+          .status(400)
+          .json({ error: "Name and campaign_id are required" });
+      }
+
+      const id = `npc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      const stmt = db.prepare(`
+        INSERT INTO npcs (
+          id, campaign_id, name, role, motivation, description, 
+          favorability, importance_level, first_appearance_scene
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const result = stmt.run(
+        id,
+        campaign_id,
+        name,
+        role,
+        motivation,
+        description,
+        favorabilityNum,
+        importance_level,
+        first_appearance_scene
+      );
+
+      const newNPC = {
+        id,
+        campaign_id,
+        name,
+        role,
+        motivation,
+        description,
+        favorability: favorabilityNum,
+        importance_level,
+        status: "active",
+        first_appearance_scene,
+        type: "npc",
+        isPlayerCharacter: false,
+      };
+
+      res.status(201).json(newNPC);
+    } catch (error) {
+      console.error("Error creating NPC:", error);
+      res.status(500).json({ error: "Failed to create NPC" });
+    }
+  });
+
+  // Update existing NPC
+  router.put("/npcs/:npcId", (req, res) => {
+    try {
+      const { npcId } = req.params;
+      const {
+        name,
+        role,
+        motivation,
+        description,
+        favorability,
+        importance_level,
+        status,
+      } = req.body;
+
+      // Favorability validation
+      const favorabilityNum = Number(favorability);
+      if (
+        isNaN(favorabilityNum) ||
+        favorabilityNum < 0 ||
+        favorabilityNum > 100
+      ) {
+        return res.status(400).json({
+          error: "Favorability must be a number between 0 and 100",
+        });
+      }
+
+      const stmt = db.prepare(`
+        UPDATE npcs 
+        SET name = ?, role = ?, motivation = ?, description = ?, 
+            favorability = ?, importance_level = ?, status = ?, 
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `);
+
+      const result = stmt.run(
+        name,
+        role,
+        motivation,
+        description,
+        favorabilityNum,
+        importance_level,
+        status,
+        npcId
+      );
+
+      if (result.changes === 0) {
+        return res.status(404).json({ error: "NPC not found" });
+      }
+
+      // Return updated NPC
+      const updatedNPC = db
+        .prepare("SELECT * FROM npcs WHERE id = ?")
+        .get(npcId);
+      res.json({ ...updatedNPC, type: "npc", isPlayerCharacter: false });
+    } catch (error) {
+      console.error("Error updating NPC:", error);
+      res.status(500).json({ error: "Failed to update NPC" });
+    }
+  });
+
+  // Delete NPC
+  router.delete("/npcs/:npcId", (req, res) => {
+    try {
+      const { npcId } = req.params;
+
+      // Soft delete by setting status to 'inactive'
+      const stmt = db.prepare(`
+        UPDATE npcs 
+        SET status = 'inactive', updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `);
+
+      const result = stmt.run(npcId);
+
+      if (result.changes === 0) {
+        return res.status(404).json({ error: "NPC not found" });
+      }
+
+      res.json({ success: true, message: "NPC deactivated successfully" });
+    } catch (error) {
+      console.error("Error deleting NPC:", error);
+      res.status(500).json({ error: "Failed to delete NPC" });
     }
   });
 

@@ -4,6 +4,8 @@
  */
 import { DataManager } from "../../data-manager.js";
 
+// Set window.DEBUG = true in the browser console or in index.html to enable debug logging in development.
+
 export default class CharacterCore {
   constructor(dataManager = null) {
     this.apiService = null; // Will be injected
@@ -20,7 +22,7 @@ export default class CharacterCore {
   async init() {
     try {
       console.log("🎭 CharacterCore: Initializing...");
-      
+
       // Load current campaign to get campaign context (only if not already loaded)
       if (!this.dataManager.currentCampaignId) {
         await this.dataManager.loadCurrentCampaign();
@@ -42,43 +44,62 @@ export default class CharacterCore {
       // Load player characters
       try {
         console.log("🎭 CharacterCore: Loading player characters from API...");
-        const playersResponse = await fetch(`/api/characters?campaign_id=${this.dataManager.currentCampaignId}`);
-        console.log("🎭 CharacterCore: Players API response status:", playersResponse.status);
-        
+        const playersResponse = await fetch(
+          `/api/characters?campaign_id=${this.dataManager.currentCampaignId}`
+        );
+        console.log(
+          "🎭 CharacterCore: Players API response status:",
+          playersResponse.status
+        );
+
         if (playersResponse.ok) {
           const rawData = await playersResponse.json();
-          console.log("🎭 CharacterCore: Raw player characters from API:", rawData);
-          
+          console.log(
+            "🎭 CharacterCore: Raw player characters from API:",
+            rawData
+          );
+
           // The API returns {players: [...], npcs: [...]}, we need just the players array
           this.playerCharacters = rawData.players || rawData;
-          console.log("🎭 CharacterCore: Extracted player characters:", this.playerCharacters);
-          
+          console.log(
+            "🎭 CharacterCore: Extracted player characters:",
+            this.playerCharacters
+          );
+
           // Parse character descriptions to extract individual fields and mark as PC
           this.playerCharacters = this.playerCharacters.map((char) => {
             const parsed = this.parseCharacterDescription(char);
             return { ...parsed, type: "pc", isPlayerCharacter: true };
           });
-          
-          console.log("🎭 CharacterCore: Processed player characters:", this.playerCharacters);
+
+          console.log(
+            "🎭 CharacterCore: Processed player characters:",
+            this.playerCharacters
+          );
         } else {
           console.log("📝 Players API not available, using default characters");
           this.playerCharacters = this.getDefaultPlayerCharacters();
         }
       } catch (error) {
-        console.log("📝 Players API failed, using default characters:", error.message);
+        console.log(
+          "📝 Players API failed, using default characters:",
+          error.message
+        );
         this.playerCharacters = this.getDefaultPlayerCharacters();
       }
 
       // Load important NPCs (from scenes or separate endpoint)
       try {
-        const npcsResponse = await fetch(`/api/characters/important-npcs?campaign_id=${this.dataManager.currentCampaignId}`);
+        const npcsResponse = await fetch(
+          `/api/characters/important-npcs?campaign_id=${this.dataManager.currentCampaignId}`
+        );
         if (npcsResponse.ok) {
           this.importantNPCs = await npcsResponse.json();
           // Mark all NPCs with proper type
           this.importantNPCs = this.importantNPCs.map((npc) => ({
             ...npc,
             type: "npc",
-            isPlayerCharacter: false
+            isPlayerCharacter: false,
           }));
         } else {
           console.log(
@@ -120,7 +141,7 @@ export default class CharacterCore {
         flaws: "Trusts too easily, sometimes to his detriment",
         progression: [],
         relationships: {
-          "lyralei": {
+          lyralei: {
             type: "family",
             description: "Missing sister - searching for her desperately",
             created: new Date().toISOString(),
@@ -158,7 +179,7 @@ export default class CharacterCore {
             description: "Former commanding officer who still believes in him",
             created: new Date().toISOString(),
           },
-          "lyralei": {
+          lyralei: {
             type: "neutral",
             description: "Vandarith's sister - wants to help find her",
             created: new Date().toISOString(),
@@ -208,7 +229,7 @@ export default class CharacterCore {
         flaws: "Quick to anger, sometimes acts before thinking",
         progression: [],
         relationships: {
-          "lyralei": {
+          lyralei: {
             type: "friend",
             description: "Sees her as needing protection like his village",
             created: new Date().toISOString(),
@@ -234,24 +255,26 @@ export default class CharacterCore {
         name: "Lyralei",
         role: "Missing Person",
         location: "Unknown",
-        description: "Vandarith's younger sister, disappeared during expedition to ancient ruins",
+        description:
+          "Vandarith's younger sister, disappeared during expedition to ancient ruins",
         motivation: "Survival and finding her way home",
-        secrets: "Has discovered something significant about the ruins but is trapped",
+        secrets:
+          "Has discovered something significant about the ruins but is trapped",
         favorability: 85,
         importance: "high",
         scenes: ["the-hollow-entrance", "ancient-ruins-discovery"],
         relationships: {
-          "vandarith": {
+          vandarith: {
             type: "family",
             description: "Beloved older brother who is searching for her",
             created: new Date().toISOString(),
           },
-          "vincent": {
+          vincent: {
             type: "neutral",
             description: "Trusts her brother's companions",
             created: new Date().toISOString(),
           },
-          "geoff": {
+          geoff: {
             type: "friend",
             description: "Appreciates his protective nature",
             created: new Date().toISOString(),
@@ -265,26 +288,29 @@ export default class CharacterCore {
         name: "Captain Thorne",
         role: "Military Officer",
         location: "Duskhaven Garrison",
-        description: "Veteran captain of the Duskhaven Guard, honorable but pragmatic",
+        description:
+          "Veteran captain of the Duskhaven Guard, honorable but pragmatic",
         motivation: "Maintain order and protect the city from emerging threats",
         secrets: "Knows more about Vincent's past than he reveals",
         favorability: 75,
         importance: "high",
         scenes: ["garrison-meeting", "tactical-briefing"],
         relationships: {
-          "vincent": {
+          vincent: {
             type: "mentor",
-            description: "Former subordinate he believes in despite past failures",
+            description:
+              "Former subordinate he believes in despite past failures",
             created: new Date().toISOString(),
           },
-          "vandarith": {
+          vandarith: {
             type: "ally",
             description: "Reliable source of information about missing persons",
             created: new Date().toISOString(),
           },
-          "lilith": {
+          lilith: {
             type: "neutral",
-            description: "Wary of her criminal background but respects her skills",
+            description:
+              "Wary of her criminal background but respects her skills",
             created: new Date().toISOString(),
           },
         },
@@ -303,17 +329,17 @@ export default class CharacterCore {
         importance: "medium",
         scenes: ["undercity-meeting", "information-exchange"],
         relationships: {
-          "lilith": {
+          lilith: {
             type: "friend",
             description: "Former guild associate, trusted business partner",
             created: new Date().toISOString(),
           },
-          "vandarith": {
+          vandarith: {
             type: "rival",
             description: "Competes for the same information sources",
             created: new Date().toISOString(),
           },
-          "geoff": {
+          geoff: {
             type: "enemy",
             description: "Mutual distrust and opposing values",
             created: new Date().toISOString(),
@@ -324,7 +350,6 @@ export default class CharacterCore {
       },
     ];
   }
-
 
   /**
    * Parse character description to extract individual fields
@@ -513,17 +538,24 @@ export default class CharacterCore {
         }
       }
 
-      // Send to API
-      console.log("🎭 CharacterCore: Sending API request to update character:", characterId);
-      console.log("🎭 CharacterCore: Character data being sent:", characterData);
-      
-      // Store debug info globally so it persists
-      window.lastCharacterSave = {
-        characterId,
-        dataSent: characterData,
-        timestamp: new Date().toISOString()
-      };
-      
+      // Only run debug logging and global debug info in development/debug mode
+      if (window.DEBUG) {
+        console.log(
+          "🎭 CharacterCore: Sending API request to update character:",
+          characterId
+        );
+        console.log(
+          "🎭 CharacterCore: Character data being sent:",
+          characterData
+        );
+        // Store debug info globally so it persists
+        window.lastCharacterSave = {
+          characterId,
+          dataSent: characterData,
+          timestamp: new Date().toISOString(),
+        };
+      }
+
       const response = await fetch(`/api/characters/${characterId}`, {
         method: "PUT",
         headers: {
@@ -532,28 +564,35 @@ export default class CharacterCore {
         body: JSON.stringify(characterData),
       });
 
-      console.log("🎭 CharacterCore: API response status:", response.status);
+      if (window.DEBUG) {
+        console.log("🎭 CharacterCore: API response status:", response.status);
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("🎭 CharacterCore: API error response:", errorText);
+        if (window.DEBUG) {
+          console.error("🎭 CharacterCore: API error response:", errorText);
+        }
         throw new Error(`Failed to update character: ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log("🎭 CharacterCore: API success response:", result);
-      
-      // Debug: Check what the character looks like in memory after update
-      const updatedChar = isPlayerCharacter 
-        ? this.playerCharacters.find(char => char.id === characterId)
-        : this.importantNPCs.find(npc => npc.id === characterId);
-      console.log("🎭 CharacterCore: Character in memory after update:", updatedChar);
-      
-      // Store complete debug info globally
-      window.lastCharacterSave.apiResponse = result;
-      window.lastCharacterSave.characterInMemory = updatedChar;
-      window.lastCharacterSave.responseStatus = response.status;
-      
+      if (window.DEBUG) {
+        console.log("🎭 CharacterCore: API success response:", result);
+        // Debug: Check what the character looks like in memory after update
+        const updatedChar = isPlayerCharacter
+          ? this.playerCharacters.find((char) => char.id === characterId)
+          : this.importantNPCs.find((npc) => npc.id === characterId);
+        console.log(
+          "🎭 CharacterCore: Character in memory after update:",
+          updatedChar
+        );
+        // Store complete debug info globally
+        window.lastCharacterSave.apiResponse = result;
+        window.lastCharacterSave.characterInMemory = updatedChar;
+        window.lastCharacterSave.responseStatus = response.status;
+      }
+
       return result;
     } catch (error) {
       console.error("❌ Error updating character:", error);

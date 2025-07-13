@@ -1,5 +1,6 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
+const { randomUUID } = require("crypto");
 
 module.exports = (db) => {
   // Get single scene
@@ -118,7 +119,20 @@ module.exports = (db) => {
         return res.status(400).json({ error: "Campaign ID is required" });
       }
 
-      const id = name.toLowerCase().replace(/[^a-z0-9]/g, "-") + "-" + Date.now();
+      // Validate location_id exists if provided
+      if (location_id) {
+        const locationExists = db
+          .prepare("SELECT 1 FROM locations WHERE id = ?")
+          .get(location_id);
+        if (!locationExists) {
+          return res
+            .status(400)
+            .json({ error: "Provided location_id does not exist" });
+        }
+      }
+
+      const id =
+        name.toLowerCase().replace(/[^a-z0-9]/g, "-") + "-" + Date.now();
 
       const sceneStmt = db.prepare(`
         INSERT INTO scenes (
@@ -149,8 +163,21 @@ module.exports = (db) => {
         `);
 
         characters.forEach((char) => {
-          const charId =
-            char.id || char.name.toLowerCase().replace(/[^a-z0-9]/g, "-");
+          let charId = char.id;
+          if (!charId) {
+            // Generate a unique character ID based on name, timestamp, and random string
+            const base = char.name
+              ? char.name.toLowerCase().replace(/[^a-z0-9]/g, "-")
+              : "char";
+            const uniqueSuffix =
+              Date.now().toString() +
+              "-" +
+              Math.random().toString(36).substring(2, 8);
+            charId = `${base}-${uniqueSuffix}`;
+            // Fallback to UUID if still not unique enough
+            // (in practice, this is extremely unlikely, but for completeness)
+            // Optionally, you could check for collisions in the DB here if needed
+          }
           charStmt.run(
             id,
             charId,
@@ -246,8 +273,19 @@ module.exports = (db) => {
           `);
 
           characters.forEach((char) => {
-            const charId =
-              char.id || char.name.toLowerCase().replace(/[^a-z0-9]/g, "-");
+            let charId = char.id;
+            if (!charId) {
+              // Generate a unique character ID based on name, timestamp, and random string (same as POST)
+              const base = char.name
+                ? char.name.toLowerCase().replace(/[^a-z0-9]/g, "-")
+                : "char";
+              const uniqueSuffix =
+                Date.now().toString() +
+                "-" +
+                Math.random().toString(36).substring(2, 8);
+              charId = `${base}-${uniqueSuffix}`;
+              // Optionally, fallback to UUID if needed (require('crypto').randomUUID())
+            }
             charStmt.run(
               sceneId,
               charId,
@@ -278,7 +316,9 @@ module.exports = (db) => {
     try {
       const sceneId = req.params.id;
 
-      const scene = db.prepare("SELECT * FROM scenes WHERE id = ?").get(sceneId);
+      const scene = db
+        .prepare("SELECT * FROM scenes WHERE id = ?")
+        .get(sceneId);
       if (!scene) {
         return res.status(404).json({ error: "Scene not found" });
       }
