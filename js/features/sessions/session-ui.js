@@ -104,19 +104,19 @@ export class SessionUI {
     const statusClass = status.toLowerCase().replace(/\s+/g, "-");
 
     return `
-      <div class="card card-session clickable" data-session-id="${session.id}">
+      <div class="card card-session clickable" data-session-id="${escapeHTML(session.id)}">
         <div class="card-header">
           <div class="card-title-info">
             <h4 class="card-title">Session ${
-              session.session_number || "N/A"
-            }: ${session.title || "Untitled"}</h4>
+              escapeHTML(String(session.session_number || "N/A"))
+            }: ${escapeHTML(session.title || "Untitled")}</h4>
             <div class="card-meta">
-              <span class="card-status status-${statusClass}">${status}</span>
+              <span class="card-status status-${statusClass}">${escapeHTML(status)}</span>
               <span class="card-category">
                 <i class="fas fa-calendar"></i>
                 ${
                   session.date
-                    ? new Date(session.date).toLocaleDateString()
+                    ? escapeHTML(new Date(session.date).toLocaleDateString())
                     : "No date set"
                 }
               </span>
@@ -135,7 +135,7 @@ export class SessionUI {
           session.summary
             ? `
           <div class="card-body">
-            <p class="card-description">${session.summary}</p>
+            <p class="card-description">${escapeHTML(session.summary)}</p>
           </div>
         `
             : ""

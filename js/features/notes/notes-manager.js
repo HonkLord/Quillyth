@@ -436,10 +436,10 @@ export class NotesManager {
     try {
       const formData = new FormData(form);
       const noteData = {
-        title: escapeHTML(formData.get("title")),
-        content: escapeHTML(formData.get("content")),
-        category: escapeHTML(formData.get("category")),
-        tags: escapeHTML(formData.get("tags")),
+        title: formData.get("title"),
+        content: formData.get("content"),
+        category: formData.get("category"),
+        tags: formData.get("tags"),
         campaign_id: this.dataManager.currentCampaignId,
       };
 
@@ -472,10 +472,10 @@ export class NotesManager {
     try {
       const formData = new FormData(form);
       const noteData = {
-        title: escapeHTML(formData.get("title")),
-        content: escapeHTML(formData.get("content")),
-        category: escapeHTML(formData.get("category")),
-        tags: escapeHTML(formData.get("tags")),
+        title: formData.get("title"),
+        content: formData.get("content"),
+        category: formData.get("category"),
+        tags: formData.get("tags"),
       };
 
       const response = await fetch(`${this.apiBase}/notes/${noteId}`, {

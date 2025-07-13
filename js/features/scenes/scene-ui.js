@@ -1,6 +1,4 @@
 import { uiNotificationService } from "../../services/ui-notification-service.js";
-import { escapeHTML } from "../../shared/escape-html.js";
-
 /**
  * SceneUI - Handles modal dialogs, form handling, notifications, and UI interactions
  * Part of the modular scene management architecture

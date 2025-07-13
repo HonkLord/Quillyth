@@ -152,8 +152,8 @@
   line-height: var(--cm-line-height-base);
   color: var(--cm-text-medium);
   display: -webkit-box;
-  line-clamp: 2;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin: 0;
@@ -1357,57 +1357,6 @@
   gap: var(--cm-space-lg);
 }
 
-/* Override grid layout when showing relationships or other full-width content */
-.character-content .character-relationships,
-.character-content .character-progression {
-  grid-column: 1 / -1; /* Span all columns */
-}
-
-/* Ensure relationships grid has proper layout in character detail area */
-.character-content .relationships-grid {
-  display: grid !important;
-  gap: var(--cm-space-md) !important;
-  margin-top: var(--cm-space-lg) !important;
-  width: 100% !important;
-
-  /* Smart responsive grid - adapts to available space and content */
-  /* Uses auto-fit to collapse empty columns and auto-size to actual content */
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
-
-  /* Center cards within the grid */
-  justify-items: center !important;
-
-  /* Ensure cards don't get too wide on large screens */
-  max-width: 100% !important;
-  grid-auto-rows: min-content !important;
-}
-
-/* Progressive enhancement for different screen sizes */
-@media (min-width: 600px) {
-  .character-content .relationships-grid {
-    /* Allow more flexible sizing on medium screens */
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
-    justify-items: center !important;
-  }
-}
-
-@media (min-width: 900px) {
-  .character-content .relationships-grid {
-    /* Optimize for 3+ columns on larger screens */
-    grid-template-columns: repeat(auto-fit, minmax(200px, 280px)) !important;
-    justify-content: center !important;
-    justify-items: center !important;
-  }
-}
-
-@media (min-width: 1200px) {
-  .character-content .relationships-grid {
-    /* Cap maximum width and center the grid for very large screens */
-    grid-template-columns: repeat(auto-fit, minmax(220px, 300px)) !important;
-    justify-content: center !important;
-    justify-items: center !important;
-  }
-}
 
 
 .character-section {
@@ -2110,46 +2059,51 @@
 }
 
 /* === CHARACTER VIEW TOGGLE BUTTONS === */
-.character-view-toggle {
+.character-header-actions .btn.character-view-toggle,
+.npc-header-actions .btn.character-view-toggle {
   position: relative;
-  background: rgba(255, 255, 255, 0.8) !important;
-  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+  background: var(--cm-char-toggle-bg-base);
+  border: var(--cm-border-width) solid var(--cm-char-toggle-border-base);
   backdrop-filter: blur(8px);
-  transition: all 0.3s ease !important;
+  transition: var(--cm-char-toggle-transition);
 }
 
-.character-view-toggle:hover {
-  background: rgba(59, 130, 246, 0.1) !important;
-  border-color: rgba(59, 130, 246, 0.6) !important;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+.character-header-actions .btn.character-view-toggle:hover,
+.npc-header-actions .btn.character-view-toggle:hover {
+  background: var(--cm-char-toggle-bg-hover);
+  border-color: var(--cm-char-toggle-border-hover);
+  transform: var(--cm-char-toggle-transform-hover);
+  box-shadow: var(--cm-char-toggle-shadow-hover);
 }
 
-.character-view-toggle.active {
-  background: rgba(59, 130, 246, 0.15) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  font-weight: var(--cm-font-weight-bold) !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+.character-header-actions .btn.character-view-toggle.active,
+.npc-header-actions .btn.character-view-toggle.active {
+  background: var(--cm-char-toggle-bg-active);
+  border-color: var(--cm-char-toggle-border-active);
+  color: var(--cm-char-toggle-text-active);
+  font-weight: var(--cm-font-weight-bold);
+  box-shadow: var(--cm-char-toggle-shadow-active);
 }
 
-.character-view-toggle.active::before {
+.character-header-actions .btn.character-view-toggle.active::before,
+.npc-header-actions .btn.character-view-toggle.active::before {
   content: '';
   position: absolute;
   top: -2px;
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: linear-gradient(45deg, #3b82f6, #6366f1);
+  background: var(--cm-char-toggle-gradient);
   border-radius: inherit;
   z-index: -1;
   opacity: 0.3;
 }
 
-.character-view-toggle.active:hover {
-  background: rgba(59, 130, 246, 0.2) !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
-  transform: translateY(-1px);
+.character-header-actions .btn.character-view-toggle.active:hover,
+.npc-header-actions .btn.character-view-toggle.active:hover {
+  background: var(--cm-char-toggle-bg-active-hover);
+  box-shadow: var(--cm-char-toggle-shadow-active-hover);
+  transform: var(--cm-char-toggle-transform-hover);
 }
 
 /* === MATRIX HEADER & LABEL ENHANCEMENTS === */
@@ -2835,13 +2789,18 @@
   }
 }
 
+/* === SHARED RELATIONSHIP GRID STYLES === */
+
 /* Override grid layout when showing relationships or other full-width content */
+.character-content .character-relationships,
+.character-content .character-progression,
 .character-details-view .character-content .character-relationships,
 .character-details-view .character-content .character-progression {
   grid-column: 1 / -1;
 }
 
-/* Ensure relationships grid has proper layout in character detail area */
+/* Base relationship grid layout - shared across all character views */
+.character-content .relationships-grid,
 .character-details-view .character-content .relationships-grid {
   display: grid;
   gap: var(--cm-space-md);
@@ -2853,7 +2812,9 @@
   grid-auto-rows: min-content;
 }
 
+/* Progressive enhancement for different screen sizes */
 @media (min-width: 600px) {
+  .character-content .relationships-grid,
   .character-details-view .character-content .relationships-grid {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     justify-items: center;
@@ -2861,6 +2822,7 @@
 }
 
 @media (min-width: 900px) {
+  .character-content .relationships-grid,
   .character-details-view .character-content .relationships-grid {
     grid-template-columns: repeat(auto-fit, minmax(200px, 280px));
     justify-content: center;
@@ -2869,6 +2831,7 @@
 }
 
 @media (min-width: 1200px) {
+  .character-content .relationships-grid,
   .character-details-view .character-content .relationships-grid {
     grid-template-columns: repeat(auto-fit, minmax(220px, 300px));
     justify-content: center;
