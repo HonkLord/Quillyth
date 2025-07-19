@@ -579,6 +579,50 @@ class SceneRenderer {
    * Create Run Scene HTML - DM Control Panel for Live Gameplay
    */
   createRunSceneHTML(scene, characters, locations, quests) {
+    // Prepare data for the interface
+    const sceneData = this.prepareSceneData(
+      scene,
+      characters,
+      locations,
+      quests
+    );
+
+    return `
+      <div class="run-scene-interface">
+        ${this.createRunSceneHeader(scene)}
+        
+        <div class="run-scene-content">
+          <!-- MAIN CONTROL PANEL -->
+          <div class="run-scene-main">
+            ${this.createContextPanel(scene, sceneData.currentLocation)}
+            ${this.createMusicPanel(scene)}
+            ${this.createReadAloudPanel(scene)}
+          </div>
+
+          <!-- SIDEBAR - ACTORS & WORLD INFO -->
+          <div class="run-scene-sidebar">
+            <div class="characters-container">
+              ${this.createPlayerCharactersPanel(sceneData.relevantCharacters)}
+              ${this.createNPCsPanel(scene, sceneData.relevantCharacters)}
+            </div>
+            
+            ${this.createWorldInfoPanel(
+              sceneData.relatedQuests,
+              sceneData.nearbyLocations
+            )}
+            ${this.createThereforePanel(scene)}
+          </div>
+        </div>
+
+        ${this.createRunSceneFooter(scene)}
+      </div>
+    `;
+  }
+
+  /**
+   * Prepare and filter scene data for the run interface
+   */
+  prepareSceneData(scene, characters, locations, quests) {
     // Ensure we have arrays to work with
     const safeCharacters = Array.isArray(characters) ? characters : [];
     const safeLocations = Array.isArray(locations) ? locations : [];
@@ -611,366 +655,363 @@ class SceneRenderer {
         loc.id !== scene.location_id
     );
 
+    return {
+      relevantCharacters,
+      relatedQuests,
+      currentLocation,
+      nearbyLocations,
+    };
+  }
+
+  /**
+   * Create the run scene header
+   */
+  createRunSceneHeader(scene) {
     return `
-      <div class="run-scene-interface">
-        <div class="run-scene-header">
-          <div class="run-scene-title">
-            <h1><i class="fas fa-play-circle"></i> Running Scene: ${escapeHTML(
-              scene.name
-            )}</h1>
-            <div class="scene-runtime-meta">
-              <span class="scene-type-badge">${escapeHTML(
-                scene.scene_type || "encounter"
-              )}</span>
-              <span class="scene-status-badge status-running">● LIVE</span>
-            </div>
-          </div>
-          <div class="run-scene-nav">
-            <button class="btn btn-secondary" data-action="close-run-scene">
-              <i class="fas fa-arrow-left"></i> Exit Run Mode
-            </button>
+      <div class="run-scene-header">
+        <div class="run-scene-title">
+          <h1><i class="fas fa-play-circle"></i> Running Scene: ${escapeHTML(
+            scene.name
+          )}</h1>
+          <div class="scene-runtime-meta">
+            <span class="scene-type-badge">${escapeHTML(
+              scene.scene_type || "encounter"
+            )}</span>
+            <span class="scene-status-badge status-running">● LIVE</span>
           </div>
         </div>
+        <div class="run-scene-nav">
+          <button class="btn btn-secondary" data-action="close-run-scene">
+            <i class="fas fa-arrow-left"></i> Exit Run Mode
+          </button>
+        </div>
+      </div>
+    `;
+  }
 
-        <div class="run-scene-content">
-          <!-- MAIN CONTROL PANEL -->
-          <div class="run-scene-main">
-            
-            <!-- CURRENT CONTEXT - Why are we here? -->
-            <div class="control-panel context-panel">
-              <h3><i class="fas fa-compass"></i> Current Context</h3>
-              <div class="context-content">
-                <div class="context-section">
-                  <label><strong>Location:</strong></label>
-                  <input type="text" class="context-location-input" value="${escapeHTML(
-                    currentLocation?.name || "Unknown"
-                  )}" data-scene-id="${scene.id}" />
-                  <label><strong>Description:</strong></label>
-                  <textarea class="context-description-input" rows="2" data-scene-id="${
-                    scene.id
-                  }">${escapeHTML(
+  /**
+   * Create the context panel
+   */
+  createContextPanel(scene, currentLocation) {
+    return `
+      <div class="control-panel context-panel">
+        <h3><i class="fas fa-compass"></i> Current Context</h3>
+        <div class="context-content">
+          <div class="context-section">
+            <label><strong>Location:</strong></label>
+            <input type="text" class="context-location-input" value="${escapeHTML(
+              currentLocation?.name || "Unknown"
+            )}" data-scene-id="${scene.id}" />
+            <label><strong>Description:</strong></label>
+            <textarea class="context-description-input" rows="2" data-scene-id="${
+              scene.id
+            }">${escapeHTML(
       currentLocation?.description || scene.description || "No context provided"
     )}</textarea>
-                </div>
-                <div class="context-section">
-                  <label><strong>Scene Purpose:</strong></label>
-                  <textarea class="context-purpose-input" rows="2" data-scene-id="${
-                    scene.id
-                  }">${escapeHTML(
+          </div>
+          <div class="context-section">
+            <label><strong>Scene Purpose:</strong></label>
+            <textarea class="context-purpose-input" rows="2" data-scene-id="${
+              scene.id
+            }">${escapeHTML(
       scene.read_aloud ||
         scene.current_setup ||
         "Define why the actors are here and what they hope to accomplish"
     )}</textarea>
-                </div>
-              </div>
-              <div class="context-actions">
-                <button class="btn btn-sm btn-primary save-context-btn" data-scene-id="${
-                  scene.id
-                }">
-                  <i class="fas fa-save"></i> Save Context
-                </button>
-                <button class="btn btn-sm btn-outline-primary generate-context-btn" data-scene-id="${
-                  scene.id
-                }">
-                  <i class="fas fa-magic"></i> Generate Context
-                </button>
-              </div>
-            </div>
-
-            <!-- MUSIC -->
-            <div class="control-panel music-panel">
-              <h3><i class="fas fa-music"></i> Music</h3>
-              <div class="music-controls">
-                <div class="mood-selector">
-                  <label>Current Mood:</label>
-                  <select class="mood-select" data-scene-id="${scene.id}">
-                    <option value="tense">Tense</option>
-                    <option value="peaceful">Peaceful</option>
-                    <option value="mysterious">Mysterious</option>
-                    <option value="dangerous">Dangerous</option>
-                    <option value="festive">Festive</option>
-                    <option value="somber">Somber</option>
-                    <option value="chaotic">Chaotic</option>
-                  </select>
-                </div>
-                <div class="music-actions">
-                  <button class="btn btn-sm btn-secondary generate-music-btn">
-                    <i class="fas fa-music"></i> Find Music
-                  </button>
-                </div>
-              </div>
-              <div class="music-output" id="music-output">
-                <p class="placeholder-text">Music suggestions will appear here...</p>
-              </div>
-            </div>
-
-            <!-- READ ALOUD TEXT -->
-            ${
-              scene.read_aloud
-                ? `
-              <div class="control-panel read-aloud-panel">
-                <h3><i class="fas fa-volume-up"></i> Read Aloud Text</h3>
-                <div class="read-aloud-display">
-                  ${escapeHTML(scene.read_aloud)}
-                </div>
-                <button class="btn btn-sm btn-success mark-read-btn">
-                  <i class="fas fa-check"></i> Mark as Read
-                </button>
-              </div>
-            `
-                : ""
-            }
-
-          </div>
-
-          <!-- SIDEBAR - ACTORS & WORLD INFO -->
-          <div class="run-scene-sidebar">
-            
-            <!-- CHARACTER MANAGEMENT -->
-            <div class="characters-container">
-              <!-- PLAYER CHARACTERS -->
-              <div class="control-panel players-panel">
-                <h3><i class="fas fa-users"></i> Player Characters</h3>
-                <div class="players-list">
-                  ${
-                    relevantCharacters.filter((char) => char.type === "pc")
-                      .length > 0
-                      ? relevantCharacters
-                          .filter((char) => char.type === "pc")
-                          .map(
-                            (char) => `
-                      <div class="actor-item pc" data-character-id="${
-                        char.id || ""
-                      }">
-                        <div class="actor-header">
-                          <div class="actor-info">
-                            <strong>${escapeHTML(
-                              char.name || "Unknown Character"
-                            )}</strong>
-                            <span class="actor-type">PC</span>
-                          </div>
-                          <div class="actor-actions">
-                            <button class="btn btn-xs btn-outline-primary view-character-btn" data-character-id="${
-                              char.id || ""
-                            }">
-                              <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-xs btn-outline-secondary toggle-actor-details" data-character-id="${
-                              char.id || ""
-                            }">
-                              <i class="fas fa-chevron-down"></i>
-                            </button>
-                          </div>
-                        </div>
-                        <div class="actor-details" id="actor-details-${
-                          char.id
-                        }" style="display: none;">
-                          <div class="actor-thought-section">
-                            <label>Player Intent/State:</label>
-                            <textarea class="actor-thought-input" rows="2" placeholder="What is this player trying to accomplish? What's their character's state?" data-character-id="${
-                              char.id
-                            }"></textarea>
-                          </div>
-                          <div class="actor-action-section">
-                            <label>Player Action:</label>
-                            <textarea class="actor-action-input" rows="2" placeholder="What did this player say they want to do?" data-character-id="${
-                              char.id
-                            }"></textarea>
-                            <button class="btn btn-xs btn-success save-actor-state-btn" data-character-id="${
-                              char.id
-                            }">
-                              <i class="fas fa-save"></i> Save State
-                            </button>
-                          </div>
-                          <div class="actor-history-section">
-                            <h5><i class="fas fa-history"></i> Action History</h5>
-                            <div class="action-history" id="history-${char.id}">
-                              <p class="no-history">No actions recorded yet.</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    `
-                          )
-                          .join("")
-                      : '<p class="no-players">No player characters in this scene.</p>'
-                  }
-                </div>
-              </div>
-
-              <!-- NON-PLAYER CHARACTERS -->
-              <div class="control-panel npcs-panel">
-                <h3><i class="fas fa-user-friends"></i> NPCs (You Control)</h3>
-                <div class="npcs-list">
-                  ${
-                    relevantCharacters.filter((char) => char.type === "npc")
-                      .length > 0
-                      ? relevantCharacters
-                          .filter((char) => char.type === "npc")
-                          .map(
-                            (char) => `
-                      <div class="actor-item npc" data-character-id="${
-                        char.id || ""
-                      }">
-                        <div class="actor-header">
-                          <div class="actor-info">
-                            <strong>${escapeHTML(
-                              char.name || "Unknown Character"
-                            )}</strong>
-                            <span class="actor-type">NPC</span>
-                          </div>
-                          <div class="actor-actions">
-                            <button class="btn btn-xs btn-outline-primary view-character-btn" data-character-id="${
-                              char.id || ""
-                            }">
-                              <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-xs btn-outline-secondary toggle-actor-details" data-character-id="${
-                              char.id || ""
-                            }">
-                              <i class="fas fa-chevron-down"></i>
-                            </button>
-                          </div>
-                        </div>
-                        <div class="actor-details" id="actor-details-${
-                          char.id
-                        }" style="display: none;">
-                          <div class="actor-thought-section">
-                            <label>NPC Motivation/State:</label>
-                            <textarea class="actor-thought-input" rows="2" placeholder="What does this NPC want? How are they feeling about the situation?" data-character-id="${
-                              char.id
-                            }"></textarea>
-                          </div>
-                          <div class="actor-action-section">
-                            <label>NPC Action/Response:</label>
-                            <textarea class="actor-action-input" rows="2" placeholder="How does this NPC react? What do they do?" data-character-id="${
-                              char.id
-                            }"></textarea>
-                            <button class="btn btn-xs btn-success save-actor-state-btn" data-character-id="${
-                              char.id
-                            }">
-                              <i class="fas fa-save"></i> Save State
-                            </button>
-                          </div>
-                          <div class="actor-history-section">
-                            <h5><i class="fas fa-history"></i> Action History</h5>
-                            <div class="action-history" id="history-${char.id}">
-                              <p class="no-history">No actions recorded yet.</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    `
-                          )
-                          .join("")
-                      : '<p class="no-npcs">No NPCs in this scene location.</p>'
-                  }
-                </div>
-                <button class="btn btn-sm btn-outline-success add-actor-btn" data-scene-id="${
-                  scene.id
-                }">
-                  <i class="fas fa-plus"></i> Add NPC
-                </button>
-              </div>
-            </div>
-
-            <!-- RELATIVE WORLD INFO -->
-            <div class="control-panel world-info-panel">
-              <h3><i class="fas fa-globe"></i> Related Information</h3>
-              
-              <!-- Related Quests -->
-              ${
-                relatedQuests.length > 0
-                  ? `
-                <div class="world-section">
-                  <h4><i class="fas fa-scroll"></i> Active Quests</h4>
-                  <div class="quest-list">
-                    ${
-                      relatedQuests.length > 0
-                        ? relatedQuests
-                            .map(
-                              (quest) => `
-                      <div class="quest-item" data-quest-id="${quest.id || ""}">
-                        <span class="quest-name">${escapeHTML(
-                          quest.title || quest.name || "Unknown Quest"
-                        )}</span>
-                        <span class="quest-status">${escapeHTML(
-                          quest.status || "unknown"
-                        )}</span>
-                      </div>
-                    `
-                            )
-                            .join("")
-                        : '<p class="no-quests">No related quests found.</p>'
-                    }
-                  </div>
-                </div>
-              `
-                  : ""
-              }
-
-              <!-- Nearby Locations -->
-              ${
-                nearbyLocations.length > 0
-                  ? `
-                <div class="world-section">
-                  <h4><i class="fas fa-map"></i> Nearby Locations</h4>
-                  <div class="location-list">
-                    ${
-                      nearbyLocations.length > 0
-                        ? nearbyLocations
-                            .map(
-                              (loc) => `
-                      <div class="location-item" data-location-id="${
-                        loc.id || ""
-                      }">
-                        ${escapeHTML(loc.name || "Unknown Location")}
-                      </div>
-                    `
-                            )
-                            .join("")
-                        : '<p class="no-locations">No nearby locations found.</p>'
-                    }
-                  </div>
-                </div>
-              `
-                  : ""
-              }
-            </div>
-
-            <!-- THEREFORE SYSTEM -->
-            <div class="control-panel therefore-panel">
-              <h3><i class="fas fa-arrow-right"></i> What Happens Next?</h3>
-              <div class="therefore-content">
-                <p class="therefore-description">
-                  Based on the current context, actors, and goals...
-                </p>
-                <button class="btn btn-primary generate-next-btn" data-scene-id="${
-                  scene.id
-                }">
-                  <i class="fas fa-magic"></i> Generate Next Action
-                </button>
-                <div class="next-suggestions" id="next-suggestions">
-                  <!-- AI suggestions will appear here -->
-                </div>
-              </div>
-            </div>
-
           </div>
         </div>
+        <div class="context-actions">
+          <button class="btn btn-sm btn-primary save-context-btn" data-scene-id="${
+            scene.id
+          }">
+            <i class="fas fa-save"></i> Save Context
+          </button>
+          <button class="btn btn-sm btn-outline-primary generate-context-btn" data-scene-id="${
+            scene.id
+          }">
+            <i class="fas fa-magic"></i> Generate Context
+          </button>
+        </div>
+      </div>
+    `;
+  }
 
-        <!-- FOOTER CONTROLS -->
-        <div class="run-scene-footer">
-          <div class="scene-controls">
-            <button class="btn btn-outline-warning pause-scene-btn">
-              <i class="fas fa-pause"></i> Pause Scene
-            </button>
-            <button class="btn btn-outline-success complete-scene-btn" data-scene-id="${
-              scene.id
-            }">
-              <i class="fas fa-check"></i> Complete Scene
+  /**
+   * Create the music panel
+   */
+  createMusicPanel(scene) {
+    return `
+      <div class="control-panel music-panel">
+        <h3><i class="fas fa-music"></i> Music</h3>
+        <div class="music-controls">
+          <div class="mood-selector">
+            <label>Current Mood:</label>
+            <select class="mood-select" data-scene-id="${scene.id}">
+              <option value="tense">Tense</option>
+              <option value="peaceful">Peaceful</option>
+              <option value="mysterious">Mysterious</option>
+              <option value="dangerous">Dangerous</option>
+              <option value="festive">Festive</option>
+              <option value="somber">Somber</option>
+              <option value="chaotic">Chaotic</option>
+            </select>
+          </div>
+          <div class="music-actions">
+            <button class="btn btn-sm btn-secondary generate-music-btn">
+              <i class="fas fa-music"></i> Find Music
             </button>
           </div>
+        </div>
+        <div class="music-output" id="music-output">
+          <p class="placeholder-text">Music suggestions will appear here...</p>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Create the read aloud panel
+   */
+  createReadAloudPanel(scene) {
+    if (!scene.read_aloud) return "";
+
+    return `
+      <div class="control-panel read-aloud-panel">
+        <h3><i class="fas fa-volume-up"></i> Read Aloud Text</h3>
+        <div class="read-aloud-display">
+          ${escapeHTML(scene.read_aloud)}
+        </div>
+        <button class="btn btn-sm btn-success mark-read-btn">
+          <i class="fas fa-check"></i> Mark as Read
+        </button>
+      </div>
+    `;
+  }
+
+  /**
+   * Create the player characters panel
+   */
+  createPlayerCharactersPanel(relevantCharacters) {
+    const playerCharacters = relevantCharacters.filter(
+      (char) => char.type === "pc"
+    );
+
+    return `
+      <div class="control-panel players-panel">
+        <h3><i class="fas fa-users"></i> Player Characters</h3>
+        <div class="players-list">
+          ${
+            playerCharacters.length > 0
+              ? playerCharacters
+                  .map((char) => this.createCharacterItem(char, "pc"))
+                  .join("")
+              : '<p class="no-players">No player characters in this scene.</p>'
+          }
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Create the NPCs panel
+   */
+  createNPCsPanel(scene, relevantCharacters) {
+    const npcCharacters = relevantCharacters.filter(
+      (char) => char.type === "npc"
+    );
+
+    return `
+      <div class="control-panel npcs-panel">
+        <h3><i class="fas fa-user-friends"></i> NPCs (You Control)</h3>
+        <div class="npcs-list">
+          ${
+            npcCharacters.length > 0
+              ? npcCharacters
+                  .map((char) => this.createCharacterItem(char, "npc"))
+                  .join("")
+              : '<p class="no-npcs">No NPCs in this scene location.</p>'
+          }
+        </div>
+        <button class="btn btn-sm btn-outline-success add-actor-btn" data-scene-id="${
+          scene.id
+        }">
+          <i class="fas fa-plus"></i> Add NPC
+        </button>
+      </div>
+    `;
+  }
+
+  /**
+   * Create a character item HTML
+   */
+  createCharacterItem(char, characterType) {
+    const isPC = characterType === "pc";
+    const thoughtLabel = isPC
+      ? "Player Intent/State:"
+      : "NPC Motivation/State:";
+    const thoughtPlaceholder = isPC
+      ? "What is this player trying to accomplish? What's their character's state?"
+      : "What does this NPC want? How are they feeling about the situation?";
+    const actionLabel = isPC ? "Player Action:" : "NPC Action/Response:";
+    const actionPlaceholder = isPC
+      ? "What did this player say they want to do?"
+      : "How does this NPC react? What do they do?";
+
+    return `
+      <div class="actor-item ${characterType}" data-character-id="${
+      char.id || ""
+    }">
+        <div class="actor-header">
+          <div class="actor-info">
+            <strong>${escapeHTML(char.name || "Unknown Character")}</strong>
+            <span class="actor-type">${characterType.toUpperCase()}</span>
+          </div>
+          <div class="actor-actions">
+            <button class="btn btn-xs btn-outline-primary view-character-btn" data-character-id="${
+              char.id || ""
+            }">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn btn-xs btn-outline-secondary toggle-actor-details" data-character-id="${
+              char.id || ""
+            }">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </div>
+        </div>
+        <div class="actor-details" id="actor-details-${
+          char.id
+        }" style="display: none;">
+          <div class="actor-thought-section">
+            <label>${thoughtLabel}</label>
+            <textarea class="actor-thought-input" rows="2" placeholder="${thoughtPlaceholder}" data-character-id="${
+      char.id
+    }"></textarea>
+          </div>
+          <div class="actor-action-section">
+            <label>${actionLabel}</label>
+            <textarea class="actor-action-input" rows="2" placeholder="${actionPlaceholder}" data-character-id="${
+      char.id
+    }"></textarea>
+            <button class="btn btn-xs btn-success save-actor-state-btn" data-character-id="${
+              char.id
+            }">
+              <i class="fas fa-save"></i> Save State
+            </button>
+          </div>
+          <div class="actor-history-section">
+            <h5><i class="fas fa-history"></i> Action History</h5>
+            <div class="action-history" id="history-${char.id}">
+              <p class="no-history">No actions recorded yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Create the world info panel
+   */
+  createWorldInfoPanel(relatedQuests, nearbyLocations) {
+    return `
+      <div class="control-panel world-info-panel">
+        <h3><i class="fas fa-globe"></i> Related Information</h3>
+        
+        ${this.createRelatedQuestsSection(relatedQuests)}
+        ${this.createNearbyLocationsSection(nearbyLocations)}
+      </div>
+    `;
+  }
+
+  /**
+   * Create the related quests section
+   */
+  createRelatedQuestsSection(relatedQuests) {
+    if (relatedQuests.length === 0) return "";
+
+    return `
+      <div class="world-section">
+        <h4><i class="fas fa-scroll"></i> Active Quests</h4>
+        <div class="quest-list">
+          ${relatedQuests
+            .map(
+              (quest) => `
+            <div class="quest-item" data-quest-id="${quest.id || ""}">
+              <span class="quest-name">${escapeHTML(
+                quest.title || quest.name || "Unknown Quest"
+              )}</span>
+              <span class="quest-status">${escapeHTML(
+                quest.status || "unknown"
+              )}</span>
+            </div>
+          `
+            )
+            .join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Create the nearby locations section
+   */
+  createNearbyLocationsSection(nearbyLocations) {
+    if (nearbyLocations.length === 0) return "";
+
+    return `
+      <div class="world-section">
+        <h4><i class="fas fa-map"></i> Nearby Locations</h4>
+        <div class="location-list">
+          ${nearbyLocations
+            .map(
+              (loc) => `
+            <div class="location-item" data-location-id="${loc.id || ""}">
+              ${escapeHTML(loc.name || "Unknown Location")}
+            </div>
+          `
+            )
+            .join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Create the therefore panel
+   */
+  createThereforePanel(scene) {
+    return `
+      <div class="control-panel therefore-panel">
+        <h3><i class="fas fa-arrow-right"></i> What Happens Next?</h3>
+        <div class="therefore-content">
+          <p class="therefore-description">
+            Based on the current context, actors, and goals...
+          </p>
+          <button class="btn btn-primary generate-next-btn" data-scene-id="${scene.id}">
+            <i class="fas fa-magic"></i> Generate Next Action
+          </button>
+          <div class="next-suggestions" id="next-suggestions">
+            <!-- AI suggestions will appear here -->
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Create the run scene footer
+   */
+  createRunSceneFooter(scene) {
+    return `
+      <div class="run-scene-footer">
+        <div class="scene-controls">
+          <button class="btn btn-outline-warning pause-scene-btn">
+            <i class="fas fa-pause"></i> Pause Scene
+          </button>
+          <button class="btn btn-outline-success complete-scene-btn" data-scene-id="${scene.id}">
+            <i class="fas fa-check"></i> Complete Scene
+          </button>
         </div>
       </div>
     `;
