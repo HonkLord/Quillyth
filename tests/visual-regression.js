@@ -19,10 +19,16 @@ class VisualRegressionTester {
     this.currentDir = path.join(this.screenshotsDir, "current");
     this.diffDir = path.join(this.screenshotsDir, "diff");
 
+    // Validate and normalize diffThreshold
+    const diffThreshold = VisualRegressionTester.validateDiffThreshold(
+      options.diffThreshold || 0.5
+    );
+    console.log(`ℹ️  diffThreshold configured as: ${diffThreshold}%`);
+
     // Visual comparison configuration
     this.config = {
       pixelThreshold: options.pixelThreshold || 0.1, // Color threshold (0-1)
-      diffThreshold: options.diffThreshold || 0.5, // Percentage of pixels that can differ
+      diffThreshold: diffThreshold, // Percentage of pixels that can differ (0-100)
       includeAA: options.includeAA !== false, // Include anti-aliasing
       alpha: options.alpha || 0.5, // Alpha channel threshold
       aaColor: options.aaColor || [255, 255, 0], // Anti-aliasing color (yellow)
@@ -208,12 +214,23 @@ class VisualRegressionTester {
     const totalPixels = baselineImg.width * baselineImg.height;
     const diffPercentage = (numDiffPixels / totalPixels) * 100;
 
+    // Validate threshold before comparison
+    if (
+      typeof this.config.diffThreshold !== "number" ||
+      this.config.diffThreshold < 0 ||
+      this.config.diffThreshold > 100
+    ) {
+      throw new Error(
+        `Invalid diffThreshold configuration: ${this.config.diffThreshold}. Must be a number between 0-100 (percentage)`
+      );
+    }
+
     // Save diff image if differences are found
     if (numDiffPixels > 0 && diffPath) {
       fs.writeFileSync(diffPath, PNG.sync.write(diffImg));
     }
 
-    // Check against configured threshold
+    // Check against configured threshold (both values are now guaranteed to be percentages 0-100)
     if (diffPercentage > this.config.diffThreshold) {
       throw new Error(
         `Visual regression detected: ${numDiffPixels} pixels differ (${diffPercentage.toFixed(
@@ -542,6 +559,32 @@ class VisualRegressionTester {
       console.log("🎉 All visual tests passed! No regressions detected.");
     }
   }
+
+  /**
+   * Validate and normalize a diffThreshold value
+   * @param {number} threshold - The threshold value to validate
+   * @returns {number} - Normalized threshold as percentage (0-100)
+   * @throws {Error} - If threshold is invalid
+   */
+  static validateDiffThreshold(threshold) {
+    if (typeof threshold !== "number" || isNaN(threshold)) {
+      throw new Error(
+        `Invalid diffThreshold: ${threshold}. Must be a valid number`
+      );
+    }
+
+    if (threshold > 1 && threshold <= 100) {
+      // Threshold is provided as percentage (0-100)
+      return threshold;
+    } else if (threshold >= 0 && threshold <= 1) {
+      // Threshold is provided as decimal (0-1), convert to percentage
+      return threshold * 100;
+    } else {
+      throw new Error(
+        `Invalid diffThreshold value: ${threshold}. Must be between 0-1 (decimal) or 0-100 (percentage)`
+      );
+    }
+  }
 }
 
 // Parse command line arguments
@@ -567,9 +610,15 @@ Examples:
 
 Configuration:
   The tool uses pixel-level comparison with configurable thresholds:
-  - Pixel threshold: 0.1 (color sensitivity)
-  - Diff threshold: 0.5% (percentage of pixels that can differ)
+  - Pixel threshold: 0.1 (color sensitivity, 0-1 range)
+  - Diff threshold: 0.5% (percentage of pixels that can differ, accepts 0-1 decimal or 0-100 percentage)
   - Auto-creates missing baselines by default
+
+Threshold Format:
+  diffThreshold accepts values in either format:
+  - Decimal (0-1): 0.5 = 50% tolerance
+  - Percentage (0-100): 50 = 50% tolerance
+  The tool automatically detects and normalizes the format.
 
 Output:
   - Screenshots saved to: tests/screenshots/current/
@@ -592,3 +641,6 @@ if (updateBaselines) {
 }
 
 tester.runAllTests().catch(console.error);
+
+// Export the class for testing
+module.exports = { VisualRegressionTester };
