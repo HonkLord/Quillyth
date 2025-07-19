@@ -449,7 +449,7 @@ module.exports = (db) => {
   router.get("/:id/actor-states", (req, res) => {
     try {
       const sceneId = req.params.id;
-      const { characterId } = req.query;
+      const { characterId, limit, offset } = req.query;
 
       // Check if scene exists
       const scene = db
@@ -457,6 +457,28 @@ module.exports = (db) => {
         .get(sceneId);
       if (!scene) {
         return res.status(404).json({ error: "Scene not found" });
+      }
+
+      // Validate and parse pagination parameters
+      let parsedLimit = 50; // Default limit
+      let parsedOffset = 0; // Default offset
+
+      if (limit !== undefined) {
+        parsedLimit = parseInt(limit, 10);
+        if (isNaN(parsedLimit) || parsedLimit < 1 || parsedLimit > 1000) {
+          return res.status(400).json({
+            error: "Limit must be a positive integer between 1 and 1000",
+          });
+        }
+      }
+
+      if (offset !== undefined) {
+        parsedOffset = parseInt(offset, 10);
+        if (isNaN(parsedOffset) || parsedOffset < 0) {
+          return res.status(400).json({
+            error: "Offset must be a non-negative integer",
+          });
+        }
       }
 
       let query = `
@@ -472,7 +494,8 @@ module.exports = (db) => {
         params.push(characterId);
       }
 
-      query += " ORDER BY timestamp DESC";
+      query += " ORDER BY timestamp DESC LIMIT ? OFFSET ?";
+      params.push(parsedLimit, parsedOffset);
 
       const actorStates = db.prepare(query).all(...params);
 
@@ -482,7 +505,30 @@ module.exports = (db) => {
         metadata: state.metadata ? JSON.parse(state.metadata) : {},
       }));
 
-      res.json(parsedStates);
+      // Get total count for pagination info
+      let countQuery = `
+        SELECT COUNT(*) as total
+        FROM scene_actor_states 
+        WHERE scene_id = ?
+      `;
+      const countParams = [sceneId];
+
+      if (characterId) {
+        countQuery += " AND character_id = ?";
+        countParams.push(characterId);
+      }
+
+      const totalCount = db.prepare(countQuery).get(...countParams).total;
+
+      res.json({
+        data: parsedStates,
+        pagination: {
+          limit: parsedLimit,
+          offset: parsedOffset,
+          total: totalCount,
+          hasMore: parsedOffset + parsedLimit < totalCount,
+        },
+      });
     } catch (error) {
       console.error("Error fetching actor states:", error);
       res.status(500).json({ error: "Failed to fetch actor states" });

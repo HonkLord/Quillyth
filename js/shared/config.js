@@ -80,7 +80,24 @@ export const CONFIG = {
  * @returns {*} Configuration value or default
  */
 export function getConfig(path, defaultValue = null) {
+  // Validate path input
+  if (typeof path !== "string" || path.trim() === "") {
+    return defaultValue;
+  }
+
+  // Check for invalid characters (only allow alphanumeric, dots, and underscores)
+  if (!/^[a-zA-Z0-9._]+$/.test(path)) {
+    return defaultValue;
+  }
+
+  // Split path and validate each segment
   const keys = path.split(".");
+
+  // Check for empty segments (e.g., "CAMPAIGNS..DEFAULT_CAMPAIGN_ID")
+  if (keys.some((key) => key.trim() === "")) {
+    return defaultValue;
+  }
+
   let value = CONFIG;
 
   for (const key of keys) {

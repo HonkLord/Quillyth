@@ -28,19 +28,32 @@ This document outlines the plan to replace placeholder AI functionality in `js/c
 
 ```javascript
 // Scene-specific AI generation methods
-async generateSceneContext(sceneData, campaignContext) {
-  const prompt = this.buildSceneContextPrompt(sceneData, campaignContext);
+async generateSceneContext(scene, location, campaignContext) {
+  const prompt = this.#buildSceneContextPrompt(scene, location, campaignContext);
   return this.generateContent(prompt);
 }
 
-async generateMusicSuggestion(sceneData, mood) {
-  const prompt = this.buildMusicPrompt(sceneData, mood);
+async generateMusicSuggestion(scene, mood) {
+  const prompt = this.#buildMusicPrompt(scene, mood);
   return this.generateContent(prompt);
 }
 
-async generateNextAction(sceneData, actorStates, campaignContext) {
-  const prompt = this.buildNextActionPrompt(sceneData, actorStates, campaignContext);
+async generateNextAction(scene, actorStates, campaignContext) {
+  const prompt = this.#buildNextActionPrompt(scene, actorStates, campaignContext);
   return this.generateContent(prompt);
+}
+
+// Private helper methods for building prompts
+#buildSceneContextPrompt(scene, location, campaignContext) {
+  return getSceneContextPrompt(scene, location, campaignContext);
+}
+
+#buildMusicPrompt(scene, mood) {
+  return getMusicSuggestionPrompt(scene, mood);
+}
+
+#buildNextActionPrompt(scene, actorStates, campaignContext) {
+  return getNextActionPrompt(scene, actorStates, campaignContext);
 }
 ```
 

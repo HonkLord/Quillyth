@@ -8,7 +8,8 @@
 const puppeteer = require("puppeteer");
 const fs = require("fs");
 const path = require("path");
-const pixelmatch = require("pixelmatch").default || require("pixelmatch");
+const pixelmatchModule = require("pixelmatch");
+const pixelmatch = pixelmatchModule.default || pixelmatchModule;
 const { PNG } = require("pngjs");
 
 class VisualRegressionTester {

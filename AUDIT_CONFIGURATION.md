@@ -190,6 +190,14 @@ When adding a new feature (e.g., "inventory"):
    }
    ```
 
+**⚠️  IMPORTANT: After making any configuration changes, always run the audit process to verify your changes:**
+
+```bash
+node audit-application.js
+```
+
+This ensures that your new feature is properly integrated and all audit checks pass before committing your changes.
+
 This approach makes the audit system much more maintainable and flexible as your application grows.
 
 ## CDN Enforcement Configuration

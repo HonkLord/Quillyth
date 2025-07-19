@@ -209,6 +209,70 @@ Add helper methods to support AI integration:
 - Frequency of AI feature usage
 - Reduction in manual scene preparation time
 
+### Monitoring and Alerting Metrics
+
+#### API Performance Monitoring
+- **API Error Rates by Type:**
+  - Rate limit exceeded errors < 1% of requests
+  - Authentication failures < 0.1% of requests
+  - Network timeout errors < 2% of requests
+  - Malformed request errors < 0.5% of requests
+  - Server error (5xx) responses < 1% of requests
+
+- **Response Time Percentiles:**
+  - P50 (median) < 2 seconds
+  - P95 < 4 seconds
+  - P99 < 6 seconds
+  - Timeout threshold: 10 seconds
+
+#### Cache Performance
+- **Cache Hit/Miss Ratios:**
+  - Scene context cache hit rate > 70%
+  - Music suggestion cache hit rate > 60%
+  - "Therefore" system cache hit rate > 50%
+  - Overall cache efficiency > 65%
+
+- **Cache Performance Metrics:**
+  - Cache eviction rate < 10% per hour
+  - Cache memory usage < 100MB
+  - Cache warm-up time < 30 seconds after restart
+
+#### Token Usage and Cost Management
+- **Average Token Usage per Request:**
+  - Scene context generation: < 500 tokens
+  - Music suggestions: < 300 tokens
+  - "Therefore" system: < 800 tokens
+  - Overall average: < 600 tokens per request
+
+- **Cost Monitoring:**
+  - Daily token consumption < 50,000 tokens
+  - Monthly cost variance < 20% from baseline
+  - Cost per successful request < $0.01
+
+#### Alerting Thresholds
+- **Critical Alerts (Immediate Response Required):**
+  - API error rate > 10% for 5 consecutive minutes
+  - Response time P95 > 8 seconds for 10 consecutive minutes
+  - Cache hit rate < 30% for 15 consecutive minutes
+  - Token usage > 100,000 tokens in 1 hour
+
+- **Warning Alerts (Investigation Required):**
+  - API error rate > 5% for 10 consecutive minutes
+  - Response time P95 > 6 seconds for 15 consecutive minutes
+  - Cache hit rate < 50% for 30 consecutive minutes
+  - Token usage > 75,000 tokens in 1 hour
+
+#### Operational Health Metrics
+- **Service Availability:**
+  - Uptime > 99.5%
+  - Graceful degradation success rate > 95%
+  - Fallback mechanism activation rate < 5%
+
+- **Data Quality:**
+  - Valid JSON response rate > 98%
+  - Content relevance score > 85% (user feedback)
+  - Prompt template effectiveness > 90%
+
 ## Notes
 
 - All issues should include proper error handling and graceful degradation
