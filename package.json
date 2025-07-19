@@ -9,7 +9,14 @@
     "dev": "node server.js",
     "test": "node tests/test-runner.js",
     "test:manual": "echo \"Manual testing checklist available at tests/manual-test-checklist.md\"",
-    "test:install": "npm install node-fetch@2"
+    "test:install": "npm install node-fetch@2",
+    "audit": "node audit-application.js",
+    "test:accessibility": "node tests/accessibility-test.js",
+    "test:performance": "node tests/performance-monitor.js",
+    "test:visual": "node tests/visual-regression.js",
+    "test:all": "npm run test && npm run audit && npm run test:performance",
+    "test:ci": "npm run test:all && npm run test:accessibility && npm run test:visual",
+    "maintenance": "node scripts/monthly-maintenance.js"
   },
   "keywords": [
     "dnd",
@@ -28,6 +35,8 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "puppeteer": "^21.0.0",
+    "axe-core": "^4.8.0"
   }
 }
