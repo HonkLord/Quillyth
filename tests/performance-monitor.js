@@ -234,9 +234,10 @@ class PerformanceMonitor {
 
   generateRecommendations() {
     const recommendations = [];
+    const issues = this.hasPerformanceIssues();
     const avgResponseTime = this.calculateAverageResponseTime();
 
-    if (avgResponseTime > this.results.thresholds.apiResponseTime) {
+    if (issues.averageResponseTimeExceeded) {
       recommendations.push({
         type: "warning",
         message: `Average response time (${avgResponseTime}ms) exceeds threshold (${this.results.thresholds.apiResponseTime}ms)`,
@@ -244,28 +245,21 @@ class PerformanceMonitor {
       });
     }
 
-    const slowEndpoints = this.results.apiTests.filter(
-      (t) =>
-        t.status === "PASS" &&
-        t.duration > this.results.thresholds.apiResponseTime
-    );
-
-    if (slowEndpoints.length > 0) {
+    if (issues.slowEndpointsCount > 0) {
+      const slowEndpoints = this.getSlowEndpoints();
       recommendations.push({
         type: "optimization",
-        message: `${slowEndpoints.length} endpoints are performing slowly`,
+        message: `${issues.slowEndpointsCount} endpoints are performing slowly`,
         action: "Review and optimize database queries for these endpoints",
         endpoints: slowEndpoints.map((t) => t.name),
       });
     }
 
-    const failedTests = this.results.apiTests.filter(
-      (t) => t.status === "FAIL"
-    );
-    if (failedTests.length > 0) {
+    if (issues.failedTestsCount > 0) {
+      const failedTests = this.getFailedTests();
       recommendations.push({
         type: "error",
-        message: `${failedTests.length} performance tests failed`,
+        message: `${issues.failedTestsCount} performance tests failed`,
         action: "Investigate and fix performance issues",
         failures: failedTests.map((t) => ({ name: t.name, error: t.error })),
       });
@@ -330,14 +324,8 @@ class PerformanceMonitor {
 
   hasPerformanceIssues() {
     const avgResponseTime = this.calculateAverageResponseTime();
-    const slowEndpoints = this.results.apiTests.filter(
-      (t) =>
-        t.status === "PASS" &&
-        t.duration > this.results.thresholds.apiResponseTime
-    );
-    const failedTests = this.results.apiTests.filter(
-      (t) => t.status === "FAIL"
-    );
+    const slowEndpoints = this.getSlowEndpoints();
+    const failedTests = this.getFailedTests();
 
     return {
       averageResponseTimeExceeded:
@@ -349,6 +337,18 @@ class PerformanceMonitor {
         slowEndpoints.length > 0,
       hasErrors: failedTests.length > 0,
     };
+  }
+
+  getSlowEndpoints() {
+    return this.results.apiTests.filter(
+      (t) =>
+        t.status === "PASS" &&
+        t.duration > this.results.thresholds.apiResponseTime
+    );
+  }
+
+  getFailedTests() {
+    return this.results.apiTests.filter((t) => t.status === "FAIL");
   }
 }
 
