@@ -357,10 +357,26 @@ const config = {
   // Override these values as needed for different test environments
   campaignId: process.env.TEST_CAMPAIGN_ID || "campaign-4-old-cistern",
   baseUrl: process.env.TEST_BASE_URL || "http://localhost:3000",
-  apiResponseTime: process.env.TEST_API_RESPONSE_TIME || 1000,
-  pageLoadTime: process.env.TEST_PAGE_LOAD_TIME || 3000,
-  memoryUsage: process.env.TEST_MEMORY_USAGE || 50,
+  apiResponseTime: parseInt(process.env.TEST_API_RESPONSE_TIME) || 1000,
+  pageLoadTime: parseInt(process.env.TEST_PAGE_LOAD_TIME) || 3000,
+  memoryUsage: parseInt(process.env.TEST_MEMORY_USAGE) || 50,
 };
+
+// Validate numeric configuration values
+if (isNaN(config.apiResponseTime) || config.apiResponseTime <= 0) {
+  console.warn("Invalid TEST_API_RESPONSE_TIME, using default: 1000ms");
+  config.apiResponseTime = 1000;
+}
+
+if (isNaN(config.pageLoadTime) || config.pageLoadTime <= 0) {
+  console.warn("Invalid TEST_PAGE_LOAD_TIME, using default: 3000ms");
+  config.pageLoadTime = 3000;
+}
+
+if (isNaN(config.memoryUsage) || config.memoryUsage <= 0) {
+  console.warn("Invalid TEST_MEMORY_USAGE, using default: 50MB");
+  config.memoryUsage = 50;
+}
 
 // Run performance monitoring
 const monitor = new PerformanceMonitor(config);

@@ -396,6 +396,19 @@ module.exports = (db) => {
         return res.status(404).json({ error: "Scene not found" });
       }
 
+      // Check if character belongs to this scene
+      const characterInScene = db
+        .prepare(
+          "SELECT id FROM scene_characters WHERE scene_id = ? AND character_id = ?"
+        )
+        .get(sceneId, characterId);
+      if (!characterInScene) {
+        return res.status(404).json({
+          error:
+            "Character not found in this scene. Please add the character to the scene first.",
+        });
+      }
+
       // Insert actor state
       const insertStmt = db.prepare(`
         INSERT INTO scene_actor_states (
@@ -403,13 +416,23 @@ module.exports = (db) => {
         ) VALUES (?, ?, ?, ?, ?, ?)
       `);
 
+      // Validate metadata size before storing
+      const metadataString = metadata ? JSON.stringify(metadata) : "{}";
+      const MAX_METADATA_SIZE = 10000; // 10KB limit
+
+      if (metadataString.length > MAX_METADATA_SIZE) {
+        return res.status(400).json({
+          error: `Metadata too large. Maximum size is ${MAX_METADATA_SIZE} characters, got ${metadataString.length}`,
+        });
+      }
+
       const result = insertStmt.run(
         sceneId,
         characterId,
         characterType,
         thought || null,
         action || null,
-        metadata ? JSON.stringify(metadata) : "{}"
+        metadataString
       );
 
       res.json({

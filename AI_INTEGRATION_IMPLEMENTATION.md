@@ -11,64 +11,19 @@ This guide provides step-by-step instructions to replace the placeholder setTime
 ```javascript
 // Add these methods to the GeminiService class
 
-async generateSceneContext(sceneData, location, campaignContext) {
-  const prompt = this.buildSceneContextPrompt(sceneData, location, campaignContext);
+async generateSceneContext(sceneData, campaignContext) {
+  const prompt = getSceneContextPrompt(sceneData, campaignContext);
   return this.generateContent(prompt);
 }
 
 async generateMusicSuggestion(sceneData, mood) {
-  const prompt = this.buildMusicPrompt(sceneData, mood);
+  const prompt = getMusicSuggestionPrompt(sceneData, mood);
   return this.generateContent(prompt);
 }
 
 async generateNextAction(sceneData, actorStates, campaignContext) {
-  const prompt = this.buildNextActionPrompt(sceneData, actorStates, campaignContext);
+  const prompt = getNextActionPrompt(sceneData, actorStates, campaignContext);
   return this.generateContent(prompt);
-}
-
-// Helper methods to build prompts
-buildSceneContextPrompt(scene, location, campaignContext) {
-  return `Generate rich, atmospheric context for this D&D scene:
-
-SCENE: ${scene.name} (${scene.scene_type})
-LOCATION: ${location?.name || 'Unknown'}
-SETUP: ${scene.current_setup || 'None'}
-DESCRIPTION: ${scene.description || 'No description'}
-
-LOCATION CONTEXT: ${location?.description || 'No location description'}
-
-CAMPAIGN CONTEXT: ${campaignContext || 'No campaign context'}
-
-Provide atmospheric details, sensory information, and immersive descriptions that a DM can use to enhance the scene.`;
-}
-
-buildMusicPrompt(scene, mood) {
-  return `Suggest appropriate music and ambient sounds for this D&D scene:
-
-SCENE: ${scene.name} (${scene.scene_type})
-MOOD: ${mood}
-LOCATION: ${scene.location_id}
-DESCRIPTION: ${scene.description || 'No description'}
-
-Provide specific music recommendations, ambient sounds, and pacing suggestions for this scene.`;
-}
-
-buildNextActionPrompt(scene, actorStates, campaignContext) {
-  const actorInfo = actorStates.map(state => 
-    `${state.characterName} (${state.characterType}): ${state.thought || 'No thought'} | ${state.action || 'No action'}`
-  ).join('\n');
-
-  return `Based on the current scene dynamics, suggest what should happen next:
-
-SCENE: ${scene.name} (${scene.scene_type})
-STATUS: ${scene.scene_status}
-
-ACTOR STATES:
-${actorInfo}
-
-CAMPAIGN CONTEXT: ${campaignContext || 'No campaign context'}
-
-Provide "Therefore" suggestions for scene progression, NPC reactions, and plot advancement while maintaining player agency.`;
 }
 ```
 
@@ -191,9 +146,39 @@ constructor() {
 
 async getCampaignContext(campaignId) {
   try {
-    // This would fetch campaign context from your database
-    // For now, return a placeholder
-    return "Campaign context placeholder";
+    if (!campaignId) {
+      console.warn('No campaign ID provided for context retrieval');
+      return null;
+    }
+
+    // Fetch campaign data from the API
+    const response = await fetch(`/api/campaigns/${campaignId}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch campaign: ${response.status}`);
+    }
+
+    const campaign = await response.json();
+    
+    // Build comprehensive campaign context
+    const context = {
+      name: campaign.name || 'Unknown Campaign',
+      description: campaign.description || '',
+      setting: campaign.setting || '',
+      currentArc: campaign.current_arc || '',
+      majorEvents: campaign.major_events || '',
+      npcRelationships: campaign.npc_relationships || '',
+      worldState: campaign.world_state || ''
+    };
+
+    // Format the context for AI consumption
+    return `CAMPAIGN: ${context.name}
+DESCRIPTION: ${context.description}
+SETTING: ${context.setting}
+CURRENT ARC: ${context.currentArc}
+MAJOR EVENTS: ${context.majorEvents}
+NPC RELATIONSHIPS: ${context.npcRelationships}
+WORLD STATE: ${context.worldState}`.trim();
+
   } catch (error) {
     console.error('Failed to get campaign context:', error);
     return null;

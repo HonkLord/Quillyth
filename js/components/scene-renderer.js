@@ -3,10 +3,18 @@
  */
 import { escapeHTML } from "../shared/escape-html.js";
 import { getDefaultCampaignId, isDebugEnabled } from "../shared/config.js";
+import { GeminiService } from "../services/gemini-service.js";
+import {
+  getSceneContextPrompt,
+  getMusicSuggestionPrompt,
+  getNextActionPrompt,
+} from "../prompt-templates.js";
+
 class SceneRenderer {
   constructor() {
     this.currentScene = null;
     this.quickNPCCounter = 0; // Counter for generating unique quick NPC IDs
+    this.geminiService = new GeminiService(); // Initialize Gemini AI service
   }
 
   /**
@@ -1315,14 +1323,31 @@ class SceneRenderer {
    * Generate scene context using AI
    */
   async generateSceneContext(scene) {
-    // Placeholder for AI integration
-    const output = document.getElementById("atmosphere-output");
-    if (output) {
+    try {
+      const output = document.getElementById("atmosphere-output");
+      if (!output) return;
+
       output.innerHTML = `<p class="generating">🤖 Generating contextual information...</p>`;
-      // TODO: Integrate with Gemini AI service
-      setTimeout(() => {
-        output.innerHTML = `<p>Context generated based on scene type "${scene.scene_type}" and location. This would integrate with the AI service to provide rich contextual information.</p>`;
-      }, 1500);
+
+      // Get campaign context
+      const campaignContext = await this.getCampaignContext(scene.campaign_id);
+
+      // Generate context using AI with new signature
+      const context = await this.geminiService.generateSceneContext(
+        scene,
+        campaignContext
+      );
+
+      output.innerHTML = `<div class="ai-generated-content">${context}</div>`;
+    } catch (error) {
+      console.error("Failed to generate scene context:", error);
+      this.showToast("Failed to generate context", "error");
+
+      // Fallback to placeholder content
+      const output = document.getElementById("atmosphere-output");
+      if (output) {
+        output.innerHTML = `<p>Context generation failed. Please try again or add context manually.</p>`;
+      }
     }
   }
 
@@ -1330,16 +1355,28 @@ class SceneRenderer {
    * Generate music suggestion based on mood
    */
   async generateMusicSuggestion(scene) {
-    const mood = document.querySelector(".mood-select")?.value || "neutral";
-    const output = document.getElementById("music-output");
-    if (output) {
+    try {
+      const mood = document.querySelector(".mood-select")?.value || "neutral";
+      const output = document.getElementById("music-output");
+      if (!output) return;
+
       output.innerHTML = `<p class="generating">🎵 Finding music for ${mood} mood...</p>`;
-      // TODO: Implement music suggestion API
-      setTimeout(() => {
-        output.innerHTML = `<p><strong>Music Suggestion for ${mood} scene:</strong><br>Search for: "${mood} D&D ambient music" or "fantasy ${mood} soundtrack"<br><br><strong>Suggested Tracks:</strong><br>• Ambient ${mood} fantasy background<br>• ${
-          mood.charAt(0).toUpperCase() + mood.slice(1)
-        } dungeon atmosphere<br>• Medieval ${mood} tavern sounds</p>`;
-      }, 1000);
+
+      const musicSuggestion = await this.geminiService.generateMusicSuggestion(
+        scene,
+        mood
+      );
+
+      output.innerHTML = `<div class="ai-generated-content">${musicSuggestion}</div>`;
+    } catch (error) {
+      console.error("Failed to generate music suggestion:", error);
+      this.showToast("Failed to generate music suggestion", "error");
+
+      // Fallback to placeholder content
+      const output = document.getElementById("music-output");
+      if (output) {
+        output.innerHTML = `<p>Music suggestion failed. Please try again or search manually.</p>`;
+      }
     }
   }
 
@@ -1347,20 +1384,34 @@ class SceneRenderer {
    * Generate next action suggestions
    */
   async generateNextAction(scene) {
-    const suggestions = document.getElementById("next-suggestions");
-    if (suggestions) {
+    try {
+      const suggestions = document.getElementById("next-suggestions");
+      if (!suggestions) return;
+
       suggestions.innerHTML = `<p class="generating">🎲 Analyzing scene context...</p>`;
-      // TODO: Implement AI-powered "Therefore" system
-      setTimeout(() => {
-        suggestions.innerHTML = `
-          <div class="suggestion-item">
-            <strong>Therefore:</strong> Based on the current scene dynamics, consider having an NPC react to the party's presence or introduce a complication that advances the plot.
-          </div>
-          <div class="suggestion-item">
-            <strong>Alternative:</strong> Allow the players to drive the scene forward with their questions or actions.
-          </div>
-        `;
-      }, 2000);
+
+      // Get current actor states
+      const actorStates = this.getCurrentActorStates(scene.id);
+
+      // Get campaign context
+      const campaignContext = await this.getCampaignContext(scene.campaign_id);
+
+      const nextAction = await this.geminiService.generateNextAction(
+        scene,
+        actorStates,
+        campaignContext
+      );
+
+      suggestions.innerHTML = `<div class="ai-generated-content">${nextAction}</div>`;
+    } catch (error) {
+      console.error("Failed to generate next action:", error);
+      this.showToast("Failed to generate next action", "error");
+
+      // Fallback to placeholder content
+      const suggestions = document.getElementById("next-suggestions");
+      if (suggestions) {
+        suggestions.innerHTML = `<p>Next action generation failed. Please try again or proceed manually.</p>`;
+      }
     }
   }
 
@@ -1817,6 +1868,92 @@ class SceneRenderer {
     } catch (error) {
       console.error("Failed to load actor state history:", error);
       // Don't show error toast as this is a background operation
+    }
+  }
+
+  /**
+   * Get campaign context for AI generation
+   */
+  async getCampaignContext(campaignId) {
+    try {
+      if (!campaignId) {
+        console.warn("No campaign ID provided for context retrieval");
+        return null;
+      }
+
+      // Fetch campaign data from the API
+      const response = await fetch(`/api/campaigns/${campaignId}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch campaign: ${response.status}`);
+      }
+
+      const campaign = await response.json();
+
+      // Build comprehensive campaign context
+      const context = {
+        name: campaign.name || "Unknown Campaign",
+        description: campaign.description || "",
+        setting: campaign.setting || "",
+        currentArc: campaign.current_arc || "",
+        majorEvents: campaign.major_events || "",
+        npcRelationships: campaign.npc_relationships || "",
+        worldState: campaign.world_state || "",
+      };
+
+      // Format the context for AI consumption
+      return `CAMPAIGN: ${context.name}
+DESCRIPTION: ${context.description}
+SETTING: ${context.setting}
+CURRENT ARC: ${context.currentArc}
+MAJOR EVENTS: ${context.majorEvents}
+NPC RELATIONSHIPS: ${context.npcRelationships}
+WORLD STATE: ${context.worldState}`.trim();
+    } catch (error) {
+      console.error("Failed to get campaign context:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Get current actor states for AI generation
+   */
+  getCurrentActorStates(sceneId) {
+    try {
+      if (!this.sceneActionHistory[sceneId]) {
+        return [];
+      }
+
+      const states = [];
+      Object.entries(this.sceneActionHistory[sceneId]).forEach(
+        ([characterId, history]) => {
+          if (history.length > 0) {
+            const latestState = history[history.length - 1];
+            const characterElement = document.querySelector(
+              `[data-character-id="${characterId}"]`
+            );
+            const characterName =
+              characterElement?.querySelector("strong")?.textContent ||
+              "Unknown";
+            const characterType = characterElement?.classList.contains("pc")
+              ? "PC"
+              : "NPC";
+
+            states.push({
+              characterId,
+              characterName,
+              characterType,
+              thought: latestState.thought,
+              action: latestState.action,
+              timestamp: latestState.timestamp,
+            });
+          }
+        }
+      );
+
+      return states;
+    } catch (error) {
+      console.error("Failed to get current actor states:", error);
+      return [];
     }
   }
 
