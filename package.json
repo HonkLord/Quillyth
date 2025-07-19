@@ -37,6 +37,8 @@
   "devDependencies": {
     "node-fetch": "^2.7.0",
     "puppeteer": "^21.0.0",
-    "axe-core": "^4.8.0"
+    "axe-core": "^4.8.0",
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0"
   }
 }

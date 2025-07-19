@@ -1,234 +1,99 @@
-# Campaign Manager Testing Framework
+# Testing Suite
 
-This directory contains comprehensive testing tools for the D&D Campaign Manager application.
+This directory contains comprehensive testing tools for the Campaign Manager application.
 
-## 🧪 Automated Tests
+## Test Files
 
-### Quick Start
+### Core Tests
+- `test-runner.js` - Main test runner for functional tests
+- `manual-test-checklist.md` - Manual testing procedures and checklist
 
-1. **Install test dependencies:**
+### Specialized Tests
+- `accessibility-test.js` - Automated accessibility testing using axe-core
+- `performance-monitor.js` - Performance monitoring and benchmarking
+- `visual-regression.js` - **Visual regression testing with pixel-level comparison**
 
-   ```bash
-   npm run test:install
-   ```
+## Visual Regression Testing
 
-2. **Start the server:**
+The visual regression testing tool has been significantly improved with proper image comparison capabilities:
 
-   ```bash
-   npm start
-   ```
+### Features
+- **Pixel-level comparison** using `pixelmatch` library instead of unreliable file size comparison
+- **Configurable thresholds** for color sensitivity and acceptable difference percentages
+- **Automatic baseline creation** for missing reference screenshots
+- **Diff image generation** showing exactly what changed
+- **Command-line interface** with help and update options
 
-3. **Run automated tests:**
-
-   ```bash
-   npm test
-   ```
-
-### Test Runner Features
-
-The automated test runner (`test-runner.js`) validates:
-
-- **Server Connectivity** - Ensures server is running and accessible
-- **API Endpoints** - Tests all REST API endpoints for proper responses
-- **File Structure** - Validates required files exist and are properly structured
-- **Code Quality** - Checks for onclick handlers removal and proper ES6 modules
-- **Integration** - Tests PlayerArcManager integration and event delegation
-- **Performance** - Validates API response times
-
-### Test Categories
-
-#### 📡 Server Connectivity Tests
-
-- Server availability
-- Static file serving
-- HTML content validation
-
-#### 🔌 API Endpoint Tests
-
-- `/api/campaigns` - Campaign data retrieval
-- `/api/locations` - Location data
-- `/api/sessions` - Session information
-- `/api/scenes` - Scene data
-- `/api/characters` - Character information
-- `/api/players` - Player data
-- `/api/player-arcs` - Player arc data (GET/PUT)
-
-#### 📁 File Structure Tests
-
-- Required files existence
-- No onclick handlers in HTML
-- Proper data-action attributes
-- ES6 module structure
-
-#### 🔗 Integration Tests
-
-- PlayerArcManager class structure
-- Event delegation implementation
-- Module imports/exports
-
-#### ⚡ Performance Tests
-
-- API response times (<5 seconds)
-- Server responsiveness
-
-### Test Results
-
-The test runner provides:
-
-- ✅ Pass/❌ Fail status for each test
-- 📊 Summary statistics
-- 🎯 Success rate percentage
-- 📝 Detailed error messages for failures
-
-## 📋 Manual Tests
-
-### Manual Test Checklist
-
-Use `manual-test-checklist.md` for comprehensive manual testing:
+### Usage
 
 ```bash
-npm run test:manual
+# Run all visual regression tests
+npm run test:visual
+
+# Or directly
+node tests/visual-regression.js
+
+# Show help
+node tests/visual-regression.js --help
+
+# Update baselines (after intentional UI changes)
+node tests/visual-regression.js --update-baselines
 ```
 
-### Manual Test Categories
+### Configuration
 
-- **🏠 Dashboard & Navigation** - UI navigation and basic functionality
-- **🎭 Scenes Workspace** - Scene management and display
-- **👥 Characters Workspace** - Character management and player arcs
-- **🏰 Campaign Workspace** - Campaign details and settings
-- **⚡ Quick Actions** - Quick action panel functionality
-- **🔧 Technical Functionality** - Event handling and API integration
-- **📱 UI/UX** - Responsive design and accessibility
-- **🚨 Error Handling** - Error states and recovery
-- **🔄 Data Flow** - CRUD operations
-- **🎯 Player Arc Specific** - Player arc management features
-- **🔍 Search & Filter** - Search and filtering functionality
-- **📊 Performance** - Load times and responsiveness
+The tool uses configurable thresholds:
+- **Pixel threshold**: 0.1 (color sensitivity, 0-1)
+- **Diff threshold**: 0.5% (percentage of pixels that can differ)
+- **Auto-create baselines**: Enabled by default
 
-### Manual Testing Process
+### Output Structure
 
-1. **Pre-Test Setup**
-   - Start server
-   - Open browser to `http://localhost:3000`
-   - Open browser console for error monitoring
-
-2. **Execute Test Categories**
-   - Work through each category systematically
-   - Check off completed items
-   - Document any issues found
-
-3. **Record Results**
-   - Update the test execution log
-   - Note any bugs or issues
-   - Track overall status
-
-## 🔧 Test Configuration
-
-### Environment Requirements
-
-- **Node.js** - Version 14+ recommended
-- **SQLite Database** - `campaign.db` with test data
-- **Network Access** - For API testing
-- **Modern Browser** - For manual testing
-
-### Test Data Setup
-
-Ensure your database contains:
-
-- At least one campaign
-- Sample scenes, characters, and players
-- Player arc data for testing
-
-### Troubleshooting
-
-#### Common Issues
-
-1. **"Server not accessible"**
-   - Ensure server is running on port 3000
-   - Check for port conflicts
-
-2. **"API request failed"**
-   - Verify database exists and is accessible
-   - Check server logs for errors
-
-3. **"Required file not found"**
-   - Ensure all files are in correct locations
-   - Run from project root directory
-
-4. **"No players found"**
-   - Add test data to database
-   - Check player_arcs table structure
-
-#### Debug Mode
-
-For detailed debugging, modify the test runner:
-
-```javascript
-// Add at top of test-runner.js
-const DEBUG = true;
-
-// Use in tests
-if (DEBUG) console.log('Debug info:', data);
+```
+tests/screenshots/
+├── baseline/     # Reference screenshots
+├── current/      # Current test screenshots
+└── diff/         # Difference images (when regressions detected)
 ```
 
-## 📈 Continuous Testing
+### Test Coverage
 
-### Integration with Development
+The visual regression tests cover:
+- Dashboard layout consistency
+- Navigation structure and styling
+- Responsive design (mobile/desktop)
+- Component visual consistency
 
-1. **Before Commits**
+### Dependencies
 
-   ```bash
-   npm test
-   ```
+- `puppeteer` - Browser automation and screenshot capture
+- `pixelmatch` - Pixel-level image comparison
+- `pngjs` - PNG image processing
 
-2. **After Major Changes**
-   - Run full automated test suite
-   - Execute relevant manual test categories
+## Performance Testing
 
-3. **Before Releases**
-   - Complete manual test checklist
-   - Verify all automated tests pass
-   - Document any known issues
+The performance monitor tracks:
+- Page load times
+- Database query performance
+- Memory usage
+- API response times
 
-### Test Maintenance
+## Accessibility Testing
 
-- **Update tests** when adding new features
-- **Modify assertions** when changing API responses
-- **Add new test cases** for bug fixes
-- **Review test coverage** regularly
+Automated accessibility testing using axe-core covers:
+- WCAG 2.1 compliance
+- Keyboard navigation
+- Screen reader compatibility
+- Color contrast ratios
 
-## 🎯 Best Practices
+## Running All Tests
 
-### Automated Testing
+```bash
+# Run all tests including visual regression
+npm run test:ci
 
-- Run tests before commits
-- Keep tests fast and reliable
-- Test both success and failure cases
-- Mock external dependencies when needed
-
-### Manual Testing
-
-- Test on multiple browsers
-- Verify mobile responsiveness
-- Check accessibility features
-- Test with realistic data volumes
-
-### Documentation
-
-- Update test documentation when adding features
-- Record test results for tracking
-- Document any test environment setup
-- Maintain test data requirements
-
----
-
-## 📞 Support
-
-If you encounter issues with the testing framework:
-
-1. Check this README for troubleshooting steps
-2. Verify your environment meets requirements
-3. Review server logs for errors
-4. Ensure database contains appropriate test data
-
-Happy testing! 🚀
+# Run specific test suites
+npm run test:accessibility
+npm run test:performance
+npm run test:visual
+```

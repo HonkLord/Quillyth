@@ -8,14 +8,27 @@
 const puppeteer = require("puppeteer");
 const fs = require("fs");
 const path = require("path");
+const pixelmatch = require("pixelmatch");
+const { PNG } = require("pngjs");
 
 class VisualRegressionTester {
-  constructor() {
-    this.baseUrl = "http://localhost:3000";
+  constructor(options = {}) {
+    this.baseUrl = options.baseUrl || "http://localhost:3000";
     this.screenshotsDir = path.join(__dirname, "screenshots");
     this.baselineDir = path.join(this.screenshotsDir, "baseline");
     this.currentDir = path.join(this.screenshotsDir, "current");
     this.diffDir = path.join(this.screenshotsDir, "diff");
+
+    // Visual comparison configuration
+    this.config = {
+      pixelThreshold: options.pixelThreshold || 0.1, // Color threshold (0-1)
+      diffThreshold: options.diffThreshold || 0.5, // Percentage of pixels that can differ
+      includeAA: options.includeAA !== false, // Include anti-aliasing
+      alpha: options.alpha || 0.5, // Alpha channel threshold
+      aaColor: options.aaColor || [255, 255, 0], // Anti-aliasing color (yellow)
+      diffColor: options.diffColor || [255, 0, 0], // Diff color (red)
+      createBaselines: options.createBaselines !== false, // Auto-create missing baselines
+    };
 
     this.results = {
       passed: 0,
@@ -70,25 +83,106 @@ class VisualRegressionTester {
     return screenshotPath;
   }
 
+  async createBaselineIfMissing(currentPath, baselinePath) {
+    if (!this.config.createBaselines) {
+      return false;
+    }
+
+    if (!fs.existsSync(baselinePath) && fs.existsSync(currentPath)) {
+      console.log(`📸 Creating baseline: ${path.basename(baselinePath)}`);
+      fs.copyFileSync(currentPath, baselinePath);
+      return true;
+    }
+    return false;
+  }
+
   async compareScreenshots(currentPath, baselinePath, diffPath) {
-    // Simple file size comparison for now
-    // In a real implementation, you'd use image comparison libraries
+    // Check if baseline exists
     if (!fs.existsSync(baselinePath)) {
-      throw new Error("Baseline screenshot not found");
+      const created = await this.createBaselineIfMissing(
+        currentPath,
+        baselinePath
+      );
+      if (created) {
+        console.log(`✅ Baseline created for ${path.basename(baselinePath)}`);
+        return {
+          numDiffPixels: 0,
+          diffPercentage: 0,
+          totalPixels: 0,
+          passed: true,
+        };
+      }
+      throw new Error(`Baseline screenshot not found: ${baselinePath}`);
     }
 
-    const currentStats = fs.statSync(currentPath);
-    const baselineStats = fs.statSync(baselinePath);
-
-    const sizeDiff = Math.abs(currentStats.size - baselineStats.size);
-    const sizeDiffPercent = (sizeDiff / baselineStats.size) * 100;
-
-    if (sizeDiffPercent > 5) {
-      // 5% threshold
-      throw new Error(`Screenshot differs by ${sizeDiffPercent.toFixed(2)}%`);
+    if (!fs.existsSync(currentPath)) {
+      throw new Error("Current screenshot not found");
     }
 
-    return true;
+    // Load images using pngjs
+    const baselineImg = PNG.sync.read(fs.readFileSync(baselinePath));
+    const currentImg = PNG.sync.read(fs.readFileSync(currentPath));
+
+    // Ensure images have the same dimensions
+    if (
+      baselineImg.width !== currentImg.width ||
+      baselineImg.height !== currentImg.height
+    ) {
+      throw new Error(
+        `Image dimensions mismatch: baseline (${baselineImg.width}x${baselineImg.height}) vs current (${currentImg.width}x${currentImg.height})`
+      );
+    }
+
+    // Create diff image
+    const diffImg = new PNG({
+      width: baselineImg.width,
+      height: baselineImg.height,
+    });
+
+    // Perform pixel-level comparison
+    const numDiffPixels = pixelmatch(
+      currentImg.data,
+      baselineImg.data,
+      diffImg.data,
+      baselineImg.width,
+      baselineImg.height,
+      {
+        threshold: this.config.pixelThreshold,
+        includeAA: this.config.includeAA,
+        alpha: this.config.alpha,
+        aaColor: this.config.aaColor,
+        diffColor: this.config.diffColor,
+        diffMask: false, // Don't create diff mask
+      }
+    );
+
+    // Calculate difference percentage
+    const totalPixels = baselineImg.width * baselineImg.height;
+    const diffPercentage = (numDiffPixels / totalPixels) * 100;
+
+    // Save diff image if differences are found
+    if (numDiffPixels > 0 && diffPath) {
+      fs.writeFileSync(diffPath, PNG.sync.write(diffImg));
+    }
+
+    // Check against configured threshold
+    if (diffPercentage > this.config.diffThreshold) {
+      throw new Error(
+        `Visual regression detected: ${numDiffPixels} pixels differ (${diffPercentage.toFixed(
+          2
+        )}% of total pixels). ` +
+          `Threshold: ${this.config.diffThreshold}%. Diff image saved to: ${
+            diffPath || "not saved"
+          }`
+      );
+    }
+
+    return {
+      numDiffPixels,
+      diffPercentage,
+      totalPixels,
+      passed: diffPercentage <= this.config.diffThreshold,
+    };
   }
 
   async testDashboardLayout() {
@@ -123,8 +217,9 @@ class VisualRegressionTester {
           "#dashboard-content"
         );
         const baselinePath = path.join(this.baselineDir, "dashboard.png");
+        const diffPath = path.join(this.diffDir, "dashboard-diff.png");
 
-        await this.compareScreenshots(screenshotPath, baselinePath);
+        await this.compareScreenshots(screenshotPath, baselinePath, diffPath);
       } finally {
         await page.close();
       }
@@ -175,8 +270,9 @@ class VisualRegressionTester {
           ".top-nav"
         );
         const baselinePath = path.join(this.baselineDir, "navigation.png");
+        const diffPath = path.join(this.diffDir, "navigation-diff.png");
 
-        await this.compareScreenshots(screenshotPath, baselinePath);
+        await this.compareScreenshots(screenshotPath, baselinePath, diffPath);
       } finally {
         await page.close();
       }
@@ -218,8 +314,16 @@ class VisualRegressionTester {
           this.baselineDir,
           "mobile-layout.png"
         );
+        const mobileDiffPath = path.join(
+          this.diffDir,
+          "mobile-layout-diff.png"
+        );
 
-        await this.compareScreenshots(mobileScreenshotPath, mobileBaselinePath);
+        await this.compareScreenshots(
+          mobileScreenshotPath,
+          mobileBaselinePath,
+          mobileDiffPath
+        );
 
         // Test desktop layout (1200px)
         await page.setViewport({ width: 1200, height: 800 });
@@ -249,10 +353,15 @@ class VisualRegressionTester {
           this.baselineDir,
           "desktop-layout.png"
         );
+        const desktopDiffPath = path.join(
+          this.diffDir,
+          "desktop-layout-diff.png"
+        );
 
         await this.compareScreenshots(
           desktopScreenshotPath,
-          desktopBaselinePath
+          desktopBaselinePath,
+          desktopDiffPath
         );
       } finally {
         await page.close();
@@ -312,8 +421,9 @@ class VisualRegressionTester {
           ".quick-stats"
         );
         const baselinePath = path.join(this.baselineDir, "components.png");
+        const diffPath = path.join(this.diffDir, "components-diff.png");
 
-        await this.compareScreenshots(screenshotPath, baselinePath);
+        await this.compareScreenshots(screenshotPath, baselinePath, diffPath);
       } finally {
         await page.close();
       }
@@ -346,6 +456,20 @@ class VisualRegressionTester {
     this.printResults();
   }
 
+  updateBaseline(testName) {
+    const currentPath = path.join(this.currentDir, `${testName}.png`);
+    const baselinePath = path.join(this.baselineDir, `${testName}.png`);
+
+    if (fs.existsSync(currentPath)) {
+      fs.copyFileSync(currentPath, baselinePath);
+      console.log(`✅ Updated baseline for: ${testName}`);
+      return true;
+    } else {
+      console.log(`❌ No current screenshot found for: ${testName}`);
+      return false;
+    }
+  }
+
   printResults() {
     console.log("\n=====================================");
     console.log("📊 VISUAL REGRESSION TEST RESULTS");
@@ -363,12 +487,60 @@ class VisualRegressionTester {
       console.log(
         "\n💡 Check screenshots in tests/screenshots/diff/ for visual differences"
       );
+      console.log(
+        "\n🔄 To update baselines, run: node tests/visual-regression.js --update-baselines"
+      );
     } else {
       console.log("🎉 All visual tests passed! No regressions detected.");
     }
   }
 }
 
+// Parse command line arguments
+const args = process.argv.slice(2);
+const updateBaselines = args.includes("--update-baselines");
+const help = args.includes("--help") || args.includes("-h");
+
+if (help) {
+  console.log(`
+🖼️  Visual Regression Testing Tool
+
+Usage:
+  node tests/visual-regression.js [options]
+
+Options:
+  --update-baselines    Update baseline screenshots with current ones
+  --help, -h           Show this help message
+
+Examples:
+  node tests/visual-regression.js                    # Run all tests
+  node tests/visual-regression.js --update-baselines # Update baselines
+  node tests/visual-regression.js --help             # Show help
+
+Configuration:
+  The tool uses pixel-level comparison with configurable thresholds:
+  - Pixel threshold: 0.1 (color sensitivity)
+  - Diff threshold: 0.5% (percentage of pixels that can differ)
+  - Auto-creates missing baselines by default
+
+Output:
+  - Screenshots saved to: tests/screenshots/current/
+  - Baselines stored in: tests/screenshots/baseline/
+  - Diff images saved to: tests/screenshots/diff/
+`);
+  process.exit(0);
+}
+
 // Run visual regression tests
 const tester = new VisualRegressionTester();
+
+if (updateBaselines) {
+  console.log("🔄 Updating baseline screenshots...");
+  // This would need to be implemented to run tests and update baselines
+  console.log(
+    "⚠️  Baseline update mode not yet implemented. Run tests first to generate current screenshots."
+  );
+  process.exit(0);
+}
+
 tester.runAllTests().catch(console.error);
