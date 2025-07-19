@@ -3,15 +3,60 @@
 /**
  * Application Audit Script
  * Comprehensive check for feature, page, and CSS alignment
+ *
+ * Configuration:
+ * - TEST_BASE_URL: Base URL for API endpoints (default: "http://localhost:3000")
+ * - AUDIT_BASE_URL: Alternative environment variable for base URL
+ *
+ * Usage examples:
+ *   node audit-application.js
+ *   TEST_BASE_URL=http://staging.example.com node audit-application.js
+ *   AUDIT_BASE_URL=http://production.example.com node audit-application.js
  */
 
 const fs = require("fs");
 const path = require("path");
 const fetch = require("node-fetch");
 
+/**
+ * Get base URL from configuration sources
+ * Priority: 1. Environment variables, 2. Config file, 3. Default fallback
+ * @returns {string} Base URL for testing
+ */
+function getBaseUrl() {
+  // Check environment variables first
+  if (process.env.TEST_BASE_URL) {
+    return process.env.TEST_BASE_URL;
+  }
+
+  if (process.env.AUDIT_BASE_URL) {
+    return process.env.AUDIT_BASE_URL;
+  }
+
+  // Try to read from config file
+  try {
+    const configPath = path.join(__dirname, "js", "shared", "config.js");
+    if (fs.existsSync(configPath)) {
+      const configContent = fs.readFileSync(configPath, "utf8");
+      // Look specifically for TESTING.BASE_URL
+      const baseUrlMatch = configContent.match(
+        /TESTING:\s*{[\s\S]*?BASE_URL:\s*"([^"]+)"/
+      );
+      if (baseUrlMatch) {
+        return baseUrlMatch[1];
+      }
+    }
+  } catch (error) {
+    // Silently fall back to default if config file can't be read
+  }
+
+  // Default fallback
+  return "http://localhost:3000";
+}
+
 class ApplicationAuditor {
   constructor() {
-    this.baseUrl = "http://localhost:3000";
+    this.baseUrl = getBaseUrl();
     this.results = {
       passed: 0,
       failed: 0,
@@ -560,6 +605,9 @@ class ApplicationAuditor {
 
   async runAllAudits() {
     console.log("🚀 Starting Application Audit");
+    console.log("=====================================");
+    console.log(`📋 Configuration:`);
+    console.log(`   Base URL: ${this.baseUrl}`);
     console.log("=====================================\n");
 
     // Run all audit tests
