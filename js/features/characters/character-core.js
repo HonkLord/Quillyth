@@ -97,28 +97,30 @@ export default class CharacterCore {
         this.playerCharacters = this.getDefaultPlayerCharacters();
       }
 
-      // Load important NPCs (from scenes or separate endpoint)
+      // Load all NPCs (using same endpoint as Run Scene for consistency)
       try {
         const npcsResponse = await fetch(
-          `/api/characters/important-npcs?campaign_id=${this.dataManager.currentCampaignId}`
+          `/api/characters?campaign_id=${this.dataManager.currentCampaignId}`
         );
         if (npcsResponse.ok) {
-          this.importantNPCs = await npcsResponse.json();
+          const charactersData = await npcsResponse.json();
+          this.importantNPCs = charactersData.npcs || [];
           // Mark all NPCs with proper type
           this.importantNPCs = this.importantNPCs.map((npc) => ({
             ...npc,
             type: "npc",
             isPlayerCharacter: false,
           }));
+          console.log('📊 Characters tab loaded NPCs:', this.importantNPCs.map(npc => npc.name));
         } else {
           console.log(
-            "📝 Important NPCs endpoint not available, using sample NPCs"
+            "📝 NPCs endpoint not available, using sample NPCs"
           );
           this.importantNPCs = this.getSampleNPCs();
         }
       } catch (error) {
         console.log(
-          "📝 Important NPCs endpoint not available, using sample NPCs"
+          "📝 NPCs endpoint not available, using sample NPCs"
         );
         this.importantNPCs = this.getSampleNPCs();
       }

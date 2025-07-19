@@ -260,13 +260,18 @@ export class SceneUI {
                       }</textarea>
           </div>
           
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">
-              Cancel
+          <div class="form-actions justify-between">
+            <button type="button" class="btn btn-outline-danger" onclick="sceneManager.deleteScene('${scene.id}')">
+              <i class="fas fa-trash"></i> Delete Scene
             </button>
-            <button type="submit" class="btn btn-primary">
-              Update Scene
-            </button>
+            <div style="display: flex; gap: var(--cm-space-md);">
+              <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary">
+                Update Scene
+              </button>
+            </div>
           </div>
         </form>
       </div>

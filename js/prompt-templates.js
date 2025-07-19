@@ -95,3 +95,87 @@ ${
 }
 `;
 }
+
+export function getSceneContextPrompt(scene, campaignContext) {
+  return `# SCENE CONTEXT GENERATION
+  
+## SCENE DETAILS
+- **Name:** ${scene.name}
+- **Type:** ${scene.scene_type}
+- **Location:** ${scene.location_id || "Unknown"}
+- **Current Setup:** ${scene.current_setup || "None"}
+
+## SCENE DESCRIPTION
+${scene.description || "No description available"}
+
+## CAMPAIGN CONTEXT
+${campaignContext || "No campaign context available"}
+
+## TASK
+Generate rich, atmospheric context for this scene that a DM can use to:
+- Set the mood and atmosphere
+- Provide sensory details (sights, sounds, smells)
+- Suggest environmental interactions
+- Create immersive descriptions
+
+**Output Format:**
+- **Atmosphere:** [Mood and feeling of the scene]
+- **Sensory Details:** [What characters see, hear, smell, feel]
+- **Environmental Elements:** [Interactive objects, weather, lighting]
+- **NPC Reactions:** [How NPCs might respond to the scene]
+- **Player Hooks:** [Elements that might engage player characters]`;
+}
+
+export function getMusicSuggestionPrompt(scene, mood) {
+  return `# MUSIC SUGGESTION GENERATION
+
+## SCENE CONTEXT
+- **Scene Type:** ${scene.scene_type}
+- **Mood:** ${mood}
+- **Location:** ${scene.location_id}
+- **Description:** ${scene.description || "No description"}
+
+## TASK
+Suggest appropriate music and ambient sounds for this D&D scene.
+
+**Output Format:**
+- **Primary Mood:** [Main emotional tone]
+- **Music Suggestions:** [3-5 specific music recommendations]
+- **Ambient Sounds:** [Environmental audio suggestions]
+- **Volume/Pacing:** [How the music should change during the scene]
+- **Transition Notes:** [When to change music or add effects]`;
+}
+
+export function getNextActionPrompt(scene, actorStates, campaignContext) {
+  return `# NEXT ACTION GENERATION ("THEREFORE" SYSTEM)
+
+## SCENE STATE
+- **Scene:** ${scene.name}
+- **Type:** ${scene.scene_type}
+- **Current Status:** ${scene.scene_status}
+
+## ACTOR STATES
+${actorStates
+  .map(
+    (state) => `
+**${state.characterName} (${state.characterType}):**
+- Thought: ${state.thought || "None recorded"}
+- Action: ${state.action || "None recorded"}
+- Timestamp: ${state.timestamp}
+`
+  )
+  .join("\n")}
+
+## CAMPAIGN CONTEXT
+${campaignContext || "No campaign context available"}
+
+## TASK
+Based on the current scene dynamics and actor states, suggest what should happen next.
+
+**Output Format:**
+- **Therefore:** [Main suggested next action based on current events]
+- **Alternative:** [Secondary option if players take different approach]
+- **NPC Reactions:** [How NPCs should respond to current situation]
+- **Plot Advancement:** [How this moves the story forward]
+- **Player Agency:** [Ways to let players drive the scene]`;
+}
