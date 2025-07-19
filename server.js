@@ -241,6 +241,26 @@ async function createEnhancedTables(db) {
       )
     `);
 
+    // Locations table
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS locations (
+        id TEXT PRIMARY KEY,
+        campaign_id TEXT,
+        name TEXT NOT NULL,
+        description TEXT,
+        location_type TEXT CHECK(location_type IN ('city', 'town', 'village', 'dungeon', 'wilderness', 'building', 'landmark', 'region', 'other')) DEFAULT 'other',
+        parent_location_id TEXT,
+        coordinates TEXT,
+        notable_features TEXT,
+        secrets TEXT,
+        status TEXT CHECK(status IN ('active', 'inactive', 'destroyed', 'abandoned')) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id),
+        FOREIGN KEY (parent_location_id) REFERENCES locations(id)
+      )
+    `);
+
     // Quest tracking table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS quests (

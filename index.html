@@ -19,21 +19,31 @@
             class="campaign-title"
             data-action="edit-campaign-title"
             title="Click to edit campaign title"
+            role="button"
+            tabindex="0"
+            aria-label="Campaign title - click to edit"
           >
-            <i class="fas fa-dragon"></i>
+            <i class="fas fa-dragon" aria-hidden="true"></i>
             D&D Campaign
           </h1>
         </div>
 
         <nav class="nav-center">
-          <div class="main-nav-tabs">
+          <div
+            class="main-nav-tabs"
+            role="tablist"
+            aria-label="Main navigation"
+          >
             <button
               id="nav-dashboard"
               class="main-nav-tab active"
               data-section="dashboard"
               data-action="show-dashboard"
+              role="tab"
+              aria-selected="true"
+              aria-controls="dashboard-content"
             >
-              <i class="fas fa-home"></i>
+              <i class="fas fa-home" aria-hidden="true"></i>
               <span>Dashboard</span>
             </button>
             <button
@@ -41,8 +51,11 @@
               class="main-nav-tab"
               data-section="scenes"
               data-action="show-scenes"
+              role="tab"
+              aria-selected="false"
+              aria-controls="scenes-content"
             >
-              <i class="fas fa-theater-masks"></i>
+              <i class="fas fa-theater-masks" aria-hidden="true"></i>
               <span>Scenes</span>
             </button>
             <button
@@ -50,8 +63,11 @@
               class="main-nav-tab"
               data-section="characters"
               data-action="show-characters"
+              role="tab"
+              aria-selected="false"
+              aria-controls="characters-content"
             >
-              <i class="fas fa-users"></i>
+              <i class="fas fa-users" aria-hidden="true"></i>
               <span>Characters</span>
             </button>
             <button
@@ -59,8 +75,11 @@
               class="main-nav-tab"
               data-section="relationships"
               data-action="show-relationships"
+              role="tab"
+              aria-selected="false"
+              aria-controls="relationships-content"
             >
-              <i class="fas fa-project-diagram"></i>
+              <i class="fas fa-project-diagram" aria-hidden="true"></i>
               <span>Relationships</span>
             </button>
             <button
@@ -68,8 +87,11 @@
               class="main-nav-tab"
               data-section="locations"
               data-action="show-locations"
+              role="tab"
+              aria-selected="false"
+              aria-controls="locations-content"
             >
-              <i class="fas fa-map-marker-alt"></i>
+              <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
               <span>Locations</span>
             </button>
             <button
@@ -77,8 +99,11 @@
               class="main-nav-tab"
               data-section="quests"
               data-action="show-quests"
+              role="tab"
+              aria-selected="false"
+              aria-controls="quests-content"
             >
-              <i class="fas fa-scroll"></i>
+              <i class="fas fa-scroll" aria-hidden="true"></i>
               <span>Quests</span>
             </button>
             <button
@@ -86,8 +111,11 @@
               class="main-nav-tab"
               data-section="notes"
               data-action="show-notes"
+              role="tab"
+              aria-selected="false"
+              aria-controls="notes-content"
             >
-              <i class="fas fa-sticky-note"></i>
+              <i class="fas fa-sticky-note" aria-hidden="true"></i>
               <span>Notes</span>
             </button>
             <button
@@ -95,8 +123,11 @@
               class="main-nav-tab"
               data-section="sessions"
               data-action="show-sessions"
+              role="tab"
+              aria-selected="false"
+              aria-controls="sessions-content"
             >
-              <i class="fas fa-calendar-alt"></i>
+              <i class="fas fa-calendar-alt" aria-hidden="true"></i>
               <span>Sessions</span>
             </button>
             <button
@@ -104,8 +135,11 @@
               class="main-nav-tab"
               data-section="campaign"
               data-action="show-campaign"
+              role="tab"
+              aria-selected="false"
+              aria-controls="campaign-content"
             >
-              <i class="fas fa-book"></i>
+              <i class="fas fa-book" aria-hidden="true"></i>
               <span>Campaign</span>
             </button>
             <button
@@ -113,8 +147,11 @@
               class="main-nav-tab"
               data-section="export-import"
               data-action="show-export-import"
+              role="tab"
+              aria-selected="false"
+              aria-controls="export-import-content"
             >
-              <i class="fas fa-download"></i>
+              <i class="fas fa-download" aria-hidden="true"></i>
               <span>Export/Import</span>
             </button>
           </div>
@@ -182,7 +219,12 @@
         <!-- Content Area -->
         <div class="content-area" id="content-area">
           <!-- Welcome/Dashboard Content -->
-          <div id="dashboard-content" class="workspace-content active">
+          <div
+            id="dashboard-content"
+            class="workspace-content active"
+            role="tabpanel"
+            aria-labelledby="nav-dashboard"
+          >
             <div class="management-panel">
               <div class="dashboard-grid">
                 <!-- Quick Stats -->
@@ -281,42 +323,96 @@
           </div>
 
           <!-- Dynamic Workspace Content Areas -->
-          <div id="locations-content" class="workspace-content">
+          <div
+            id="locations-content"
+            class="workspace-content"
+            role="tabpanel"
+            aria-labelledby="nav-locations"
+            hidden
+          >
             <!-- Main content area for location details -->
             <div id="content" class="location-detail-content">
               <!-- Location content will be inserted here -->
             </div>
           </div>
 
-          <div id="scenes-content" class="workspace-content">
+          <div
+            id="scenes-content"
+            class="workspace-content"
+            role="tabpanel"
+            aria-labelledby="nav-scenes"
+            hidden
+          >
             <!-- Scenes workspace content will be inserted here -->
           </div>
 
-          <div id="characters-content" class="workspace-content">
+          <div
+            id="characters-content"
+            class="workspace-content"
+            role="tabpanel"
+            aria-labelledby="nav-characters"
+            hidden
+          >
             <!-- Characters workspace content will be inserted here -->
           </div>
 
-          <div id="relationships-content" class="workspace-content">
+          <div
+            id="relationships-content"
+            class="workspace-content"
+            role="tabpanel"
+            aria-labelledby="nav-relationships"
+            hidden
+          >
             <!-- Relationships workspace content will be inserted here -->
           </div>
 
-          <div id="quests-content" class="workspace-content">
+          <div
+            id="quests-content"
+            class="workspace-content"
+            role="tabpanel"
+            aria-labelledby="nav-quests"
+            hidden
+          >
             <!-- Quests workspace content will be inserted here -->
           </div>
 
-          <div id="notes-content" class="workspace-content">
+          <div
+            id="notes-content"
+            class="workspace-content"
+            role="tabpanel"
+            aria-labelledby="nav-notes"
+            hidden
+          >
             <!-- Notes workspace content will be inserted here -->
           </div>
 
-          <div id="sessions-content" class="workspace-content">
+          <div
+            id="sessions-content"
+            class="workspace-content"
+            role="tabpanel"
+            aria-labelledby="nav-sessions"
+            hidden
+          >
             <!-- Sessions workspace content will be inserted here -->
           </div>
 
-          <div id="campaign-content" class="workspace-content">
+          <div
+            id="campaign-content"
+            class="workspace-content"
+            role="tabpanel"
+            aria-labelledby="nav-campaign"
+            hidden
+          >
             <!-- Campaign workspace content will be inserted here -->
           </div>
 
-          <div id="export-import-content" class="workspace-content">
+          <div
+            id="export-import-content"
+            class="workspace-content"
+            role="tabpanel"
+            aria-labelledby="nav-export-import"
+            hidden
+          >
             <!-- Export/Import workspace content will be inserted here -->
           </div>
         </div>

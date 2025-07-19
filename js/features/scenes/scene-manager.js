@@ -238,7 +238,7 @@ export class SceneManager {
     const statusLabel = this.formatSceneStatus(scene.scene_status || "planned");
 
     return `
-      <div class="card card-scene clickable" data-scene-id="${scene.id}">
+      <div class="card card-scene clickable" data-scene-id="${scene.id}" data-action="navigate-to-scene">
         <div class="card-header">
           <div class="card-title-info">
             <h4 class="card-title">${escapeHTML(scene.name)}</h4>
@@ -254,20 +254,10 @@ export class SceneManager {
             </div>
           </div>
           <div class="card-actions">
-            <button class="btn btn-sm btn-primary" onclick="sceneManager.navigateToScene('${
-              scene.id
-            }')" title="Open Scene">
-              <i class="fas fa-play"></i>
-            </button>
-            <button class="btn btn-sm btn-secondary" onclick="sceneManager.editScene('${
+            <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); sceneManager.editScene('${
               scene.id
             }')" title="Edit Scene">
               <i class="fas fa-edit"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="sceneManager.deleteScene('${
-              scene.id
-            }')" title="Delete Scene">
-              <i class="fas fa-trash"></i>
             </button>
           </div>
         </div>

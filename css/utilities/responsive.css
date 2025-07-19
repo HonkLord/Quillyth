@@ -231,6 +231,87 @@
   }
 }
 
+/* Large screens and up (1200px+) */
+@media (min-width: 1200px) {
+  .xl\:block {
+    display: block !important;
+  }
+  .xl\:flex {
+    display: flex !important;
+  }
+  .xl\:grid {
+    display: grid !important;
+  }
+  .xl\:hidden {
+    display: none !important;
+  }
+
+  .xl\:flex-row {
+    flex-direction: row !important;
+  }
+  .xl\:flex-col {
+    flex-direction: column !important;
+  }
+
+  .xl\:grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+  .xl\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .xl\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  .xl\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+  .xl\:grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+  .xl\:grid-cols-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  }
+
+  .xl\:w-auto {
+    width: auto !important;
+  }
+  .xl\:w-full {
+    width: 100% !important;
+  }
+  .xl\:w-1\/2 {
+    width: 50% !important;
+  }
+  .xl\:w-1\/3 {
+    width: 33.333333% !important;
+  }
+  .xl\:w-2\/3 {
+    width: 66.666667% !important;
+  }
+
+  .xl\:p-2 {
+    padding: var(--cm-space-sm) !important;
+  }
+  .xl\:p-4 {
+    padding: var(--cm-space-md) !important;
+  }
+  .xl\:p-6 {
+    padding: var(--cm-space-lg) !important;
+  }
+  .xl\:p-8 {
+    padding: var(--cm-space-xl) !important;
+  }
+
+  .xl\:text-left {
+    text-align: left !important;
+  }
+  .xl\:text-center {
+    text-align: center !important;
+  }
+  .xl\:text-right {
+    text-align: right !important;
+  }
+}
+
 /* Extra large screens and up (1280px+) */
 @media (min-width: 1280px) {
   .xl\:block {
