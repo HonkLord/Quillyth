@@ -241,6 +241,26 @@ async function createEnhancedTables(db) {
       )
     `);
 
+    // Locations table
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS locations (
+        id TEXT PRIMARY KEY,
+        campaign_id TEXT,
+        name TEXT NOT NULL,
+        description TEXT,
+        location_type TEXT CHECK(location_type IN ('city', 'town', 'village', 'dungeon', 'wilderness', 'building', 'landmark', 'region', 'other')) DEFAULT 'other',
+        parent_location_id TEXT,
+        coordinates TEXT,
+        notable_features TEXT,
+        secrets TEXT,
+        status TEXT CHECK(status IN ('active', 'inactive', 'destroyed', 'abandoned')) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id),
+        FOREIGN KEY (parent_location_id) REFERENCES locations(id)
+      )
+    `);
+
     // Quest tracking table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS quests (
@@ -425,6 +445,21 @@ async function createEnhancedTables(db) {
       )
     `);
 
+    // Actor State/History Table for Run Scene functionality
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS scene_actor_states (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        scene_id TEXT NOT NULL,
+        character_id TEXT NOT NULL,
+        character_type TEXT CHECK(character_type IN ('pc', 'npc')) NOT NULL,
+        thought TEXT,
+        action TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        metadata TEXT DEFAULT '{}',
+        FOREIGN KEY (scene_id) REFERENCES scenes(id)
+      )
+    `);
+
     try {
       await db.exec(`ALTER TABLE locations ADD COLUMN notable_features TEXT`);
     } catch (e) {
@@ -465,6 +500,9 @@ async function createEnhancedTables(db) {
       CREATE INDEX IF NOT EXISTS idx_progression_type ON character_progression(progression_type);
       CREATE INDEX IF NOT EXISTS idx_progression_date ON character_progression(progression_date);
       CREATE INDEX IF NOT EXISTS idx_progression_session ON character_progression(session_number);
+      CREATE INDEX IF NOT EXISTS idx_actor_states_scene ON scene_actor_states(scene_id);
+      CREATE INDEX IF NOT EXISTS idx_actor_states_character ON scene_actor_states(character_id);
+      CREATE INDEX IF NOT EXISTS idx_actor_states_timestamp ON scene_actor_states(timestamp);
     `);
 
     console.log("✅ Enhanced database tables created successfully");
@@ -481,6 +519,18 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Serve static files
 app.use(express.static("."));
+
+// ==========================================
+// HEALTH CHECK ENDPOINT
+// ==========================================
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || "development",
+  });
+});
 
 // ==========================================
 // API ROUTES

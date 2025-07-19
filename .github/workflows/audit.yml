@@ -1,0 +1,87 @@
+name: Application Alignment Audit
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run monthly on the first day at 2 AM UTC
+    - cron: "0 2 1 * *"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start server
+        run: |
+          npm start &
+        env:
+          PORT: 3000
+
+      - name: Wait for server to be ready
+        run: |
+          echo "Waiting for server to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:3000/health > /dev/null 2>&1; then
+              echo "Server is ready!"
+              break
+            fi
+            echo "Attempt $i: Server not ready yet, waiting..."
+            sleep 2
+          done
+
+          # Final check to ensure server is actually ready
+          if ! curl -f http://localhost:3000/health > /dev/null 2>&1; then
+            echo "ERROR: Server failed to start within 60 seconds"
+            exit 1
+          fi
+
+      - name: Run application audit
+        run: node audit-application.js
+
+      - name: Run test suite
+        run: npm test
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: audit-results
+          path: |
+            audit-application.js
+            tests/test-runner.js
+          retention-days: 30
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let auditOutput = '';
+            try {
+              auditOutput = fs.readFileSync('audit-output.txt', 'utf8');
+            } catch (e) {
+              auditOutput = 'Audit completed successfully';
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🔍 Application Alignment Audit Results\n\n${auditOutput}\n\nThis audit ensures all features, pages, and CSS are properly aligned.`
+            });

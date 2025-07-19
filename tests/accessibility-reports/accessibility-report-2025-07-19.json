@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-07-19T17:43:23.410Z",
+  "summary": {
+    "totalTests": 4,
+    "passedTests": 2,
+    "failedTests": 2,
+    "successRate": 50
+  },
+  "violations": [
+    {
+      "name": "Dashboard Accessibility",
+      "error": "axe-core not loaded properly\npptr:evaluate;E%3A%5CProjects%5CQuillyth%5Ctests%5Caccessibility-test.js%3A145%3A36:4:22"
+    },
+    {
+      "name": "Screen Reader Compatibility",
+      "error": "Not enough decorative icons marked as aria-hidden. Found 11/25 hidden icons (44.0%), expected at least 18 (70% of total)"
+    }
+  ],
+  "config": {
+    "minHiddenIconsRatio": 0.7,
+    "minHiddenIconsCount": 2
+  },
+  "hasIssues": {
+    "hasViolations": true,
+    "hasErrors": true,
+    "violationCount": 2
+  }
+}

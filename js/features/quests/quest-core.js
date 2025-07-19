@@ -38,7 +38,7 @@ export default class QuestCore {
       if (!this.dataManager.currentCampaignId) {
         await this.dataManager.loadCurrentCampaign();
       }
-      
+
       await this.loadQuests();
       console.log("✅ QuestCore: Initialized successfully");
     } catch (error) {
@@ -52,7 +52,9 @@ export default class QuestCore {
    */
   async loadQuests() {
     try {
-      const response = await fetch(`${this.apiBase}/quests?campaign_id=${this.dataManager.currentCampaignId}`);
+      const response = await fetch(
+        `${this.apiBase}/quests?campaign_id=${this.dataManager.currentCampaignId}`
+      );
       if (!response.ok) {
         throw new Error(`Failed to load quests: ${response.status}`);
       }
@@ -119,6 +121,7 @@ export default class QuestCore {
     try {
       const quest = {
         id: questData.id || this.generateQuestId(),
+        campaign_id: this.dataManager.currentCampaignId,
         title: questData.title,
         description: questData.description || "",
         category: questData.category || "side",
