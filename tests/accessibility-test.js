@@ -3,21 +3,106 @@
 /**
  * Automated Accessibility Testing
  * Uses axe-core to test accessibility compliance
+ *
+ * Features:
+ * - Dynamic icon accessibility validation based on actual UI state
+ * - Configurable thresholds for accessibility requirements
+ * - Comprehensive ARIA attribute testing
+ * - Keyboard navigation validation
+ * - Configurable base URL for different environments
+ *
+ * Configuration:
+ * - Environment variable: QUILLYTH_TEST_BASE_URL (full URL)
+ * - Environment variable: QUILLYTH_TEST_PORT (port only, uses localhost)
+ * - Config file: js/shared/config.js (TESTING.BASE_URL property, preferred)
+ * - Config file: js/shared/config.js (TEST_BASE_URL property, fallback)
+ * - Default fallback: http://localhost:3000
  */
 
 const puppeteer = require("puppeteer");
 const fs = require("fs");
 const path = require("path");
 
+/**
+ * Get base URL from environment variable or configuration file
+ * @returns {string} Base URL for testing
+ */
+function getBaseUrl() {
+  // Priority 1: Environment variable
+  if (process.env.QUILLYTH_TEST_BASE_URL) {
+    return process.env.QUILLYTH_TEST_BASE_URL;
+  }
+
+  // Priority 2: Environment variable for port (common pattern)
+  if (process.env.QUILLYTH_TEST_PORT) {
+    return `http://localhost:${process.env.QUILLYTH_TEST_PORT}`;
+  }
+
+  // Priority 3: Check for config file
+  try {
+    const configPath = path.join(__dirname, "..", "js", "shared", "config.js");
+    if (fs.existsSync(configPath)) {
+      // Try to read and parse the config file
+      const configContent = fs.readFileSync(configPath, "utf8");
+      // Look for TESTING.BASE_URL in the config (preferred)
+      const testingUrlMatch = configContent.match(
+        /TESTING:\s*{[^}]*BASE_URL:\s*["']([^"']+)["']/
+      );
+      if (testingUrlMatch) {
+        return testingUrlMatch[1];
+      }
+      // Fallback: Look for TEST_BASE_URL in the config
+      const testUrlMatch = configContent.match(
+        /TEST_BASE_URL:\s*["']([^"']+)["']/
+      );
+      if (testUrlMatch) {
+        return testUrlMatch[1];
+      }
+    }
+  } catch (error) {
+    console.log("⚠️  Could not read config file, using default URL");
+  }
+
+  // Priority 4: Default fallback
+  return "http://localhost:3000";
+}
+
 class AccessibilityTester {
   constructor() {
-    this.baseUrl = "http://localhost:3000";
+    this.baseUrl = getBaseUrl();
     this.results = {
       passed: 0,
       failed: 0,
       total: 0,
       violations: [],
     };
+
+    // Configuration for accessibility thresholds
+    // These can be updated at runtime using updateConfig() method
+    this.config = {
+      minHiddenIconsRatio: 0.7, // At least 70% of icons should be aria-hidden
+      minHiddenIconsCount: 2, // Minimum absolute count of hidden icons
+    };
+
+    console.log(`🌐 Using test base URL: ${this.baseUrl}`);
+  }
+
+  /**
+   * Update accessibility configuration
+   * @param {Object} newConfig - New configuration object
+   */
+  updateConfig(newConfig) {
+    this.config = { ...this.config, ...newConfig };
+    console.log(`🔧 Updated accessibility config:`, this.config);
+  }
+
+  /**
+   * Update base URL for testing
+   * @param {string} newBaseUrl - New base URL
+   */
+  updateBaseUrl(newBaseUrl) {
+    this.baseUrl = newBaseUrl;
+    console.log(`🌐 Updated test base URL: ${this.baseUrl}`);
   }
 
   async test(name, testFn) {
@@ -120,7 +205,21 @@ class AccessibilityTester {
 
         // Test tab navigation
         await page.keyboard.press("Tab");
-        await page.waitForTimeout(100);
+
+        // Wait for focus to be established on a focusable element
+        await page.waitForFunction(
+          () => {
+            const activeElement = document.activeElement;
+            return (
+              activeElement &&
+              (activeElement.tagName === "BUTTON" ||
+                activeElement.tagName === "H1" ||
+                activeElement.tagName === "INPUT" ||
+                activeElement.hasAttribute("tabindex"))
+            );
+          },
+          { timeout: 5000 }
+        );
 
         const focusElement = await page.evaluate(() => {
           return document.activeElement.tagName;
@@ -138,13 +237,23 @@ class AccessibilityTester {
 
         const accessibility = await page.evaluate(() => {
           const title = document.querySelector(".campaign-title");
-          const icons = document.querySelectorAll('i[aria-hidden="true"]');
+          const allIcons = document.querySelectorAll("i");
+          const hiddenIcons = document.querySelectorAll(
+            'i[aria-hidden="true"]'
+          );
+          const visibleIcons = document.querySelectorAll(
+            'i:not([aria-hidden="true"])'
+          );
 
           return {
             hasRole: title.hasAttribute("role"),
             hasTabIndex: title.hasAttribute("tabindex"),
             hasAriaLabel: title.hasAttribute("aria-label"),
-            hiddenIcons: icons.length,
+            totalIcons: allIcons.length,
+            hiddenIcons: hiddenIcons.length,
+            visibleIcons: visibleIcons.length,
+            hiddenRatio:
+              allIcons.length > 0 ? hiddenIcons.length / allIcons.length : 0,
           };
         });
 
@@ -157,9 +266,29 @@ class AccessibilityTester {
         if (!accessibility.hasAriaLabel) {
           throw new Error("Interactive elements missing aria-label");
         }
-        if (accessibility.hiddenIcons < 5) {
-          throw new Error("Not enough decorative icons marked as aria-hidden");
+
+        // Dynamic validation based on actual UI state
+        const minHiddenCount = Math.max(
+          this.config.minHiddenIconsCount,
+          Math.ceil(accessibility.totalIcons * this.config.minHiddenIconsRatio)
+        );
+
+        if (accessibility.hiddenIcons < minHiddenCount) {
+          throw new Error(
+            `Not enough decorative icons marked as aria-hidden. ` +
+              `Found ${accessibility.hiddenIcons}/${accessibility.totalIcons} hidden icons ` +
+              `(${(accessibility.hiddenRatio * 100).toFixed(1)}%), ` +
+              `expected at least ${minHiddenCount} (${
+                this.config.minHiddenIconsRatio * 100
+              }% of total)`
+          );
         }
+
+        console.log(
+          `   📊 Icon accessibility: ${accessibility.hiddenIcons}/${
+            accessibility.totalIcons
+          } hidden (${(accessibility.hiddenRatio * 100).toFixed(1)}%)`
+        );
       });
     } catch (error) {
       console.error("❌ Accessibility testing error:", error);
@@ -194,4 +323,14 @@ class AccessibilityTester {
 
 // Run accessibility tests
 const tester = new AccessibilityTester();
+
+// Example: Customize thresholds for different environments
+// tester.updateConfig({
+//   minHiddenIconsRatio: 0.8,  // Require 80% of icons to be hidden
+//   minHiddenIconsCount: 3     // Require at least 3 hidden icons
+// });
+
+// Example: Update base URL for different environments
+// tester.updateBaseUrl('https://staging.quillyth.com');
+
 tester.runAccessibilityTests().catch(console.error);

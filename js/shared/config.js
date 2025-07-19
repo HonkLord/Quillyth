@@ -24,6 +24,12 @@ export const CONFIG = {
     RETRY_ATTEMPTS: 3,
   },
 
+  // Testing Configuration
+  TESTING: {
+    BASE_URL: "http://localhost:3000", // Default test server URL
+    TIMEOUT: 10000, // 10 seconds for test operations
+  },
+
   // UI Configuration
   UI: {
     TOAST_DURATION: 3000, // 3 seconds

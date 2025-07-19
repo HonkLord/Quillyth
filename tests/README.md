@@ -1,99 +1,80 @@
-# Testing Suite
+# Test Configuration
 
-This directory contains comprehensive testing tools for the Campaign Manager application.
-
-## Test Files
-
-### Core Tests
-- `test-runner.js` - Main test runner for functional tests
-- `manual-test-checklist.md` - Manual testing procedures and checklist
-
-### Specialized Tests
-- `accessibility-test.js` - Automated accessibility testing using axe-core
-- `performance-monitor.js` - Performance monitoring and benchmarking
-- `visual-regression.js` - **Visual regression testing with pixel-level comparison**
-
-## Visual Regression Testing
-
-The visual regression testing tool has been significantly improved with proper image comparison capabilities:
-
-### Features
-- **Pixel-level comparison** using `pixelmatch` library instead of unreliable file size comparison
-- **Configurable thresholds** for color sensitivity and acceptable difference percentages
-- **Automatic baseline creation** for missing reference screenshots
-- **Diff image generation** showing exactly what changed
-- **Command-line interface** with help and update options
-
-### Usage
-
-```bash
-# Run all visual regression tests
-npm run test:visual
-
-# Or directly
-node tests/visual-regression.js
-
-# Show help
-node tests/visual-regression.js --help
-
-# Update baselines (after intentional UI changes)
-node tests/visual-regression.js --update-baselines
-```
-
-### Configuration
-
-The tool uses configurable thresholds:
-- **Pixel threshold**: 0.1 (color sensitivity, 0-1)
-- **Diff threshold**: 0.5% (percentage of pixels that can differ)
-- **Auto-create baselines**: Enabled by default
-
-### Output Structure
-
-```
-tests/screenshots/
-├── baseline/     # Reference screenshots
-├── current/      # Current test screenshots
-└── diff/         # Difference images (when regressions detected)
-```
-
-### Test Coverage
-
-The visual regression tests cover:
-- Dashboard layout consistency
-- Navigation structure and styling
-- Responsive design (mobile/desktop)
-- Component visual consistency
-
-### Dependencies
-
-- `puppeteer` - Browser automation and screenshot capture
-- `pixelmatch` - Pixel-level image comparison
-- `pngjs` - PNG image processing
-
-## Performance Testing
-
-The performance monitor tracks:
-- Page load times
-- Database query performance
-- Memory usage
-- API response times
+This directory contains automated tests for the Quillyth campaign management application.
 
 ## Accessibility Testing
 
-Automated accessibility testing using axe-core covers:
-- WCAG 2.1 compliance
-- Keyboard navigation
-- Screen reader compatibility
-- Color contrast ratios
+The accessibility test (`accessibility-test.js`) supports configurable base URLs for different environments.
 
-## Running All Tests
+### Configuration Options
+
+The test will use the base URL in the following priority order:
+
+1. **Environment Variable (Full URL)**: `QUILLYTH_TEST_BASE_URL`
+   ```bash
+   # Windows PowerShell
+   $env:QUILLYTH_TEST_BASE_URL="https://staging.quillyth.com"
+   
+   # Linux/macOS
+   export QUILLYTH_TEST_BASE_URL="https://staging.quillyth.com"
+   ```
+
+2. **Environment Variable (Port Only)**: `QUILLYTH_TEST_PORT`
+   ```bash
+   # Windows PowerShell
+   $env:QUILLYTH_TEST_PORT="3001"
+   
+   # Linux/macOS
+   export QUILLYTH_TEST_PORT="3001"
+   ```
+
+3. **Configuration File**: `js/shared/config.js`
+   ```javascript
+   TESTING: {
+     BASE_URL: "http://localhost:3000", // Default test server URL
+     TIMEOUT: 10000, // 10 seconds for test operations
+   },
+   ```
+
+4. **Default Fallback**: `http://localhost:3000`
+
+### Usage Examples
 
 ```bash
-# Run all tests including visual regression
-npm run test:ci
-
-# Run specific test suites
+# Run with default configuration
 npm run test:accessibility
-npm run test:performance
-npm run test:visual
+
+# Run with custom URL
+$env:QUILLYTH_TEST_BASE_URL="https://staging.quillyth.com"; npm run test:accessibility
+
+# Run with custom port
+$env:QUILLYTH_TEST_PORT="3001"; npm run test:accessibility
+
+# Run in CI/CD environment
+QUILLYTH_TEST_BASE_URL="https://ci.quillyth.com" npm run test:accessibility
 ```
+
+### Runtime Configuration
+
+You can also update the base URL programmatically:
+
+```javascript
+const tester = new AccessibilityTester();
+
+// Update base URL for different environments
+tester.updateBaseUrl('https://staging.quillyth.com');
+
+// Update accessibility thresholds
+tester.updateConfig({
+  minHiddenIconsRatio: 0.8,  // Require 80% of icons to be hidden
+  minHiddenIconsCount: 3     // Require at least 3 hidden icons
+});
+
+tester.runAccessibilityTests();
+```
+
+## Other Tests
+
+- **Performance Testing**: `performance-monitor.js`
+- **Visual Regression Testing**: `visual-regression.js`
+- **Manual Testing Checklist**: `manual-test-checklist.md`
