@@ -57,12 +57,233 @@ function getBaseUrl() {
 class ApplicationAuditor {
   constructor() {
     this.baseUrl = getBaseUrl();
+    this.config = this.loadConfiguration();
     this.results = {
       passed: 0,
       failed: 0,
       warnings: 0,
       total: 0,
       details: [],
+    };
+  }
+
+  /**
+   * Load audit configuration from JSON file
+   * @returns {Object} Configuration object
+   */
+  loadConfiguration() {
+    try {
+      const configPath = path.join(__dirname, "audit-config.json");
+      if (fs.existsSync(configPath)) {
+        const configContent = fs.readFileSync(configPath, "utf8");
+        return JSON.parse(configContent);
+      } else {
+        console.warn("⚠️  Configuration file not found: audit-config.json");
+        console.warn("   Using fallback configuration...");
+        return this.getFallbackConfiguration();
+      }
+    } catch (error) {
+      console.error("❌ Error loading configuration:", error.message);
+      console.warn("   Using fallback configuration...");
+      return this.getFallbackConfiguration();
+    }
+  }
+
+  /**
+   * Fallback configuration if config file is missing or invalid
+   * @returns {Object} Fallback configuration
+   */
+  getFallbackConfiguration() {
+    return {
+      css: {
+        requiredImports: [
+          "./base/variables.css",
+          "./base/reset.css",
+          "./base/typography.css",
+          "./base/layout.css",
+          "./components/navigation.css",
+          "./components/dashboard.css",
+          "./components/scenes.css",
+          "./components/characters.css",
+          "./components/quests.css",
+          "./components/sessions.css",
+          "./components/campaigns.css",
+          "./components/locations.css",
+          "./components/notifications.css",
+          "./components/search.css",
+          "./components/buttons.css",
+          "./components/forms.css",
+          "./components/modals.css",
+          "./components/cards.css",
+        ],
+      },
+      html: {
+        requiredSections: [
+          "dashboard-content",
+          "scenes-content",
+          "characters-content",
+          "relationships-content",
+          "locations-content",
+          "quests-content",
+          "notes-content",
+          "sessions-content",
+          "campaign-content",
+          "export-import-content",
+        ],
+        requiredNavTabs: [
+          "nav-dashboard",
+          "nav-scenes",
+          "nav-characters",
+          "nav-relationships",
+          "nav-locations",
+          "nav-quests",
+          "nav-notes",
+          "nav-sessions",
+          "nav-campaign",
+          "nav-export-import",
+        ],
+        requiredClasses: [
+          "app-container",
+          "top-nav",
+          "main-nav-tabs",
+          "main-nav-tab",
+          "workspace-content",
+          "content-area",
+          "management-panel",
+          "dashboard-grid",
+          "stat-card",
+          "section-title",
+        ],
+        handledActions: [
+          "edit-campaign-title",
+          "show-dashboard",
+          "show-scenes",
+          "show-characters",
+          "show-relationships",
+          "show-locations",
+          "show-quests",
+          "show-notes",
+          "show-sessions",
+          "show-campaign",
+          "show-export-import",
+          "show-quick-actions",
+          "toggle-scene-tree",
+        ],
+      },
+      javascript: {
+        requiredImports: [
+          "SceneManager",
+          "CharacterManager",
+          "PlayerArcManager",
+          "QuestManager",
+          "NotesManager",
+          "SessionManager",
+          "LocationManager",
+          "ExportImportPanel",
+        ],
+        requiredFeatures: [
+          "scenes",
+          "characters",
+          "player-arcs",
+          "quests",
+          "notes",
+          "sessions",
+          "locations",
+        ],
+        requiredManagers: [
+          { name: "scene-manager.js", feature: "scenes" },
+          { name: "character-manager.js", feature: "characters" },
+          { name: "player-arc-manager.js", feature: "player-arcs" },
+          { name: "quest-manager.js", feature: "quests" },
+          { name: "notes-manager.js", feature: "notes" },
+          { name: "session-manager-new.js", feature: "sessions" },
+          { name: "location-manager.js", feature: "locations" },
+        ],
+        featureFiles: [
+          {
+            name: "scenes",
+            files: ["scene-core.js", "scene-manager.js", "scene-ui.js"],
+          },
+          {
+            name: "characters",
+            files: [
+              "character-core.js",
+              "character-manager.js",
+              "character-ui.js",
+            ],
+          },
+          {
+            name: "player-arcs",
+            files: [
+              "player-arc-core.js",
+              "player-arc-manager.js",
+              "player-arc-ui.js",
+            ],
+          },
+          {
+            name: "quests",
+            files: ["quest-core.js", "quest-manager.js", "quest-ui.js"],
+          },
+          {
+            name: "notes",
+            files: ["notes-manager.js"],
+          },
+          {
+            name: "sessions",
+            files: [
+              "session-core.js",
+              "session-manager-new.js",
+              "session-ui.js",
+            ],
+          },
+          {
+            name: "locations",
+            files: [
+              "location-core.js",
+              "location-manager.js",
+              "location-ui.js",
+            ],
+          },
+        ],
+      },
+      api: {
+        requiredRoutes: [
+          "campaigns.js",
+          "characters.js",
+          "character-relationships.js",
+          "locations.js",
+          "notes.js",
+          "player-arcs.js",
+          "quests.js",
+          "scenes.js",
+          "sessions.js",
+        ],
+      },
+      database: {
+        requiredTables: [
+          "campaigns",
+          "sessions",
+          "scenes",
+          "scene_characters",
+          "players",
+          "npcs",
+          "locations",
+          "quests",
+          "notes",
+          "character_notes",
+          "character_relationships",
+          "character_progression",
+          "player_arcs",
+          "scene_cards",
+        ],
+      },
+      responsive: {
+        requiredMediaQueries: [
+          "@media (max-width: 768px)",
+          "@media (max-width: 1024px)",
+          "@media (min-width: 1200px)",
+        ],
+      },
     };
   }
 
@@ -117,19 +338,8 @@ class ApplicationAuditor {
     await this.test("HTML Structure Validation", async () => {
       const htmlContent = fs.readFileSync("index.html", "utf8");
 
-      // Check for required sections
-      const requiredSections = [
-        "dashboard-content",
-        "scenes-content",
-        "characters-content",
-        "relationships-content",
-        "locations-content",
-        "quests-content",
-        "notes-content",
-        "sessions-content",
-        "campaign-content",
-        "export-import-content",
-      ];
+      // Check for required sections from configuration
+      const requiredSections = this.config.html.requiredSections;
 
       for (const section of requiredSections) {
         this.assert(
@@ -138,19 +348,8 @@ class ApplicationAuditor {
         );
       }
 
-      // Check for navigation tabs
-      const requiredNavTabs = [
-        "nav-dashboard",
-        "nav-scenes",
-        "nav-characters",
-        "nav-relationships",
-        "nav-locations",
-        "nav-quests",
-        "nav-notes",
-        "nav-sessions",
-        "nav-campaign",
-        "nav-export-import",
-      ];
+      // Check for navigation tabs from configuration
+      const requiredNavTabs = this.config.html.requiredNavTabs;
 
       for (const tab of requiredNavTabs) {
         this.assert(
@@ -181,27 +380,8 @@ class ApplicationAuditor {
     await this.test("CSS Structure Validation", async () => {
       const mainCSS = fs.readFileSync("css/main.css", "utf8");
 
-      // Check for required CSS imports
-      const requiredImports = [
-        "./base/variables.css",
-        "./base/reset.css",
-        "./base/typography.css",
-        "./base/layout.css",
-        "./components/navigation.css",
-        "./components/dashboard.css",
-        "./components/scenes.css",
-        "./components/characters.css",
-        "./components/quests.css",
-        "./components/sessions.css",
-        "./components/campaigns.css",
-        "./components/locations.css",
-        "./components/notifications.css",
-        "./components/search.css",
-        "./components/buttons.css",
-        "./components/forms.css",
-        "./components/modals.css",
-        "./components/cards.css",
-      ];
+      // Check for required CSS imports from configuration
+      const requiredImports = this.config.css.requiredImports;
 
       for (const importPath of requiredImports) {
         this.assert(
@@ -229,17 +409,8 @@ class ApplicationAuditor {
     await this.test("JavaScript Module Structure", async () => {
       const appJS = fs.readFileSync("js/app.js", "utf8");
 
-      // Check for required imports
-      const requiredImports = [
-        "SceneManager",
-        "CharacterManager",
-        "PlayerArcManager",
-        "QuestManager",
-        "NotesManager",
-        "SessionManager",
-        "LocationManager",
-        "ExportImportPanel",
-      ];
+      // Check for required imports from configuration
+      const requiredImports = this.config.javascript.requiredImports;
 
       for (const importName of requiredImports) {
         this.assert(
@@ -248,16 +419,8 @@ class ApplicationAuditor {
         );
       }
 
-      // Check for required feature directories
-      const requiredFeatures = [
-        "scenes",
-        "characters",
-        "player-arcs",
-        "quests",
-        "notes",
-        "sessions",
-        "locations",
-      ];
+      // Check for required feature directories from configuration
+      const requiredFeatures = this.config.javascript.requiredFeatures;
 
       for (const feature of requiredFeatures) {
         const featurePath = path.join("js", "features", feature);
@@ -267,16 +430,8 @@ class ApplicationAuditor {
         );
       }
 
-      // Check for required manager files
-      const requiredManagers = [
-        { name: "scene-manager.js", feature: "scenes" },
-        { name: "character-manager.js", feature: "characters" },
-        { name: "player-arc-manager.js", feature: "player-arcs" },
-        { name: "quest-manager.js", feature: "quests" },
-        { name: "notes-manager.js", feature: "notes" },
-        { name: "session-manager-new.js", feature: "sessions" },
-        { name: "location-manager.js", feature: "locations" },
-      ];
+      // Check for required manager files from configuration
+      const requiredManagers = this.config.javascript.requiredManagers;
 
       for (const manager of requiredManagers) {
         const managerPath = path.join(
@@ -301,18 +456,8 @@ class ApplicationAuditor {
     await this.test("API Endpoints Validation", async () => {
       const serverJS = fs.readFileSync("server.js", "utf8");
 
-      // Check for required route files
-      const requiredRoutes = [
-        "campaigns.js",
-        "characters.js",
-        "character-relationships.js",
-        "locations.js",
-        "notes.js",
-        "player-arcs.js",
-        "quests.js",
-        "scenes.js",
-        "sessions.js",
-      ];
+      // Check for required route files from configuration
+      const requiredRoutes = this.config.api.requiredRoutes;
 
       for (const route of requiredRoutes) {
         const routePath = path.join("routes", route);
@@ -349,23 +494,8 @@ class ApplicationAuditor {
     await this.test("Database Schema Validation", async () => {
       const serverJS = fs.readFileSync("server.js", "utf8");
 
-      // Check for required tables
-      const requiredTables = [
-        "campaigns",
-        "sessions",
-        "scenes",
-        "scene_characters",
-        "players",
-        "npcs",
-        "locations",
-        "quests",
-        "notes",
-        "character_notes",
-        "character_relationships",
-        "character_progression",
-        "player_arcs",
-        "scene_cards",
-      ];
+      // Check for required tables from configuration
+      const requiredTables = this.config.database.requiredTables;
 
       for (const table of requiredTables) {
         this.assert(
@@ -382,42 +512,8 @@ class ApplicationAuditor {
 
   async auditFeatureAlignment() {
     await this.test("Feature Alignment Check", async () => {
-      // Check that each feature has the required components
-      const features = [
-        {
-          name: "scenes",
-          files: ["scene-core.js", "scene-manager.js", "scene-ui.js"],
-        },
-        {
-          name: "characters",
-          files: [
-            "character-core.js",
-            "character-manager.js",
-            "character-ui.js",
-          ],
-        },
-        {
-          name: "player-arcs",
-          files: [
-            "player-arc-core.js",
-            "player-arc-manager.js",
-            "player-arc-ui.js",
-          ],
-        },
-        {
-          name: "quests",
-          files: ["quest-core.js", "quest-manager.js", "quest-ui.js"],
-        },
-        { name: "notes", files: ["notes-manager.js"] },
-        {
-          name: "sessions",
-          files: ["session-core.js", "session-manager-new.js", "session-ui.js"],
-        },
-        {
-          name: "locations",
-          files: ["location-core.js", "location-manager.js", "location-ui.js"],
-        },
-      ];
+      // Check that each feature has the required components from configuration
+      const features = this.config.javascript.featureFiles;
 
       for (const feature of features) {
         for (const file of feature.files) {
@@ -451,19 +547,8 @@ class ApplicationAuditor {
         classList.forEach((cls) => classes.add(cls));
       });
 
-      // Check for required CSS classes
-      const requiredClasses = [
-        "app-container",
-        "top-nav",
-        "main-nav-tabs",
-        "main-nav-tab",
-        "workspace-content",
-        "content-area",
-        "management-panel",
-        "dashboard-grid",
-        "stat-card",
-        "section-title",
-      ];
+      // Check for required CSS classes from configuration
+      const requiredClasses = this.config.html.requiredClasses;
 
       for (const className of requiredClasses) {
         this.assert(
@@ -492,22 +577,8 @@ class ApplicationAuditor {
         actions.add(action);
       });
 
-      // Check that all data-action values are handled in app.js
-      const handledActions = [
-        "edit-campaign-title",
-        "show-dashboard",
-        "show-scenes",
-        "show-characters",
-        "show-relationships",
-        "show-locations",
-        "show-quests",
-        "show-notes",
-        "show-sessions",
-        "show-campaign",
-        "show-export-import",
-        "show-quick-actions",
-        "toggle-scene-tree",
-      ];
+      // Check that all data-action values are handled in app.js from configuration
+      const handledActions = this.config.html.handledActions;
 
       for (const action of handledActions) {
         this.assert(
@@ -529,12 +600,8 @@ class ApplicationAuditor {
         "utf8"
       );
 
-      // Check for required media queries
-      const requiredMediaQueries = [
-        "@media (max-width: 768px)",
-        "@media (max-width: 1024px)",
-        "@media (min-width: 1200px)",
-      ];
+      // Check for required media queries from configuration
+      const requiredMediaQueries = this.config.responsive.requiredMediaQueries;
 
       for (const query of requiredMediaQueries) {
         this.assert(
@@ -608,6 +675,13 @@ class ApplicationAuditor {
     console.log("=====================================");
     console.log(`📋 Configuration:`);
     console.log(`   Base URL: ${this.baseUrl}`);
+    console.log(
+      `   Config Source: ${
+        fs.existsSync(path.join(__dirname, "audit-config.json"))
+          ? "audit-config.json"
+          : "fallback configuration"
+      }`
+    );
     console.log("=====================================\n");
 
     // Run all audit tests

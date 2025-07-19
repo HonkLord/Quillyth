@@ -1,0 +1,183 @@
+{
+  "css": {
+    "requiredImports": [
+      "./base/variables.css",
+      "./base/reset.css",
+      "./base/typography.css",
+      "./base/layout.css",
+      "./components/navigation.css",
+      "./components/dashboard.css",
+      "./components/scenes.css",
+      "./components/characters.css",
+      "./components/quests.css",
+      "./components/sessions.css",
+      "./components/campaigns.css",
+      "./components/locations.css",
+      "./components/notifications.css",
+      "./components/search.css",
+      "./components/buttons.css",
+      "./components/forms.css",
+      "./components/modals.css",
+      "./components/cards.css"
+    ]
+  },
+  "html": {
+    "requiredSections": [
+      "dashboard-content",
+      "scenes-content",
+      "characters-content",
+      "relationships-content",
+      "locations-content",
+      "quests-content",
+      "notes-content",
+      "sessions-content",
+      "campaign-content",
+      "export-import-content"
+    ],
+    "requiredNavTabs": [
+      "nav-dashboard",
+      "nav-scenes",
+      "nav-characters",
+      "nav-relationships",
+      "nav-locations",
+      "nav-quests",
+      "nav-notes",
+      "nav-sessions",
+      "nav-campaign",
+      "nav-export-import"
+    ],
+    "requiredClasses": [
+      "app-container",
+      "top-nav",
+      "main-nav-tabs",
+      "main-nav-tab",
+      "workspace-content",
+      "content-area",
+      "management-panel",
+      "dashboard-grid",
+      "stat-card",
+      "section-title"
+    ],
+    "handledActions": [
+      "edit-campaign-title",
+      "show-dashboard",
+      "show-scenes",
+      "show-characters",
+      "show-relationships",
+      "show-locations",
+      "show-quests",
+      "show-notes",
+      "show-sessions",
+      "show-campaign",
+      "show-export-import",
+      "show-quick-actions",
+      "toggle-scene-tree"
+    ]
+  },
+  "javascript": {
+    "requiredImports": [
+      "SceneManager",
+      "CharacterManager",
+      "PlayerArcManager",
+      "QuestManager",
+      "NotesManager",
+      "SessionManager",
+      "LocationManager",
+      "ExportImportPanel"
+    ],
+    "requiredFeatures": [
+      "scenes",
+      "characters",
+      "player-arcs",
+      "quests",
+      "notes",
+      "sessions",
+      "locations"
+    ],
+    "requiredManagers": [
+      { "name": "scene-manager.js", "feature": "scenes" },
+      { "name": "character-manager.js", "feature": "characters" },
+      { "name": "player-arc-manager.js", "feature": "player-arcs" },
+      { "name": "quest-manager.js", "feature": "quests" },
+      { "name": "notes-manager.js", "feature": "notes" },
+      { "name": "session-manager-new.js", "feature": "sessions" },
+      { "name": "location-manager.js", "feature": "locations" }
+    ],
+    "featureFiles": [
+      {
+        "name": "scenes",
+        "files": ["scene-core.js", "scene-manager.js", "scene-ui.js"]
+      },
+      {
+        "name": "characters",
+        "files": [
+          "character-core.js",
+          "character-manager.js",
+          "character-ui.js"
+        ]
+      },
+      {
+        "name": "player-arcs",
+        "files": [
+          "player-arc-core.js",
+          "player-arc-manager.js",
+          "player-arc-ui.js"
+        ]
+      },
+      {
+        "name": "quests",
+        "files": ["quest-core.js", "quest-manager.js", "quest-ui.js"]
+      },
+      {
+        "name": "notes",
+        "files": ["notes-manager.js"]
+      },
+      {
+        "name": "sessions",
+        "files": ["session-core.js", "session-manager-new.js", "session-ui.js"]
+      },
+      {
+        "name": "locations",
+        "files": ["location-core.js", "location-manager.js", "location-ui.js"]
+      }
+    ]
+  },
+  "api": {
+    "requiredRoutes": [
+      "campaigns.js",
+      "characters.js",
+      "character-relationships.js",
+      "locations.js",
+      "notes.js",
+      "player-arcs.js",
+      "quests.js",
+      "scenes.js",
+      "sessions.js"
+    ]
+  },
+  "database": {
+    "requiredTables": [
+      "campaigns",
+      "sessions",
+      "scenes",
+      "scene_characters",
+      "players",
+      "npcs",
+      "locations",
+      "quests",
+      "notes",
+      "character_notes",
+      "character_relationships",
+      "character_progression",
+      "player_arcs",
+      "scene_cards"
+    ]
+  },
+  "responsive": {
+    "requiredMediaQueries": [
+      "@media (max-width: 768px)",
+      "@media (max-width: 1024px)",
+      "@media (min-width: 1200px)"
+    ]
+  }
+}
