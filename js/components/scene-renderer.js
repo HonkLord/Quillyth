@@ -2,7 +2,7 @@
  * SceneRenderer - Renders individual scenes with proper management tools
  */
 import { escapeHTML } from "../shared/escape-html.js";
-import { getDefaultCampaignId } from "../shared/config.js";
+import { getDefaultCampaignId, isDebugEnabled } from "../shared/config.js";
 class SceneRenderer {
   constructor() {
     this.currentScene = null;
@@ -13,7 +13,9 @@ class SceneRenderer {
    * Render the main scene content
    */
   renderScene(scene, sceneDataManager) {
-    console.log(`🎭 SceneRenderer: Rendering scene "${scene.name}"`, scene);
+    if (isDebugEnabled()) {
+      console.log(`🎭 SceneRenderer: Rendering scene "${scene.name}"`, scene);
+    }
 
     this.currentScene = scene;
     const sceneContent = this.createSceneContent(scene, sceneDataManager);
@@ -494,7 +496,11 @@ class SceneRenderer {
    * Show Run Scene Interface - Live gameplay control panel
    */
   async showRunSceneInterface(scene) {
-    console.log(`🎬 SceneRenderer: Starting Run Scene mode for: ${scene.name}`);
+    if (isDebugEnabled()) {
+      console.log(
+        `🎬 SceneRenderer: Starting Run Scene mode for: ${scene.name}`
+      );
+    }
 
     try {
       // Get campaign ID from scene or fallback
@@ -540,11 +546,13 @@ class SceneRenderer {
       const safeLocations = Array.isArray(locations) ? locations : [];
       const safeQuests = Array.isArray(quests) ? quests : [];
 
-      console.log(`📊 Run Scene data loaded:`, {
-        characters: safeCharacters.length,
-        locations: safeLocations.length,
-        quests: safeQuests.length,
-      });
+      if (isDebugEnabled()) {
+        console.log(`📊 Run Scene data loaded:`, {
+          characters: safeCharacters.length,
+          locations: safeLocations.length,
+          quests: safeQuests.length,
+        });
+      }
 
       // Replace the entire scenes-content with run scene interface
       const scenesContent = document.getElementById("scenes-content");
@@ -1108,7 +1116,9 @@ class SceneRenderer {
       );
     }
 
-    console.log(`🎬 Run Scene interface initialized for: ${scene.name}`);
+    if (isDebugEnabled()) {
+      console.log(`🎬 Run Scene interface initialized for: ${scene.name}`);
+    }
   }
 
   /**
@@ -1135,7 +1145,9 @@ class SceneRenderer {
       };
 
       // TODO: Save to scene data via API
-      console.log("Saving context changes:", contextData);
+      if (isDebugEnabled()) {
+        console.log("Saving context changes:", contextData);
+      }
 
       this.showToast("Context saved successfully!", "success");
     } catch (error) {
@@ -1239,7 +1251,9 @@ class SceneRenderer {
         }
 
         const result = await response.json();
-        console.log("Actor state saved to database:", result);
+        if (isDebugEnabled()) {
+          console.log("Actor state saved to database:", result);
+        }
         this.showToast("Actor state saved!", "success");
       } catch (apiError) {
         console.error("Failed to save actor state to database:", apiError);
@@ -1360,7 +1374,9 @@ class SceneRenderer {
       scenesContent.classList.remove("run-scene-active");
       this.originalSceneContent = null;
     }
-    console.log("🎬 Exited Run Scene mode");
+    if (isDebugEnabled()) {
+      console.log("🎬 Exited Run Scene mode");
+    }
   }
 
   /**
@@ -1473,13 +1489,15 @@ class SceneRenderer {
           window.dataManager?.currentCampaignId || getDefaultCampaignId();
       }
 
-      console.log("🔍 Run Scene loading NPCs for campaign:", campaignId);
-      console.log("🎭 Scene details:", {
-        sceneId: scene.id,
-        sceneCampaignId: scene.campaign_id,
-        dataManagerCampaignId: window.dataManager?.currentCampaignId,
-        finalCampaignId: campaignId,
-      });
+      if (isDebugEnabled()) {
+        console.log("🔍 Run Scene loading NPCs for campaign:", campaignId);
+        console.log("🎭 Scene details:", {
+          sceneId: scene.id,
+          sceneCampaignId: scene.campaign_id,
+          dataManagerCampaignId: window.dataManager?.currentCampaignId,
+          finalCampaignId: campaignId,
+        });
+      }
 
       // Fetch all NPCs using the same endpoint structure as Characters tab
       const response = await fetch(`/api/characters?campaign_id=${campaignId}`);
@@ -1490,10 +1508,12 @@ class SceneRenderer {
       const charactersData = await response.json();
       const allNPCs = charactersData.npcs || [];
 
-      console.log(
-        "📊 Available NPCs from API:",
-        allNPCs.map((npc) => npc.name)
-      );
+      if (isDebugEnabled()) {
+        console.log(
+          "📊 Available NPCs from API:",
+          allNPCs.map((npc) => npc.name)
+        );
+      }
 
       // Filter out NPCs already in scene
       const currentNPCIds =
@@ -1789,9 +1809,11 @@ class SceneRenderer {
         this.updateActorHistory(characterId, groupedStates[characterId]);
       });
 
-      console.log(
-        `📚 Loaded ${actorStates.length} actor states for scene ${sceneId}`
-      );
+      if (isDebugEnabled()) {
+        console.log(
+          `📚 Loaded ${actorStates.length} actor states for scene ${sceneId}`
+        );
+      }
     } catch (error) {
       console.error("Failed to load actor state history:", error);
       // Don't show error toast as this is a background operation
@@ -1802,7 +1824,9 @@ class SceneRenderer {
    * Update scene mood
    */
   updateSceneMood(scene, mood) {
-    console.log(`🎭 Scene mood updated to: ${mood}`);
+    if (isDebugEnabled()) {
+      console.log(`🎭 Scene mood updated to: ${mood}`);
+    }
     // TODO: Store mood state and use it for AI generation
   }
 

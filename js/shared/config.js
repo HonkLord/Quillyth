@@ -37,6 +37,16 @@ export const CONFIG = {
     DEBOUNCE_DELAY: 300, // 300ms
   },
 
+  // Debug Configuration
+  DEBUG: {
+    ENABLED:
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1" ||
+        window.QUILLYTH_DEBUG === "true"),
+    LOG_LEVEL: "info", // info, warn, error, debug
+  },
+
   // Scene Configuration
   SCENES: {
     STATUSES: {
@@ -96,6 +106,14 @@ export function getDefaultCampaignId() {
   }
 
   return CONFIG.CAMPAIGNS.DEFAULT_CAMPAIGN_ID;
+}
+
+/**
+ * Check if debug logging is enabled
+ * @returns {boolean} True if debug logging should be enabled
+ */
+export function isDebugEnabled() {
+  return CONFIG.DEBUG.ENABLED;
 }
 
 export default CONFIG;
