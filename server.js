@@ -521,6 +521,18 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("."));
 
 // ==========================================
+// HEALTH CHECK ENDPOINT
+// ==========================================
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || "development",
+  });
+});
+
+// ==========================================
 // API ROUTES
 // ==========================================
 const campaignRoutes = require("./routes/campaigns")(db);

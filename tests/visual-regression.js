@@ -67,11 +67,59 @@ class VisualRegressionTester {
     }
   }
 
+  async waitForAnimations(page, selector = "body") {
+    // Wait for all animations to complete by checking if any elements are currently animating
+    await page.waitForFunction(
+      (targetSelector) => {
+        const element = document.querySelector(targetSelector);
+        if (!element) return true; // Element not found, consider animations done
+
+        // Check if the element or any of its children are currently animating
+        const isAnimating = (el) => {
+          const style = window.getComputedStyle(el);
+          const animation = style.animation;
+          const transition = style.transition;
+
+          // Check if element has active animations or transitions
+          if (animation && animation !== "none") {
+            const animationName = animation.split(" ")[0];
+            if (animationName && animationName !== "none") {
+              return true;
+            }
+          }
+
+          if (transition && transition !== "none") {
+            const transitionProperty = transition.split(" ")[0];
+            if (transitionProperty && transitionProperty !== "none") {
+              return true;
+            }
+          }
+
+          // Check children recursively
+          for (const child of el.children) {
+            if (isAnimating(child)) {
+              return true;
+            }
+          }
+
+          return false;
+        };
+
+        return !isAnimating(element);
+      },
+      { timeout: 10000 }, // 10 second timeout as fallback
+      selector
+    );
+
+    // Additional small delay to ensure any final rendering is complete
+    await page.waitForTimeout(100);
+  }
+
   async captureScreenshot(page, name, selector = "body") {
     await page.waitForSelector(selector, { timeout: 5000 });
 
     // Wait for any animations to complete
-    await page.waitForTimeout(1000);
+    await this.waitForAnimations(page, selector);
 
     const screenshotPath = path.join(this.currentDir, `${name}.png`);
     await page.screenshot({

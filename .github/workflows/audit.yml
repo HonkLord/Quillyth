@@ -29,9 +29,26 @@ jobs:
       - name: Start server
         run: |
           npm start &
-          sleep 10
         env:
           PORT: 3000
+
+      - name: Wait for server to be ready
+        run: |
+          echo "Waiting for server to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:3000/health > /dev/null 2>&1; then
+              echo "Server is ready!"
+              break
+            fi
+            echo "Attempt $i: Server not ready yet, waiting..."
+            sleep 2
+          done
+
+          # Final check to ensure server is actually ready
+          if ! curl -f http://localhost:3000/health > /dev/null 2>&1; then
+            echo "ERROR: Server failed to start within 60 seconds"
+            exit 1
+          fi
 
       - name: Run application audit
         run: node audit-application.js

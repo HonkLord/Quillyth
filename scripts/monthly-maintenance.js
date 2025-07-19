@@ -3,6 +3,21 @@
 /**
  * Monthly Maintenance Script
  * Automated alignment checks and reporting
+ *
+ * IMPROVEMENTS (2025-07-19):
+ * - Replaced fragile string parsing with structured JSON parsing for performance tests
+ * - Added structured JSON output generation to accessibility tests
+ * - Implemented report validation to ensure data integrity
+ * - Added fallback string parsing for backward compatibility
+ * - Enhanced error handling and logging for better debugging
+ * - Improved recommendation generation with detailed violation information
+ *
+ * The script now reads structured JSON reports from:
+ * - tests/performance-reports/latest.json
+ * - tests/accessibility-reports/latest.json
+ *
+ * This makes detection of performance and accessibility issues more reliable
+ * and maintainable compared to the previous string-matching approach.
  */
 
 const fs = require("fs");
@@ -38,6 +53,170 @@ class MonthlyMaintenance {
     }
   }
 
+  async readPerformanceReport() {
+    const latestReportPath = path.join(
+      __dirname,
+      "..",
+      "tests",
+      "performance-reports",
+      "latest.json"
+    );
+
+    try {
+      if (fs.existsSync(latestReportPath)) {
+        const reportContent = fs.readFileSync(latestReportPath, "utf8");
+        const report = JSON.parse(reportContent);
+
+        // Validate report structure
+        if (this.validatePerformanceReport(report)) {
+          return report;
+        } else {
+          console.log("⚠️  Performance report has invalid structure");
+          return null;
+        }
+      } else {
+        console.log(
+          "⚠️  No performance report found, performance test may not have run"
+        );
+        return null;
+      }
+    } catch (error) {
+      console.log(`⚠️  Error reading performance report: ${error.message}`);
+      return null;
+    }
+  }
+
+  async readAccessibilityReport() {
+    const latestReportPath = path.join(
+      __dirname,
+      "..",
+      "tests",
+      "accessibility-reports",
+      "latest.json"
+    );
+
+    try {
+      if (fs.existsSync(latestReportPath)) {
+        const reportContent = fs.readFileSync(latestReportPath, "utf8");
+        const report = JSON.parse(reportContent);
+
+        // Validate report structure
+        if (this.validateAccessibilityReport(report)) {
+          return report;
+        } else {
+          console.log("⚠️  Accessibility report has invalid structure");
+          return null;
+        }
+      } else {
+        console.log(
+          "⚠️  No accessibility report found, accessibility test may not have run"
+        );
+        return null;
+      }
+    } catch (error) {
+      console.log(`⚠️  Error reading accessibility report: ${error.message}`);
+      return null;
+    }
+  }
+
+  validatePerformanceReport(report) {
+    const requiredFields = ["timestamp", "summary", "hasIssues"];
+    const summaryFields = [
+      "totalTests",
+      "passedTests",
+      "failedTests",
+      "averageResponseTime",
+    ];
+    const issuesFields = ["hasWarnings", "hasErrors"];
+
+    try {
+      // Check required top-level fields
+      for (const field of requiredFields) {
+        if (!(field in report)) {
+          console.log(
+            `⚠️  Performance report missing required field: ${field}`
+          );
+          return false;
+        }
+      }
+
+      // Check summary fields
+      for (const field of summaryFields) {
+        if (!(field in report.summary)) {
+          console.log(`⚠️  Performance report summary missing field: ${field}`);
+          return false;
+        }
+      }
+
+      // Check hasIssues fields
+      for (const field of issuesFields) {
+        if (!(field in report.hasIssues)) {
+          console.log(
+            `⚠️  Performance report hasIssues missing field: ${field}`
+          );
+          return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.log(
+        `⚠️  Error validating performance report structure: ${error.message}`
+      );
+      return false;
+    }
+  }
+
+  validateAccessibilityReport(report) {
+    const requiredFields = ["timestamp", "summary", "hasIssues"];
+    const summaryFields = [
+      "totalTests",
+      "passedTests",
+      "failedTests",
+      "successRate",
+    ];
+    const issuesFields = ["hasViolations", "hasErrors", "violationCount"];
+
+    try {
+      // Check required top-level fields
+      for (const field of requiredFields) {
+        if (!(field in report)) {
+          console.log(
+            `⚠️  Accessibility report missing required field: ${field}`
+          );
+          return false;
+        }
+      }
+
+      // Check summary fields
+      for (const field of summaryFields) {
+        if (!(field in report.summary)) {
+          console.log(
+            `⚠️  Accessibility report summary missing field: ${field}`
+          );
+          return false;
+        }
+      }
+
+      // Check hasIssues fields
+      for (const field of issuesFields) {
+        if (!(field in report.hasIssues)) {
+          console.log(
+            `⚠️  Accessibility report hasIssues missing field: ${field}`
+          );
+          return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.log(
+        `⚠️  Error validating accessibility report structure: ${error.message}`
+      );
+      return false;
+    }
+  }
+
   async runAllChecks() {
     console.log("🚀 Starting Monthly Maintenance");
     console.log("=====================================\n");
@@ -61,7 +240,7 @@ class MonthlyMaintenance {
 
     // Generate summary
     this.generateSummary();
-    this.generateRecommendations();
+    await this.generateRecommendations();
 
     // Save report
     await this.saveReport();
@@ -84,7 +263,7 @@ class MonthlyMaintenance {
     };
   }
 
-  generateRecommendations() {
+  async generateRecommendations() {
     const recommendations = [];
 
     // Check for failed tests
@@ -100,41 +279,109 @@ class MonthlyMaintenance {
       }
     });
 
-    // Check for performance issues
+    // Check for performance issues using structured JSON data
     if (this.results.tests.performance.success) {
       try {
-        // Parse performance output for recommendations
+        const performanceReport = await this.readPerformanceReport();
+
+        if (performanceReport && performanceReport.hasIssues) {
+          const issues = performanceReport.hasIssues;
+
+          if (issues.hasErrors) {
+            recommendations.push({
+              type: "error",
+              priority: "high",
+              message: `${issues.failedTestsCount} performance tests failed`,
+              action: "Investigate and fix performance test failures",
+              test: "performance",
+              details: performanceReport.recommendations.filter(
+                (r) => r.type === "error"
+              ),
+            });
+          }
+
+          if (issues.hasWarnings) {
+            let warningMessage = "Performance issues detected";
+            if (issues.averageResponseTimeExceeded) {
+              warningMessage += ` - Average response time (${performanceReport.summary.averageResponseTime}ms) exceeds threshold`;
+            }
+            if (issues.slowEndpointsCount > 0) {
+              warningMessage += ` - ${issues.slowEndpointsCount} slow endpoints detected`;
+            }
+
+            recommendations.push({
+              type: "warning",
+              priority: "medium",
+              message: warningMessage,
+              action:
+                "Review performance monitoring results and optimize slow endpoints",
+              test: "performance",
+              details: performanceReport.recommendations.filter(
+                (r) => r.type === "warning" || r.type === "optimization"
+              ),
+            });
+          }
+        }
+      } catch (e) {
+        console.log(`⚠️  Error parsing performance report: ${e.message}`);
+        // Fallback to basic string parsing if JSON parsing fails
         const perfOutput = this.results.tests.performance.output;
         if (perfOutput.includes("slow") || perfOutput.includes("warning")) {
           recommendations.push({
             type: "warning",
             priority: "medium",
-            message: "Performance issues detected",
+            message: "Performance issues detected (fallback detection)",
             action:
               "Review performance monitoring results and optimize slow endpoints",
             test: "performance",
           });
         }
-      } catch (e) {
-        // Ignore parsing errors
       }
     }
 
-    // Check for accessibility issues
+    // Check for accessibility issues using structured JSON data
     if (this.results.tests.accessibility.success) {
       try {
+        const accessibilityReport = await this.readAccessibilityReport();
+
+        if (accessibilityReport && accessibilityReport.hasIssues) {
+          const issues = accessibilityReport.hasIssues;
+
+          if (issues.hasErrors) {
+            recommendations.push({
+              type: "error",
+              priority: "high",
+              message: `${accessibilityReport.summary.failedTests} accessibility tests failed`,
+              action: "Investigate and fix accessibility test failures",
+              test: "accessibility",
+              details: accessibilityReport.violations,
+            });
+          }
+
+          if (issues.hasViolations) {
+            recommendations.push({
+              type: "warning",
+              priority: "medium",
+              message: `${issues.violationCount} accessibility violations detected`,
+              action: "Review accessibility test results and fix violations",
+              test: "accessibility",
+              details: accessibilityReport.violations,
+            });
+          }
+        }
+      } catch (e) {
+        console.log(`⚠️  Error parsing accessibility report: ${e.message}`);
+        // Fallback to basic string parsing if JSON parsing fails
         const a11yOutput = this.results.tests.accessibility.output;
         if (a11yOutput.includes("FAIL") || a11yOutput.includes("violation")) {
           recommendations.push({
             type: "warning",
             priority: "medium",
-            message: "Accessibility issues detected",
+            message: "Accessibility issues detected (fallback detection)",
             action: "Review accessibility test results and fix violations",
             test: "accessibility",
           });
         }
-      } catch (e) {
-        // Ignore parsing errors
       }
     }
 

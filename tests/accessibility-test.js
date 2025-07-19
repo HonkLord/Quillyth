@@ -143,10 +143,14 @@ class AccessibilityTester {
         await page.waitForSelector("#dashboard-content");
 
         const results = await page.evaluate(() => {
-          return new Promise((resolve) => {
+          return new Promise((resolve, reject) => {
+            if (typeof axe === "undefined") {
+              reject(new Error("axe-core not loaded properly"));
+              return;
+            }
             axe.run((err, results) => {
-              if (err) throw err;
-              resolve(results);
+              if (err) reject(err);
+              else resolve(results);
             });
           });
         });
@@ -318,6 +322,49 @@ class AccessibilityTester {
     } else {
       console.log("🎉 All accessibility tests passed!");
     }
+
+    // Generate and save structured report
+    this.generateAccessibilityReport();
+  }
+
+  generateAccessibilityReport() {
+    const report = {
+      timestamp: new Date().toISOString(),
+      summary: {
+        totalTests: this.results.total,
+        passedTests: this.results.passed,
+        failedTests: this.results.failed,
+        successRate: Math.round(
+          (this.results.passed / this.results.total) * 100
+        ),
+      },
+      violations: this.results.violations,
+      config: this.config,
+      hasIssues: {
+        hasViolations: this.results.violations.length > 0,
+        hasErrors: this.results.failed > 0,
+        violationCount: this.results.violations.length,
+      },
+    };
+
+    // Save report to file
+    const reportPath = path.join(__dirname, "accessibility-reports");
+    if (!fs.existsSync(reportPath)) {
+      fs.mkdirSync(reportPath, { recursive: true });
+    }
+
+    const filename = `accessibility-report-${
+      new Date().toISOString().split("T")[0]
+    }.json`;
+    const reportFilePath = path.join(reportPath, filename);
+    fs.writeFileSync(reportFilePath, JSON.stringify(report, null, 2));
+
+    // Also save a latest.json for easy access by maintenance scripts
+    const latestPath = path.join(reportPath, "latest.json");
+    fs.writeFileSync(latestPath, JSON.stringify(report, null, 2));
+
+    console.log(`📄 Accessibility report saved to: ${reportFilePath}`);
+    console.log(`📄 Latest report also saved to: ${latestPath}`);
   }
 }
 

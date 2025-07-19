@@ -3,6 +3,18 @@
 /**
  * Performance Monitoring System
  * Tracks API response times and frontend performance metrics
+ *
+ * Configuration:
+ * - TEST_CAMPAIGN_ID: Campaign ID to test against (default: "campaign-4-old-cistern")
+ * - TEST_BASE_URL: Base URL for API endpoints (default: "http://localhost:3000")
+ * - TEST_API_RESPONSE_TIME: API response time threshold in ms (default: 1000)
+ * - TEST_PAGE_LOAD_TIME: Page load time threshold in ms (default: 3000)
+ * - TEST_MEMORY_USAGE: Memory usage threshold in MB (default: 50)
+ *
+ * Usage examples:
+ *   node tests/performance-monitor.js
+ *   TEST_CAMPAIGN_ID=campaign-1 node tests/performance-monitor.js
+ *   TEST_BASE_URL=http://staging.example.com TEST_CAMPAIGN_ID=campaign-2 node tests/performance-monitor.js
  */
 
 const fetch = require("node-fetch");
@@ -10,14 +22,15 @@ const fs = require("fs");
 const path = require("path");
 
 class PerformanceMonitor {
-  constructor() {
-    this.baseUrl = "http://localhost:3000";
+  constructor(config = {}) {
+    this.baseUrl = config.baseUrl || "http://localhost:3000";
+    this.campaignId = config.campaignId || "campaign-4-old-cistern";
     this.results = {
       apiTests: [],
       thresholds: {
-        apiResponseTime: 1000, // 1 second
-        pageLoadTime: 3000, // 3 seconds
-        memoryUsage: 50, // 50MB
+        apiResponseTime: config.apiResponseTime || 1000, // 1 second
+        pageLoadTime: config.pageLoadTime || 3000, // 3 seconds
+        memoryUsage: config.memoryUsage || 50, // 50MB
       },
     };
   }
@@ -57,6 +70,19 @@ class PerformanceMonitor {
 
   async testAPIEndpoints() {
     console.log("🚀 Starting Performance Monitoring");
+    console.log("=====================================");
+    console.log(`📋 Configuration:`);
+    console.log(`   Campaign ID: ${this.campaignId}`);
+    console.log(`   Base URL: ${this.baseUrl}`);
+    console.log(
+      `   API Response Time Threshold: ${this.results.thresholds.apiResponseTime}ms`
+    );
+    console.log(
+      `   Page Load Time Threshold: ${this.results.thresholds.pageLoadTime}ms`
+    );
+    console.log(
+      `   Memory Usage Threshold: ${this.results.thresholds.memoryUsage}MB`
+    );
     console.log("=====================================\n");
 
     const endpoints = [
@@ -72,7 +98,7 @@ class PerformanceMonitor {
     for (const endpoint of endpoints) {
       await this.test(`${endpoint.name} Response Time`, async () => {
         const response = await fetch(
-          `${this.baseUrl}${endpoint.path}?campaign_id=campaign-4-old-cistern`
+          `${this.baseUrl}${endpoint.path}?campaign_id=${this.campaignId}`
         );
 
         if (!response.ok) {
@@ -98,9 +124,7 @@ class PerformanceMonitor {
     // Test concurrent API calls
     await this.test("Concurrent API Performance", async () => {
       const promises = endpoints.map((endpoint) =>
-        fetch(
-          `${this.baseUrl}${endpoint.path}?campaign_id=campaign-4-old-cistern`
-        )
+        fetch(`${this.baseUrl}${endpoint.path}?campaign_id=${this.campaignId}`)
       );
 
       const responses = await Promise.all(promises);
@@ -121,7 +145,7 @@ class PerformanceMonitor {
 
       // Test complex query with joins
       const response = await fetch(
-        `${this.baseUrl}/api/characters?campaign_id=campaign-4-old-cistern`
+        `${this.baseUrl}/api/characters?campaign_id=${this.campaignId}`
       );
       const data = await response.json();
 
@@ -150,6 +174,8 @@ class PerformanceMonitor {
       },
       details: this.results.apiTests,
       recommendations: this.generateRecommendations(),
+      thresholds: this.results.thresholds,
+      hasIssues: this.hasPerformanceIssues(),
     };
 
     // Save report to file
@@ -161,10 +187,15 @@ class PerformanceMonitor {
     const filename = `performance-report-${
       new Date().toISOString().split("T")[0]
     }.json`;
-    fs.writeFileSync(
-      path.join(reportPath, filename),
-      JSON.stringify(report, null, 2)
-    );
+    const reportFilePath = path.join(reportPath, filename);
+    fs.writeFileSync(reportFilePath, JSON.stringify(report, null, 2));
+
+    // Also save a latest.json for easy access by maintenance scripts
+    const latestPath = path.join(reportPath, "latest.json");
+    fs.writeFileSync(latestPath, JSON.stringify(report, null, 2));
+
+    console.log(`📄 Performance report saved to: ${reportFilePath}`);
+    console.log(`📄 Latest report also saved to: ${latestPath}`);
 
     return report;
   }
@@ -296,8 +327,41 @@ class PerformanceMonitor {
     this.printResults();
     return report;
   }
+
+  hasPerformanceIssues() {
+    const avgResponseTime = this.calculateAverageResponseTime();
+    const slowEndpoints = this.results.apiTests.filter(
+      (t) =>
+        t.status === "PASS" &&
+        t.duration > this.results.thresholds.apiResponseTime
+    );
+    const failedTests = this.results.apiTests.filter(
+      (t) => t.status === "FAIL"
+    );
+
+    return {
+      averageResponseTimeExceeded:
+        avgResponseTime > this.results.thresholds.apiResponseTime,
+      slowEndpointsCount: slowEndpoints.length,
+      failedTestsCount: failedTests.length,
+      hasWarnings:
+        avgResponseTime > this.results.thresholds.apiResponseTime ||
+        slowEndpoints.length > 0,
+      hasErrors: failedTests.length > 0,
+    };
+  }
 }
 
+// Configuration options
+const config = {
+  // Override these values as needed for different test environments
+  campaignId: process.env.TEST_CAMPAIGN_ID || "campaign-4-old-cistern",
+  baseUrl: process.env.TEST_BASE_URL || "http://localhost:3000",
+  apiResponseTime: process.env.TEST_API_RESPONSE_TIME || 1000,
+  pageLoadTime: process.env.TEST_PAGE_LOAD_TIME || 3000,
+  memoryUsage: process.env.TEST_MEMORY_USAGE || 50,
+};
+
 // Run performance monitoring
-const monitor = new PerformanceMonitor();
+const monitor = new PerformanceMonitor(config);
 monitor.runAllTests().catch(console.error);
