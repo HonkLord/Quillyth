@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
 module.exports = (db) => {
@@ -9,14 +9,16 @@ module.exports = (db) => {
         return res.status(400).json({ error: "Campaign ID is required" });
       }
       const quests = db
-        .prepare("SELECT * FROM quests WHERE campaign_id = ? ORDER BY created_at DESC")
+        .prepare(
+          "SELECT * FROM quests WHERE campaign_id = ? ORDER BY created_at DESC"
+        )
         .all(campaignId);
 
-      const parsedQuests = quests.map(quest => ({
+      const parsedQuests = quests.map((quest) => ({
         ...quest,
-        assigned_players: JSON.parse(quest.assigned_players || '[]'),
-        objectives: JSON.parse(quest.objectives || '[]'),
-        rewards: JSON.parse(quest.rewards || '[]'),
+        assigned_players: JSON.parse(quest.assigned_players || "[]"),
+        objectives: JSON.parse(quest.objectives || "[]"),
+        rewards: JSON.parse(quest.rewards || "[]"),
       }));
 
       res.json(parsedQuests);
@@ -28,14 +30,16 @@ module.exports = (db) => {
 
   router.get("/:id", (req, res) => {
     try {
-      const quest = db.prepare("SELECT * FROM quests WHERE id = ?").get(req.params.id);
+      const quest = db
+        .prepare("SELECT * FROM quests WHERE id = ?")
+        .get(req.params.id);
       if (!quest) {
         return res.status(404).json({ error: "Quest not found" });
       }
 
-      quest.assigned_players = JSON.parse(quest.assigned_players || '[]');
-      quest.objectives = JSON.parse(quest.objectives || '[]');
-      quest.rewards = JSON.parse(quest.rewards || '[]');
+      quest.assigned_players = JSON.parse(quest.assigned_players || "[]");
+      quest.objectives = JSON.parse(quest.objectives || "[]");
+      quest.rewards = JSON.parse(quest.rewards || "[]");
 
       res.json(quest);
     } catch (error) {
@@ -89,7 +93,20 @@ module.exports = (db) => {
         notes
       );
 
-      res.json({ id, success: true, changes: result.changes });
+      // Return the created quest with full data
+      const createdQuest = db
+        .prepare("SELECT * FROM quests WHERE id = ?")
+        .get(id);
+      if (createdQuest) {
+        createdQuest.assigned_players = JSON.parse(
+          createdQuest.assigned_players || "[]"
+        );
+        createdQuest.objectives = JSON.parse(createdQuest.objectives || "[]");
+        createdQuest.rewards = JSON.parse(createdQuest.rewards || "[]");
+        res.json(createdQuest);
+      } else {
+        res.json({ id, success: true, changes: result.changes });
+      }
     } catch (error) {
       console.error("Error creating quest:", error);
       res.status(500).json({ error: "Failed to create quest" });
@@ -137,7 +154,20 @@ module.exports = (db) => {
         return res.status(404).json({ error: "Quest not found" });
       }
 
-      res.json({ success: true, changes: result.changes });
+      // Return the updated quest with full data
+      const updatedQuest = db
+        .prepare("SELECT * FROM quests WHERE id = ?")
+        .get(req.params.id);
+      if (updatedQuest) {
+        updatedQuest.assigned_players = JSON.parse(
+          updatedQuest.assigned_players || "[]"
+        );
+        updatedQuest.objectives = JSON.parse(updatedQuest.objectives || "[]");
+        updatedQuest.rewards = JSON.parse(updatedQuest.rewards || "[]");
+        res.json(updatedQuest);
+      } else {
+        res.json({ success: true, changes: result.changes });
+      }
     } catch (error) {
       console.error("Error updating quest:", error);
       res.status(500).json({ error: "Failed to update quest" });
