@@ -2,6 +2,7 @@
  * SceneRenderer - Renders individual scenes with proper management tools
  */
 import { escapeHTML } from "../shared/escape-html.js";
+import { getDefaultCampaignId } from "../shared/config.js";
 class SceneRenderer {
   constructor() {
     this.currentScene = null;
@@ -496,7 +497,7 @@ class SceneRenderer {
 
     try {
       // Get campaign ID from scene or fallback
-      const campaignId = scene.campaign_id || "campaign-4-old-cistern";
+      const campaignId = scene.campaign_id || getDefaultCampaignId();
 
       // Fetch related data for the run scene interface
       const [charactersRes, locationsRes, questsRes] = await Promise.all([
@@ -1427,7 +1428,7 @@ class SceneRenderer {
       if (!campaignId) {
         // Try to get it from the same source as Characters tab
         campaignId =
-          window.dataManager?.currentCampaignId || "campaign-4-old-cistern";
+          window.dataManager?.currentCampaignId || getDefaultCampaignId();
       }
 
       console.log("🔍 Run Scene loading NPCs for campaign:", campaignId);
