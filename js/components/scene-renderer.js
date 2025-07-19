@@ -6,6 +6,7 @@ import { getDefaultCampaignId } from "../shared/config.js";
 class SceneRenderer {
   constructor() {
     this.currentScene = null;
+    this.quickNPCCounter = 0; // Counter for generating unique quick NPC IDs
   }
 
   /**
@@ -1516,13 +1517,25 @@ class SceneRenderer {
   }
 
   /**
+   * Generate a unique ID for quick NPCs using a combination of timestamp, counter, and random entropy
+   * to ensure uniqueness even when NPCs are created rapidly
+   * @returns {string} A unique identifier in format: quick-npc-{timestamp}-{counter}-{random}
+   */
+  generateUniqueQuickNPCId() {
+    this.quickNPCCounter++;
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 8);
+    return `quick-npc-${timestamp}-${this.quickNPCCounter}-${random}`;
+  }
+
+  /**
    * Create a quick NPC and add to scene
    */
   async createQuickNPC(scene, npcName, modalOverlay) {
     try {
       // Create a simple NPC object
       const quickNPC = {
-        id: `quick-npc-${Date.now()}`, // Temporary ID
+        id: this.generateUniqueQuickNPCId(), // Unique ID with counter and entropy
         name: npcName,
         role: "Quick NPC",
         type: "npc",
