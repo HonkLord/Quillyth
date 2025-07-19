@@ -40,9 +40,9 @@ function getBaseUrl() {
     const configPath = path.join(__dirname, "js", "shared", "config.js");
     if (fs.existsSync(configPath)) {
       const configContent = fs.readFileSync(configPath, "utf8");
-      // Look specifically for TESTING.BASE_URL
+      // Look specifically for TESTING.BASE_URL with robust formatting support
       const baseUrlMatch = configContent.match(
-        /TESTING:\s*{[\s\S]*?BASE_URL:\s*"([^"]+)"/
+        /TESTING\s*:\s*\{[\s\S]*?BASE_URL\s*:\s*["']([^"']+)["']\s*(?:,|\}|\/\/|$)/m
       );
       if (baseUrlMatch) {
         return baseUrlMatch[1];
@@ -64,7 +64,27 @@ function getBaseUrl() {
 function shouldEnforceCDN() {
   // Check environment variable first
   if (process.env.AUDIT_ENFORCE_CDN !== undefined) {
-    return process.env.AUDIT_ENFORCE_CDN.toLowerCase() === "true";
+    const value = process.env.AUDIT_ENFORCE_CDN.toLowerCase().trim();
+    // Accept various truthy values: "true", "1", "yes", "on", "enabled"
+    const truthyValues = ["true", "1", "yes", "on", "enabled"];
+    const falsyValues = ["false", "0", "no", "off", "disabled"];
+
+    if (truthyValues.includes(value)) {
+      return true;
+    } else if (falsyValues.includes(value)) {
+      return false;
+    } else {
+      // If value is not recognized, log a warning and default to true
+      console.warn(
+        `⚠️  Unrecognized AUDIT_ENFORCE_CDN value: "${process.env.AUDIT_ENFORCE_CDN}". Defaulting to true.`
+      );
+      console.warn(
+        `   Accepted values: ${truthyValues.join(
+          ", "
+        )} (truthy) or ${falsyValues.join(", ")} (falsy)`
+      );
+      return true;
+    }
   }
 
   // Try to read from config file
@@ -72,9 +92,9 @@ function shouldEnforceCDN() {
     const configPath = path.join(__dirname, "js", "shared", "config.js");
     if (fs.existsSync(configPath)) {
       const configContent = fs.readFileSync(configPath, "utf8");
-      // Look for AUDIT.ENFORCE_CDN setting
+      // Look for AUDIT.ENFORCE_CDN setting with robust formatting support
       const cdnMatch = configContent.match(
-        /AUDIT:\s*{[\s\S]*?ENFORCE_CDN:\s*(true|false)/
+        /AUDIT\s*:\s*\{[\s\S]*?ENFORCE_CDN\s*:\s*(true|false)\s*(?:,|\}|\/\/|$)/m
       );
       if (cdnMatch) {
         return cdnMatch[1] === "true";
@@ -103,6 +123,210 @@ class ApplicationAuditor {
   }
 
   /**
+   * Validate configuration object against expected schema
+   * @param {Object} config - Configuration object to validate
+   * @returns {Object} Validation result with isValid boolean and errors array
+   */
+  validateConfiguration(config) {
+    const errors = [];
+
+    // Helper function to check if value is an array of strings
+    const isStringArray = (value, path) => {
+      if (!Array.isArray(value)) {
+        errors.push(`${path}: must be an array`);
+        return false;
+      }
+      if (!value.every((item) => typeof item === "string")) {
+        errors.push(`${path}: all items must be strings`);
+        return false;
+      }
+      return true;
+    };
+
+    // Helper function to check if value is an array of objects with specific properties
+    const isObjectArray = (value, path, requiredProps) => {
+      if (!Array.isArray(value)) {
+        errors.push(`${path}: must be an array`);
+        return false;
+      }
+      if (!value.every((item) => typeof item === "object" && item !== null)) {
+        errors.push(`${path}: all items must be objects`);
+        return false;
+      }
+      for (let i = 0; i < value.length; i++) {
+        const item = value[i];
+        for (const prop of requiredProps) {
+          if (!(prop in item)) {
+            errors.push(`${path}[${i}]: missing required property '${prop}'`);
+          } else if (typeof item[prop] !== "string") {
+            errors.push(`${path}[${i}].${prop}: must be a string`);
+          }
+        }
+      }
+      return errors.length === 0;
+    };
+
+    // Validate top-level structure
+    if (typeof config !== "object" || config === null) {
+      errors.push("Configuration must be an object");
+      return { isValid: false, errors };
+    }
+
+    // Validate css section
+    if (!config.css || typeof config.css !== "object") {
+      errors.push("css: must be an object");
+    } else {
+      if (!config.css.requiredImports) {
+        errors.push("css.requiredImports: missing required property");
+      } else {
+        isStringArray(config.css.requiredImports, "css.requiredImports");
+      }
+    }
+
+    // Validate html section
+    if (!config.html || typeof config.html !== "object") {
+      errors.push("html: must be an object");
+    } else {
+      const htmlProps = [
+        "requiredSections",
+        "requiredNavTabs",
+        "requiredClasses",
+        "handledActions",
+      ];
+      for (const prop of htmlProps) {
+        if (!config.html[prop]) {
+          errors.push(`html.${prop}: missing required property`);
+        } else {
+          isStringArray(config.html[prop], `html.${prop}`);
+        }
+      }
+    }
+
+    // Validate javascript section
+    if (!config.javascript || typeof config.javascript !== "object") {
+      errors.push("javascript: must be an object");
+    } else {
+      // Check requiredImports
+      if (!config.javascript.requiredImports) {
+        errors.push("javascript.requiredImports: missing required property");
+      } else {
+        isStringArray(
+          config.javascript.requiredImports,
+          "javascript.requiredImports"
+        );
+      }
+
+      // Check requiredFeatures
+      if (!config.javascript.requiredFeatures) {
+        errors.push("javascript.requiredFeatures: missing required property");
+      } else {
+        isStringArray(
+          config.javascript.requiredFeatures,
+          "javascript.requiredFeatures"
+        );
+      }
+
+      // Check requiredManagers
+      if (!config.javascript.requiredManagers) {
+        errors.push("javascript.requiredManagers: missing required property");
+      } else {
+        isObjectArray(
+          config.javascript.requiredManagers,
+          "javascript.requiredManagers",
+          ["name", "feature"]
+        );
+      }
+
+      // Check featureFiles
+      if (!config.javascript.featureFiles) {
+        errors.push("javascript.featureFiles: missing required property");
+      } else {
+        if (!Array.isArray(config.javascript.featureFiles)) {
+          errors.push("javascript.featureFiles: must be an array");
+        } else {
+          for (let i = 0; i < config.javascript.featureFiles.length; i++) {
+            const feature = config.javascript.featureFiles[i];
+            if (typeof feature !== "object" || feature === null) {
+              errors.push(`javascript.featureFiles[${i}]: must be an object`);
+            } else {
+              if (!feature.name || typeof feature.name !== "string") {
+                errors.push(
+                  `javascript.featureFiles[${i}].name: must be a string`
+                );
+              }
+              if (!feature.files) {
+                errors.push(
+                  `javascript.featureFiles[${i}].files: missing required property`
+                );
+              } else {
+                isStringArray(
+                  feature.files,
+                  `javascript.featureFiles[${i}].files`
+                );
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Validate api section
+    if (!config.api || typeof config.api !== "object") {
+      errors.push("api: must be an object");
+    } else {
+      if (!config.api.requiredRoutes) {
+        errors.push("api.requiredRoutes: missing required property");
+      } else {
+        isStringArray(config.api.requiredRoutes, "api.requiredRoutes");
+      }
+    }
+
+    // Validate database section
+    if (!config.database || typeof config.database !== "object") {
+      errors.push("database: must be an object");
+    } else {
+      if (!config.database.requiredTables) {
+        errors.push("database.requiredTables: missing required property");
+      } else {
+        isStringArray(
+          config.database.requiredTables,
+          "database.requiredTables"
+        );
+      }
+    }
+
+    // Validate responsive section
+    if (!config.responsive || typeof config.responsive !== "object") {
+      errors.push("responsive: must be an object");
+    } else {
+      if (!config.responsive.requiredMediaQueries) {
+        errors.push(
+          "responsive.requiredMediaQueries: missing required property"
+        );
+      } else {
+        isStringArray(
+          config.responsive.requiredMediaQueries,
+          "responsive.requiredMediaQueries"
+        );
+      }
+    }
+
+    // Validate audit section (optional)
+    if (config.audit) {
+      if (typeof config.audit !== "object") {
+        errors.push("audit: must be an object");
+      } else if (
+        config.audit.enforceCDN !== undefined &&
+        typeof config.audit.enforceCDN !== "boolean"
+      ) {
+        errors.push("audit.enforceCDN: must be a boolean");
+      }
+    }
+
+    return { isValid: errors.length === 0, errors };
+  }
+
+  /**
    * Load audit configuration from JSON file
    * @returns {Object} Configuration object
    */
@@ -111,7 +335,19 @@ class ApplicationAuditor {
       const configPath = path.join(__dirname, "audit-config.json");
       if (fs.existsSync(configPath)) {
         const configContent = fs.readFileSync(configPath, "utf8");
-        return JSON.parse(configContent);
+        const config = JSON.parse(configContent);
+
+        // Validate the configuration structure
+        const validation = this.validateConfiguration(config);
+        if (!validation.isValid) {
+          console.error("❌ Configuration validation failed:");
+          validation.errors.forEach((error) => console.error(`   - ${error}`));
+          console.warn("   Using fallback configuration...");
+          return this.getFallbackConfiguration();
+        }
+
+        console.log("✅ Configuration loaded and validated successfully");
+        return config;
       } else {
         console.warn("⚠️  Configuration file not found: audit-config.json");
         console.warn("   Using fallback configuration...");
