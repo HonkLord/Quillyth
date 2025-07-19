@@ -190,4 +190,77 @@ When adding a new feature (e.g., "inventory"):
    }
    ```
 
-This approach makes the audit system much more maintainable and flexible as your application grows. 
+This approach makes the audit system much more maintainable and flexible as your application grows.
+
+## CDN Enforcement Configuration
+
+The audit script now supports configurable CDN usage enforcement to accommodate different deployment environments.
+
+### Environment Variable Configuration
+
+Set the `AUDIT_ENFORCE_CDN` environment variable to control CDN enforcement:
+
+```bash
+# Enable CDN enforcement (default)
+AUDIT_ENFORCE_CDN=true node audit-application.js
+
+# Disable CDN enforcement for airgapped/development environments
+AUDIT_ENFORCE_CDN=false node audit-application.js
+```
+
+### Configuration File Support
+
+You can also configure CDN enforcement in your `js/shared/config.js` file:
+
+```javascript
+const CONFIG = {
+  // ... other configuration
+  AUDIT: {
+    ENFORCE_CDN: true  // or false
+  }
+};
+```
+
+### Audit Configuration File
+
+The `audit-config.json` file also supports CDN configuration:
+
+```json
+{
+  // ... other configuration
+  "audit": {
+    "enforceCDN": true
+  }
+}
+```
+
+### Priority Order
+
+The CDN enforcement setting is determined in this priority order:
+
+1. **Environment Variable**: `AUDIT_ENFORCE_CDN` (highest priority)
+2. **Config File**: `js/shared/config.js` AUDIT.ENFORCE_CDN setting
+3. **Audit Config**: `audit-config.json` audit.enforceCDN setting
+4. **Default**: `true` (enforce CDN usage)
+
+### Use Cases
+
+- **Production Environments**: Enable CDN enforcement to ensure optimal performance
+- **Development Environments**: Disable CDN enforcement for faster local development
+- **Airgapped Networks**: Disable CDN enforcement when external CDNs are not accessible
+- **Offline Development**: Disable CDN enforcement when working without internet access
+
+### Example Usage
+
+```bash
+# Development environment
+AUDIT_ENFORCE_CDN=false node audit-application.js
+
+# Production environment
+AUDIT_ENFORCE_CDN=true node audit-application.js
+
+# Airgapped environment
+AUDIT_ENFORCE_CDN=false node audit-application.js
+```
+
+When CDN enforcement is disabled, the audit will skip the CDN usage check and display an informational message: `ℹ️  CDN usage check skipped (enforcement disabled)` 

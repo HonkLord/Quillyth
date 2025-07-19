@@ -7,11 +7,13 @@
  * Configuration:
  * - TEST_BASE_URL: Base URL for API endpoints (default: "http://localhost:3000")
  * - AUDIT_BASE_URL: Alternative environment variable for base URL
+ * - AUDIT_ENFORCE_CDN: Enable/disable CDN usage enforcement (default: "true")
  *
  * Usage examples:
  *   node audit-application.js
  *   TEST_BASE_URL=http://staging.example.com node audit-application.js
  *   AUDIT_BASE_URL=http://production.example.com node audit-application.js
+ *   AUDIT_ENFORCE_CDN=false node audit-application.js  # Disable CDN check for airgapped environments
  */
 
 const fs = require("fs");
@@ -54,10 +56,43 @@ function getBaseUrl() {
   return "http://localhost:3000";
 }
 
+/**
+ * Check if CDN usage should be enforced
+ * Priority: 1. Environment variable AUDIT_ENFORCE_CDN, 2. Config file, 3. Default true
+ * @returns {boolean} Whether to enforce CDN usage
+ */
+function shouldEnforceCDN() {
+  // Check environment variable first
+  if (process.env.AUDIT_ENFORCE_CDN !== undefined) {
+    return process.env.AUDIT_ENFORCE_CDN.toLowerCase() === "true";
+  }
+
+  // Try to read from config file
+  try {
+    const configPath = path.join(__dirname, "js", "shared", "config.js");
+    if (fs.existsSync(configPath)) {
+      const configContent = fs.readFileSync(configPath, "utf8");
+      // Look for AUDIT.ENFORCE_CDN setting
+      const cdnMatch = configContent.match(
+        /AUDIT:\s*{[\s\S]*?ENFORCE_CDN:\s*(true|false)/
+      );
+      if (cdnMatch) {
+        return cdnMatch[1] === "true";
+      }
+    }
+  } catch (error) {
+    // Silently fall back to default if config file can't be read
+  }
+
+  // Default fallback - enforce CDN by default for production-like environments
+  return true;
+}
+
 class ApplicationAuditor {
   constructor() {
     this.baseUrl = getBaseUrl();
     this.config = this.loadConfiguration();
+    this.enforceCDN = shouldEnforceCDN();
     this.results = {
       passed: 0,
       failed: 0,
@@ -283,6 +318,9 @@ class ApplicationAuditor {
           "@media (max-width: 1024px)",
           "@media (min-width: 1200px)",
         ],
+      },
+      audit: {
+        enforceCDN: true, // Can be overridden by environment variable or config file
       },
     };
   }
@@ -626,11 +664,15 @@ class ApplicationAuditor {
         "CSS file should have version parameter for cache busting"
       );
 
-      // Check for external CDN usage
-      this.assert(
-        htmlContent.includes("cdnjs.cloudflare.com"),
-        "Should use CDN for external libraries"
-      );
+      // Check for external CDN usage (conditional based on configuration)
+      if (this.enforceCDN) {
+        this.assert(
+          htmlContent.includes("cdnjs.cloudflare.com"),
+          "Should use CDN for external libraries"
+        );
+      } else {
+        console.log("   ℹ️  CDN usage check skipped (enforcement disabled)");
+      }
 
       // Check for module scripts
       this.assert(
@@ -675,6 +717,9 @@ class ApplicationAuditor {
     console.log("=====================================");
     console.log(`📋 Configuration:`);
     console.log(`   Base URL: ${this.baseUrl}`);
+    console.log(
+      `   CDN Enforcement: ${this.enforceCDN ? "Enabled" : "Disabled"}`
+    );
     console.log(
       `   Config Source: ${
         fs.existsSync(path.join(__dirname, "audit-config.json"))
