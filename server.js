@@ -445,6 +445,21 @@ async function createEnhancedTables(db) {
       )
     `);
 
+    // Actor State/History Table for Run Scene functionality
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS scene_actor_states (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        scene_id TEXT NOT NULL,
+        character_id TEXT NOT NULL,
+        character_type TEXT CHECK(character_type IN ('pc', 'npc')) NOT NULL,
+        thought TEXT,
+        action TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        metadata TEXT DEFAULT '{}',
+        FOREIGN KEY (scene_id) REFERENCES scenes(id)
+      )
+    `);
+
     try {
       await db.exec(`ALTER TABLE locations ADD COLUMN notable_features TEXT`);
     } catch (e) {
@@ -485,6 +500,9 @@ async function createEnhancedTables(db) {
       CREATE INDEX IF NOT EXISTS idx_progression_type ON character_progression(progression_type);
       CREATE INDEX IF NOT EXISTS idx_progression_date ON character_progression(progression_date);
       CREATE INDEX IF NOT EXISTS idx_progression_session ON character_progression(session_number);
+      CREATE INDEX IF NOT EXISTS idx_actor_states_scene ON scene_actor_states(scene_id);
+      CREATE INDEX IF NOT EXISTS idx_actor_states_character ON scene_actor_states(character_id);
+      CREATE INDEX IF NOT EXISTS idx_actor_states_timestamp ON scene_actor_states(timestamp);
     `);
 
     console.log("✅ Enhanced database tables created successfully");

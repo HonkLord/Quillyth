@@ -334,6 +334,11 @@ module.exports = (db) => {
         );
         const cardsResult = deleteCards.run(sceneId);
 
+        const deleteActorStates = db.prepare(
+          "DELETE FROM scene_actor_states WHERE scene_id = ?"
+        );
+        const actorStatesResult = deleteActorStates.run(sceneId);
+
         const deleteScene = db.prepare("DELETE FROM scenes WHERE id = ?");
         const sceneResult = deleteScene.run(sceneId);
 
@@ -341,6 +346,7 @@ module.exports = (db) => {
           scene: sceneResult.changes,
           characters: charactersResult.changes,
           cards: cardsResult.changes,
+          actorStates: actorStatesResult.changes,
         };
       });
 
@@ -358,6 +364,139 @@ module.exports = (db) => {
     } catch (error) {
       console.error("Error deleting scene:", error);
       res.status(500).json({ error: "Failed to delete scene" });
+    }
+  });
+
+  // Actor State Management Endpoints
+  router.post("/:id/actor-states", (req, res) => {
+    try {
+      const sceneId = req.params.id;
+      const { characterId, characterType, thought, action, metadata } =
+        req.body;
+
+      // Validate required fields
+      if (!characterId || !characterType) {
+        return res.status(400).json({
+          error: "characterId and characterType are required",
+        });
+      }
+
+      // Validate character type
+      if (!["pc", "npc"].includes(characterType)) {
+        return res.status(400).json({
+          error: "characterType must be 'pc' or 'npc'",
+        });
+      }
+
+      // Check if scene exists
+      const scene = db
+        .prepare("SELECT id FROM scenes WHERE id = ?")
+        .get(sceneId);
+      if (!scene) {
+        return res.status(404).json({ error: "Scene not found" });
+      }
+
+      // Insert actor state
+      const insertStmt = db.prepare(`
+        INSERT INTO scene_actor_states (
+          scene_id, character_id, character_type, thought, action, metadata
+        ) VALUES (?, ?, ?, ?, ?, ?)
+      `);
+
+      const result = insertStmt.run(
+        sceneId,
+        characterId,
+        characterType,
+        thought || null,
+        action || null,
+        metadata ? JSON.stringify(metadata) : "{}"
+      );
+
+      res.json({
+        success: true,
+        id: result.lastInsertRowid,
+        message: "Actor state saved successfully",
+      });
+    } catch (error) {
+      console.error("Error saving actor state:", error);
+      res.status(500).json({ error: "Failed to save actor state" });
+    }
+  });
+
+  router.get("/:id/actor-states", (req, res) => {
+    try {
+      const sceneId = req.params.id;
+      const { characterId } = req.query;
+
+      // Check if scene exists
+      const scene = db
+        .prepare("SELECT id FROM scenes WHERE id = ?")
+        .get(sceneId);
+      if (!scene) {
+        return res.status(404).json({ error: "Scene not found" });
+      }
+
+      let query = `
+        SELECT id, character_id, character_type, thought, action, 
+               timestamp, metadata
+        FROM scene_actor_states 
+        WHERE scene_id = ?
+      `;
+      const params = [sceneId];
+
+      if (characterId) {
+        query += " AND character_id = ?";
+        params.push(characterId);
+      }
+
+      query += " ORDER BY timestamp DESC";
+
+      const actorStates = db.prepare(query).all(...params);
+
+      // Parse metadata JSON
+      const parsedStates = actorStates.map((state) => ({
+        ...state,
+        metadata: state.metadata ? JSON.parse(state.metadata) : {},
+      }));
+
+      res.json(parsedStates);
+    } catch (error) {
+      console.error("Error fetching actor states:", error);
+      res.status(500).json({ error: "Failed to fetch actor states" });
+    }
+  });
+
+  router.delete("/:id/actor-states/:stateId", (req, res) => {
+    try {
+      const { id: sceneId, stateId } = req.params;
+
+      // Check if scene exists
+      const scene = db
+        .prepare("SELECT id FROM scenes WHERE id = ?")
+        .get(sceneId);
+      if (!scene) {
+        return res.status(404).json({ error: "Scene not found" });
+      }
+
+      // Delete specific actor state
+      const deleteStmt = db.prepare(`
+        DELETE FROM scene_actor_states 
+        WHERE id = ? AND scene_id = ?
+      `);
+
+      const result = deleteStmt.run(stateId, sceneId);
+
+      if (result.changes > 0) {
+        res.json({
+          success: true,
+          message: "Actor state deleted successfully",
+        });
+      } else {
+        res.status(404).json({ error: "Actor state not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting actor state:", error);
+      res.status(500).json({ error: "Failed to delete actor state" });
     }
   });
 

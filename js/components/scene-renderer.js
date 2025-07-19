@@ -493,16 +493,16 @@ class SceneRenderer {
    */
   async showRunSceneInterface(scene) {
     console.log(`🎬 SceneRenderer: Starting Run Scene mode for: ${scene.name}`);
-    
+
     try {
       // Get campaign ID from scene or fallback
-      const campaignId = scene.campaign_id || 'campaign-4-old-cistern';
-      
+      const campaignId = scene.campaign_id || "campaign-4-old-cistern";
+
       // Fetch related data for the run scene interface
       const [charactersRes, locationsRes, questsRes] = await Promise.all([
         fetch(`/api/characters?campaign_id=${campaignId}`),
         fetch(`/api/locations?campaign_id=${campaignId}`),
-        fetch(`/api/quests?campaign_id=${campaignId}`)
+        fetch(`/api/quests?campaign_id=${campaignId}`),
       ]);
 
       // Validate responses
@@ -523,10 +523,14 @@ class SceneRenderer {
       // Handle character data structure (API returns {players: [], npcs: []})
       const allCharacters = [];
       if (charactersData.players && Array.isArray(charactersData.players)) {
-        allCharacters.push(...charactersData.players.map(p => ({...p, type: 'pc'})));
+        allCharacters.push(
+          ...charactersData.players.map((p) => ({ ...p, type: "pc" }))
+        );
       }
       if (charactersData.npcs && Array.isArray(charactersData.npcs)) {
-        allCharacters.push(...charactersData.npcs.map(n => ({...n, type: 'npc'})));
+        allCharacters.push(
+          ...charactersData.npcs.map((n) => ({ ...n, type: "npc" }))
+        );
       }
 
       // Ensure all data is in array format
@@ -537,7 +541,7 @@ class SceneRenderer {
       console.log(`📊 Run Scene data loaded:`, {
         characters: safeCharacters.length,
         locations: safeLocations.length,
-        quests: safeQuests.length
+        quests: safeQuests.length,
       });
 
       // Replace the entire scenes-content with run scene interface
@@ -545,20 +549,27 @@ class SceneRenderer {
       if (scenesContent) {
         // Store the original content for restoration
         this.originalSceneContent = scenesContent.innerHTML;
-        
+
         // Replace with run scene interface
-        scenesContent.innerHTML = this.createRunSceneHTML(scene, safeCharacters, safeLocations, safeQuests);
+        scenesContent.innerHTML = this.createRunSceneHTML(
+          scene,
+          safeCharacters,
+          safeLocations,
+          safeQuests
+        );
         scenesContent.classList.add("run-scene-active");
-        
+
         // Initialize run scene functionality
-        this.initializeRunSceneInterface(scene, scenesContent);
+        await this.initializeRunSceneInterface(scene, scenesContent);
       } else {
         console.error("❌ scenes-content workspace not found for Run Scene");
       }
-      
     } catch (error) {
       console.error("❌ Failed to load Run Scene interface:", error);
-      this.showToast(`Failed to load Run Scene interface: ${error.message}`, "error");
+      this.showToast(
+        `Failed to load Run Scene interface: ${error.message}`,
+        "error"
+      );
     }
   }
 
@@ -572,29 +583,43 @@ class SceneRenderer {
     const safeQuests = Array.isArray(quests) ? quests : [];
 
     // Filter relevant characters (NPCs in scene location, PCs)
-    const relevantCharacters = safeCharacters.filter(char => 
-      char && (char.type === 'pc' || char.current_location === scene.location_id)
+    const relevantCharacters = safeCharacters.filter(
+      (char) =>
+        char &&
+        (char.type === "pc" || char.current_location === scene.location_id)
     );
 
     // Find related quests and locations
-    const relatedQuests = safeQuests.filter(quest => 
-      quest && (quest.location_id === scene.location_id || 
-      (quest.participants && quest.participants.includes && quest.participants.includes(scene.location_id)))
+    const relatedQuests = safeQuests.filter(
+      (quest) =>
+        quest &&
+        (quest.location_id === scene.location_id ||
+          (quest.participants &&
+            quest.participants.includes &&
+            quest.participants.includes(scene.location_id)))
     );
 
-    const currentLocation = safeLocations.find(loc => loc && loc.id === scene.location_id);
-    const nearbyLocations = safeLocations.filter(loc => 
-      loc && loc.parent_location_id === currentLocation?.parent_location_id && 
-      loc.id !== scene.location_id
+    const currentLocation = safeLocations.find(
+      (loc) => loc && loc.id === scene.location_id
+    );
+    const nearbyLocations = safeLocations.filter(
+      (loc) =>
+        loc &&
+        loc.parent_location_id === currentLocation?.parent_location_id &&
+        loc.id !== scene.location_id
     );
 
     return `
       <div class="run-scene-interface">
         <div class="run-scene-header">
           <div class="run-scene-title">
-            <h1><i class="fas fa-play-circle"></i> Running Scene: ${escapeHTML(scene.name)}</h1>
+            <h1><i class="fas fa-play-circle"></i> Running Scene: ${escapeHTML(
+              scene.name
+            )}</h1>
             <div class="scene-runtime-meta">
-              <span class="scene-type-badge">${escapeHTML(scene.scene_type || 'encounter')}</span>
+              <span class="scene-type-badge">${escapeHTML(
+                scene.scene_type || "encounter"
+              )}</span>
               <span class="scene-status-badge status-running">● LIVE</span>
             </div>
           </div>
@@ -615,20 +640,36 @@ class SceneRenderer {
               <div class="context-content">
                 <div class="context-section">
                   <label><strong>Location:</strong></label>
-                  <input type="text" class="context-location-input" value="${escapeHTML(currentLocation?.name || 'Unknown')}" data-scene-id="${scene.id}" />
+                  <input type="text" class="context-location-input" value="${escapeHTML(
+                    currentLocation?.name || "Unknown"
+                  )}" data-scene-id="${scene.id}" />
                   <label><strong>Description:</strong></label>
-                  <textarea class="context-description-input" rows="2" data-scene-id="${scene.id}">${escapeHTML(currentLocation?.description || scene.description || 'No context provided')}</textarea>
+                  <textarea class="context-description-input" rows="2" data-scene-id="${
+                    scene.id
+                  }">${escapeHTML(
+      currentLocation?.description || scene.description || "No context provided"
+    )}</textarea>
                 </div>
                 <div class="context-section">
                   <label><strong>Scene Purpose:</strong></label>
-                  <textarea class="context-purpose-input" rows="2" data-scene-id="${scene.id}">${escapeHTML(scene.read_aloud || scene.current_setup || 'Define why the actors are here and what they hope to accomplish')}</textarea>
+                  <textarea class="context-purpose-input" rows="2" data-scene-id="${
+                    scene.id
+                  }">${escapeHTML(
+      scene.read_aloud ||
+        scene.current_setup ||
+        "Define why the actors are here and what they hope to accomplish"
+    )}</textarea>
                 </div>
               </div>
               <div class="context-actions">
-                <button class="btn btn-sm btn-primary save-context-btn" data-scene-id="${scene.id}">
+                <button class="btn btn-sm btn-primary save-context-btn" data-scene-id="${
+                  scene.id
+                }">
                   <i class="fas fa-save"></i> Save Context
                 </button>
-                <button class="btn btn-sm btn-outline-primary generate-context-btn" data-scene-id="${scene.id}">
+                <button class="btn btn-sm btn-outline-primary generate-context-btn" data-scene-id="${
+                  scene.id
+                }">
                   <i class="fas fa-magic"></i> Generate Context
                 </button>
               </div>
@@ -662,7 +703,9 @@ class SceneRenderer {
             </div>
 
             <!-- READ ALOUD TEXT -->
-            ${scene.read_aloud ? `
+            ${
+              scene.read_aloud
+                ? `
               <div class="control-panel read-aloud-panel">
                 <h3><i class="fas fa-volume-up"></i> Read Aloud Text</h3>
                 <div class="read-aloud-display">
@@ -672,7 +715,9 @@ class SceneRenderer {
                   <i class="fas fa-check"></i> Mark as Read
                 </button>
               </div>
-            ` : ''}
+            `
+                : ""
+            }
 
           </div>
 
@@ -685,32 +730,53 @@ class SceneRenderer {
               <div class="control-panel players-panel">
                 <h3><i class="fas fa-users"></i> Player Characters</h3>
                 <div class="players-list">
-                  ${relevantCharacters.filter(char => char.type === 'pc').length > 0 ? 
-                    relevantCharacters.filter(char => char.type === 'pc').map(char => `
-                      <div class="actor-item pc" data-character-id="${char.id || ''}">
+                  ${
+                    relevantCharacters.filter((char) => char.type === "pc")
+                      .length > 0
+                      ? relevantCharacters
+                          .filter((char) => char.type === "pc")
+                          .map(
+                            (char) => `
+                      <div class="actor-item pc" data-character-id="${
+                        char.id || ""
+                      }">
                         <div class="actor-header">
                           <div class="actor-info">
-                            <strong>${escapeHTML(char.name || 'Unknown Character')}</strong>
+                            <strong>${escapeHTML(
+                              char.name || "Unknown Character"
+                            )}</strong>
                             <span class="actor-type">PC</span>
                           </div>
                           <div class="actor-actions">
-                            <button class="btn btn-xs btn-outline-primary view-character-btn" data-character-id="${char.id || ''}">
+                            <button class="btn btn-xs btn-outline-primary view-character-btn" data-character-id="${
+                              char.id || ""
+                            }">
                               <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-xs btn-outline-secondary toggle-actor-details" data-character-id="${char.id || ''}">
+                            <button class="btn btn-xs btn-outline-secondary toggle-actor-details" data-character-id="${
+                              char.id || ""
+                            }">
                               <i class="fas fa-chevron-down"></i>
                             </button>
                           </div>
                         </div>
-                        <div class="actor-details" id="actor-details-${char.id}" style="display: none;">
+                        <div class="actor-details" id="actor-details-${
+                          char.id
+                        }" style="display: none;">
                           <div class="actor-thought-section">
                             <label>Player Intent/State:</label>
-                            <textarea class="actor-thought-input" rows="2" placeholder="What is this player trying to accomplish? What's their character's state?" data-character-id="${char.id}"></textarea>
+                            <textarea class="actor-thought-input" rows="2" placeholder="What is this player trying to accomplish? What's their character's state?" data-character-id="${
+                              char.id
+                            }"></textarea>
                           </div>
                           <div class="actor-action-section">
                             <label>Player Action:</label>
-                            <textarea class="actor-action-input" rows="2" placeholder="What did this player say they want to do?" data-character-id="${char.id}"></textarea>
-                            <button class="btn btn-xs btn-success save-actor-state-btn" data-character-id="${char.id}">
+                            <textarea class="actor-action-input" rows="2" placeholder="What did this player say they want to do?" data-character-id="${
+                              char.id
+                            }"></textarea>
+                            <button class="btn btn-xs btn-success save-actor-state-btn" data-character-id="${
+                              char.id
+                            }">
                               <i class="fas fa-save"></i> Save State
                             </button>
                           </div>
@@ -722,7 +788,10 @@ class SceneRenderer {
                           </div>
                         </div>
                       </div>
-                    `).join('') : '<p class="no-players">No player characters in this scene.</p>'
+                    `
+                          )
+                          .join("")
+                      : '<p class="no-players">No player characters in this scene.</p>'
                   }
                 </div>
               </div>
@@ -731,32 +800,53 @@ class SceneRenderer {
               <div class="control-panel npcs-panel">
                 <h3><i class="fas fa-user-friends"></i> NPCs (You Control)</h3>
                 <div class="npcs-list">
-                  ${relevantCharacters.filter(char => char.type === 'npc').length > 0 ? 
-                    relevantCharacters.filter(char => char.type === 'npc').map(char => `
-                      <div class="actor-item npc" data-character-id="${char.id || ''}">
+                  ${
+                    relevantCharacters.filter((char) => char.type === "npc")
+                      .length > 0
+                      ? relevantCharacters
+                          .filter((char) => char.type === "npc")
+                          .map(
+                            (char) => `
+                      <div class="actor-item npc" data-character-id="${
+                        char.id || ""
+                      }">
                         <div class="actor-header">
                           <div class="actor-info">
-                            <strong>${escapeHTML(char.name || 'Unknown Character')}</strong>
+                            <strong>${escapeHTML(
+                              char.name || "Unknown Character"
+                            )}</strong>
                             <span class="actor-type">NPC</span>
                           </div>
                           <div class="actor-actions">
-                            <button class="btn btn-xs btn-outline-primary view-character-btn" data-character-id="${char.id || ''}">
+                            <button class="btn btn-xs btn-outline-primary view-character-btn" data-character-id="${
+                              char.id || ""
+                            }">
                               <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-xs btn-outline-secondary toggle-actor-details" data-character-id="${char.id || ''}">
+                            <button class="btn btn-xs btn-outline-secondary toggle-actor-details" data-character-id="${
+                              char.id || ""
+                            }">
                               <i class="fas fa-chevron-down"></i>
                             </button>
                           </div>
                         </div>
-                        <div class="actor-details" id="actor-details-${char.id}" style="display: none;">
+                        <div class="actor-details" id="actor-details-${
+                          char.id
+                        }" style="display: none;">
                           <div class="actor-thought-section">
                             <label>NPC Motivation/State:</label>
-                            <textarea class="actor-thought-input" rows="2" placeholder="What does this NPC want? How are they feeling about the situation?" data-character-id="${char.id}"></textarea>
+                            <textarea class="actor-thought-input" rows="2" placeholder="What does this NPC want? How are they feeling about the situation?" data-character-id="${
+                              char.id
+                            }"></textarea>
                           </div>
                           <div class="actor-action-section">
                             <label>NPC Action/Response:</label>
-                            <textarea class="actor-action-input" rows="2" placeholder="How does this NPC react? What do they do?" data-character-id="${char.id}"></textarea>
-                            <button class="btn btn-xs btn-success save-actor-state-btn" data-character-id="${char.id}">
+                            <textarea class="actor-action-input" rows="2" placeholder="How does this NPC react? What do they do?" data-character-id="${
+                              char.id
+                            }"></textarea>
+                            <button class="btn btn-xs btn-success save-actor-state-btn" data-character-id="${
+                              char.id
+                            }">
                               <i class="fas fa-save"></i> Save State
                             </button>
                           </div>
@@ -768,10 +858,15 @@ class SceneRenderer {
                           </div>
                         </div>
                       </div>
-                    `).join('') : '<p class="no-npcs">No NPCs in this scene location.</p>'
+                    `
+                          )
+                          .join("")
+                      : '<p class="no-npcs">No NPCs in this scene location.</p>'
                   }
                 </div>
-                <button class="btn btn-sm btn-outline-success add-actor-btn" data-scene-id="${scene.id}">
+                <button class="btn btn-sm btn-outline-success add-actor-btn" data-scene-id="${
+                  scene.id
+                }">
                   <i class="fas fa-plus"></i> Add NPC
                 </button>
               </div>
@@ -782,33 +877,63 @@ class SceneRenderer {
               <h3><i class="fas fa-globe"></i> Related Information</h3>
               
               <!-- Related Quests -->
-              ${relatedQuests.length > 0 ? `
+              ${
+                relatedQuests.length > 0
+                  ? `
                 <div class="world-section">
                   <h4><i class="fas fa-scroll"></i> Active Quests</h4>
                   <div class="quest-list">
-                    ${relatedQuests.length > 0 ? relatedQuests.map(quest => `
-                      <div class="quest-item" data-quest-id="${quest.id || ''}">
-                        <span class="quest-name">${escapeHTML(quest.title || quest.name || 'Unknown Quest')}</span>
-                        <span class="quest-status">${escapeHTML(quest.status || 'unknown')}</span>
+                    ${
+                      relatedQuests.length > 0
+                        ? relatedQuests
+                            .map(
+                              (quest) => `
+                      <div class="quest-item" data-quest-id="${quest.id || ""}">
+                        <span class="quest-name">${escapeHTML(
+                          quest.title || quest.name || "Unknown Quest"
+                        )}</span>
+                        <span class="quest-status">${escapeHTML(
+                          quest.status || "unknown"
+                        )}</span>
                       </div>
-                    `).join('') : '<p class="no-quests">No related quests found.</p>'}
+                    `
+                            )
+                            .join("")
+                        : '<p class="no-quests">No related quests found.</p>'
+                    }
                   </div>
                 </div>
-              ` : ''}
+              `
+                  : ""
+              }
 
               <!-- Nearby Locations -->
-              ${nearbyLocations.length > 0 ? `
+              ${
+                nearbyLocations.length > 0
+                  ? `
                 <div class="world-section">
                   <h4><i class="fas fa-map"></i> Nearby Locations</h4>
                   <div class="location-list">
-                    ${nearbyLocations.length > 0 ? nearbyLocations.map(loc => `
-                      <div class="location-item" data-location-id="${loc.id || ''}">
-                        ${escapeHTML(loc.name || 'Unknown Location')}
+                    ${
+                      nearbyLocations.length > 0
+                        ? nearbyLocations
+                            .map(
+                              (loc) => `
+                      <div class="location-item" data-location-id="${
+                        loc.id || ""
+                      }">
+                        ${escapeHTML(loc.name || "Unknown Location")}
                       </div>
-                    `).join('') : '<p class="no-locations">No nearby locations found.</p>'}
+                    `
+                            )
+                            .join("")
+                        : '<p class="no-locations">No nearby locations found.</p>'
+                    }
                   </div>
                 </div>
-              ` : ''}
+              `
+                  : ""
+              }
             </div>
 
             <!-- THEREFORE SYSTEM -->
@@ -818,7 +943,9 @@ class SceneRenderer {
                 <p class="therefore-description">
                   Based on the current context, actors, and goals...
                 </p>
-                <button class="btn btn-primary generate-next-btn" data-scene-id="${scene.id}">
+                <button class="btn btn-primary generate-next-btn" data-scene-id="${
+                  scene.id
+                }">
                   <i class="fas fa-magic"></i> Generate Next Action
                 </button>
                 <div class="next-suggestions" id="next-suggestions">
@@ -836,7 +963,9 @@ class SceneRenderer {
             <button class="btn btn-outline-warning pause-scene-btn">
               <i class="fas fa-pause"></i> Pause Scene
             </button>
-            <button class="btn btn-outline-success complete-scene-btn" data-scene-id="${scene.id}">
+            <button class="btn btn-outline-success complete-scene-btn" data-scene-id="${
+              scene.id
+            }">
               <i class="fas fa-check"></i> Complete Scene
             </button>
           </div>
@@ -848,7 +977,7 @@ class SceneRenderer {
   /**
    * Initialize Run Scene interface functionality
    */
-  initializeRunSceneInterface(scene, container) {
+  async initializeRunSceneInterface(scene, container) {
     // Initialize scene action history if not exists
     if (!this.sceneActionHistory) {
       this.sceneActionHistory = {};
@@ -857,64 +986,83 @@ class SceneRenderer {
       this.sceneActionHistory[scene.id] = {};
     }
 
+    // Load existing actor state history from database
+    await this.loadActorStateHistory(scene.id);
+
     // Close run scene handlers
-    const closeButtons = container.querySelectorAll('[data-action="close-run-scene"]');
-    closeButtons.forEach(button => {
-      button.addEventListener('click', () => this.exitRunSceneMode());
+    const closeButtons = container.querySelectorAll(
+      '[data-action="close-run-scene"]'
+    );
+    closeButtons.forEach((button) => {
+      button.addEventListener("click", () => this.exitRunSceneMode());
     });
 
     // Save Context button
-    const saveContextBtn = container.querySelector('.save-context-btn');
+    const saveContextBtn = container.querySelector(".save-context-btn");
     if (saveContextBtn) {
-      saveContextBtn.addEventListener('click', () => this.saveContextChanges(scene));
+      saveContextBtn.addEventListener("click", () =>
+        this.saveContextChanges(scene)
+      );
     }
 
     // Generate Context button
-    const generateContextBtn = container.querySelector('.generate-context-btn');
+    const generateContextBtn = container.querySelector(".generate-context-btn");
     if (generateContextBtn) {
-      generateContextBtn.addEventListener('click', () => this.generateSceneContext(scene));
+      generateContextBtn.addEventListener("click", () =>
+        this.generateSceneContext(scene)
+      );
     }
 
     // Generate Music button
-    const generateMusicBtn = container.querySelector('.generate-music-btn');
+    const generateMusicBtn = container.querySelector(".generate-music-btn");
     if (generateMusicBtn) {
-      generateMusicBtn.addEventListener('click', () => this.generateMusicSuggestion(scene));
+      generateMusicBtn.addEventListener("click", () =>
+        this.generateMusicSuggestion(scene)
+      );
     }
 
     // Actor toggle buttons
-    const toggleBtns = container.querySelectorAll('.toggle-actor-details');
-    toggleBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => this.toggleActorDetails(e.target.dataset.characterId));
+    const toggleBtns = container.querySelectorAll(".toggle-actor-details");
+    toggleBtns.forEach((btn) => {
+      btn.addEventListener("click", (e) =>
+        this.toggleActorDetails(e.target.dataset.characterId)
+      );
     });
 
     // Save actor state buttons
-    const saveActorBtns = container.querySelectorAll('.save-actor-state-btn');
-    saveActorBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => this.saveActorState(scene.id, e.target.dataset.characterId));
+    const saveActorBtns = container.querySelectorAll(".save-actor-state-btn");
+    saveActorBtns.forEach((btn) => {
+      btn.addEventListener("click", (e) =>
+        this.saveActorState(scene.id, e.target.dataset.characterId)
+      );
     });
 
     // Add NPC button
-    const addActorBtn = container.querySelector('.add-actor-btn');
+    const addActorBtn = container.querySelector(".add-actor-btn");
     if (addActorBtn) {
-      addActorBtn.addEventListener('click', () => this.showAddNPCModal(scene));
+      addActorBtn.addEventListener("click", () => this.showAddNPCModal(scene));
     }
 
     // Generate Next Action button
-    const generateNextBtn = container.querySelector('.generate-next-btn');
+    const generateNextBtn = container.querySelector(".generate-next-btn");
     if (generateNextBtn) {
-      generateNextBtn.addEventListener('click', () => this.generateNextAction(scene));
+      generateNextBtn.addEventListener("click", () =>
+        this.generateNextAction(scene)
+      );
     }
 
     // Complete Scene button
-    const completeBtn = container.querySelector('.complete-scene-btn');
+    const completeBtn = container.querySelector(".complete-scene-btn");
     if (completeBtn) {
-      completeBtn.addEventListener('click', () => this.completeScene(scene.id));
+      completeBtn.addEventListener("click", () => this.completeScene(scene.id));
     }
 
     // Mood selector
-    const moodSelect = container.querySelector('.mood-select');
+    const moodSelect = container.querySelector(".mood-select");
     if (moodSelect) {
-      moodSelect.addEventListener('change', (e) => this.updateSceneMood(scene, e.target.value));
+      moodSelect.addEventListener("change", (e) =>
+        this.updateSceneMood(scene, e.target.value)
+      );
     }
 
     console.log(`🎬 Run Scene interface initialized for: ${scene.name}`);
@@ -925,12 +1073,14 @@ class SceneRenderer {
    */
   async saveContextChanges(scene) {
     try {
-      const locationInput = document.querySelector('.context-location-input');
-      const descriptionInput = document.querySelector('.context-description-input');
-      const purposeInput = document.querySelector('.context-purpose-input');
-      
+      const locationInput = document.querySelector(".context-location-input");
+      const descriptionInput = document.querySelector(
+        ".context-description-input"
+      );
+      const purposeInput = document.querySelector(".context-purpose-input");
+
       if (!locationInput || !descriptionInput || !purposeInput) {
-        console.error('Context input fields not found');
+        console.error("Context input fields not found");
         return;
       }
 
@@ -938,16 +1088,16 @@ class SceneRenderer {
         location: locationInput.value,
         description: descriptionInput.value,
         purpose: purposeInput.value,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
 
       // TODO: Save to scene data via API
-      console.log('Saving context changes:', contextData);
-      
-      this.showToast('Context saved successfully!', 'success');
+      console.log("Saving context changes:", contextData);
+
+      this.showToast("Context saved successfully!", "success");
     } catch (error) {
-      console.error('Failed to save context:', error);
-      this.showToast('Failed to save context', 'error');
+      console.error("Failed to save context:", error);
+      this.showToast("Failed to save context", "error");
     }
   }
 
@@ -956,15 +1106,19 @@ class SceneRenderer {
    */
   toggleActorDetails(characterId) {
     const details = document.getElementById(`actor-details-${characterId}`);
-    const toggleBtn = document.querySelector(`[data-character-id="${characterId}"].toggle-actor-details`);
-    
+    const toggleBtn = document.querySelector(
+      `[data-character-id="${characterId}"].toggle-actor-details`
+    );
+
     if (details && toggleBtn) {
-      const isVisible = details.style.display !== 'none';
-      details.style.display = isVisible ? 'none' : 'block';
-      
-      const icon = toggleBtn.querySelector('i');
+      const isVisible = details.style.display !== "none";
+      details.style.display = isVisible ? "none" : "block";
+
+      const icon = toggleBtn.querySelector("i");
       if (icon) {
-        icon.className = isVisible ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+        icon.className = isVisible
+          ? "fas fa-chevron-down"
+          : "fas fa-chevron-up";
       }
     }
   }
@@ -974,19 +1128,23 @@ class SceneRenderer {
    */
   async saveActorState(sceneId, characterId) {
     try {
-      const thoughtInput = document.querySelector(`[data-character-id="${characterId}"].actor-thought-input`);
-      const actionInput = document.querySelector(`[data-character-id="${characterId}"].actor-action-input`);
-      
+      const thoughtInput = document.querySelector(
+        `[data-character-id="${characterId}"].actor-thought-input`
+      );
+      const actionInput = document.querySelector(
+        `[data-character-id="${characterId}"].actor-action-input`
+      );
+
       if (!thoughtInput || !actionInput) {
-        console.error('Actor input fields not found');
+        console.error("Actor input fields not found");
         return;
       }
 
       const thought = thoughtInput.value.trim();
       const action = actionInput.value.trim();
-      
+
       if (!thought && !action) {
-        this.showToast('Please enter a thought or action to save', 'warning');
+        this.showToast("Please enter a thought or action to save", "warning");
         return;
       }
 
@@ -995,29 +1153,62 @@ class SceneRenderer {
         thought,
         action,
         timestamp,
-        characterId
+        characterId,
       };
 
-      // Store in local history
+      // Store in local history for immediate display
       if (!this.sceneActionHistory[sceneId][characterId]) {
         this.sceneActionHistory[sceneId][characterId] = [];
       }
       this.sceneActionHistory[sceneId][characterId].push(actorState);
 
       // Update the history display
-      this.updateActorHistory(characterId, this.sceneActionHistory[sceneId][characterId]);
-      
+      this.updateActorHistory(
+        characterId,
+        this.sceneActionHistory[sceneId][characterId]
+      );
+
       // Clear the input fields
-      thoughtInput.value = '';
-      actionInput.value = '';
-      
-      // TODO: Save to scene data via API
-      console.log('Saving actor state:', actorState);
-      
-      this.showToast('Actor state saved!', 'success');
+      thoughtInput.value = "";
+      actionInput.value = "";
+
+      // Save to database via API
+      try {
+        const response = await fetch(`/api/scenes/${sceneId}/actor-states`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            characterId: characterId,
+            characterType: this.getCharacterType(characterId), // Determine character type
+            thought: actorState.thought,
+            action: actorState.action,
+            metadata: {
+              timestamp: actorState.timestamp,
+              sceneId: sceneId,
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("Actor state saved to database:", result);
+        this.showToast("Actor state saved!", "success");
+      } catch (apiError) {
+        console.error("Failed to save actor state to database:", apiError);
+        // Still show success for local save, but warn about persistence
+        this.showToast(
+          "Actor state saved locally (persistence failed)",
+          "warning"
+        );
+      }
     } catch (error) {
-      console.error('Failed to save actor state:', error);
-      this.showToast('Failed to save actor state', 'error');
+      console.error("Failed to save actor state:", error);
+      this.showToast("Failed to save actor state", "error");
     }
   }
 
@@ -1029,17 +1220,36 @@ class SceneRenderer {
     if (!historyContainer) return;
 
     if (!history || history.length === 0) {
-      historyContainer.innerHTML = '<p class="no-history">No actions recorded yet.</p>';
+      historyContainer.innerHTML =
+        '<p class="no-history">No actions recorded yet.</p>';
       return;
     }
 
-    const historyHTML = history.map((entry, index) => `
+    const historyHTML = history
+      .map(
+        (entry, index) => `
       <div class="history-entry" data-entry-index="${index}">
-        <div class="history-timestamp">${new Date(entry.timestamp).toLocaleTimeString()}</div>
-        ${entry.thought ? `<div class="history-thought"><strong>Thought:</strong> ${escapeHTML(entry.thought)}</div>` : ''}
-        ${entry.action ? `<div class="history-action"><strong>Action:</strong> ${escapeHTML(entry.action)}</div>` : ''}
+        <div class="history-timestamp">${new Date(
+          entry.timestamp
+        ).toLocaleTimeString()}</div>
+        ${
+          entry.thought
+            ? `<div class="history-thought"><strong>Thought:</strong> ${escapeHTML(
+                entry.thought
+              )}</div>`
+            : ""
+        }
+        ${
+          entry.action
+            ? `<div class="history-action"><strong>Action:</strong> ${escapeHTML(
+                entry.action
+              )}</div>`
+            : ""
+        }
       </div>
-    `).join('');
+    `
+      )
+      .join("");
 
     historyContainer.innerHTML = historyHTML;
   }
@@ -1049,7 +1259,7 @@ class SceneRenderer {
    */
   async generateSceneContext(scene) {
     // Placeholder for AI integration
-    const output = document.getElementById('atmosphere-output');
+    const output = document.getElementById("atmosphere-output");
     if (output) {
       output.innerHTML = `<p class="generating">🤖 Generating contextual information...</p>`;
       // TODO: Integrate with Gemini AI service
@@ -1063,13 +1273,15 @@ class SceneRenderer {
    * Generate music suggestion based on mood
    */
   async generateMusicSuggestion(scene) {
-    const mood = document.querySelector('.mood-select')?.value || 'neutral';
-    const output = document.getElementById('music-output');
+    const mood = document.querySelector(".mood-select")?.value || "neutral";
+    const output = document.getElementById("music-output");
     if (output) {
       output.innerHTML = `<p class="generating">🎵 Finding music for ${mood} mood...</p>`;
       // TODO: Implement music suggestion API
       setTimeout(() => {
-        output.innerHTML = `<p><strong>Music Suggestion for ${mood} scene:</strong><br>Search for: "${mood} D&D ambient music" or "fantasy ${mood} soundtrack"<br><br><strong>Suggested Tracks:</strong><br>• Ambient ${mood} fantasy background<br>• ${mood.charAt(0).toUpperCase() + mood.slice(1)} dungeon atmosphere<br>• Medieval ${mood} tavern sounds</p>`;
+        output.innerHTML = `<p><strong>Music Suggestion for ${mood} scene:</strong><br>Search for: "${mood} D&D ambient music" or "fantasy ${mood} soundtrack"<br><br><strong>Suggested Tracks:</strong><br>• Ambient ${mood} fantasy background<br>• ${
+          mood.charAt(0).toUpperCase() + mood.slice(1)
+        } dungeon atmosphere<br>• Medieval ${mood} tavern sounds</p>`;
       }, 1000);
     }
   }
@@ -1078,7 +1290,7 @@ class SceneRenderer {
    * Generate next action suggestions
    */
   async generateNextAction(scene) {
-    const suggestions = document.getElementById('next-suggestions');
+    const suggestions = document.getElementById("next-suggestions");
     if (suggestions) {
       suggestions.innerHTML = `<p class="generating">🎲 Analyzing scene context...</p>`;
       // TODO: Implement AI-powered "Therefore" system
@@ -1113,12 +1325,12 @@ class SceneRenderer {
    */
   async completeScene(sceneId) {
     try {
-      await this.updateSceneStatus(sceneId, 'completed');
-      this.showToast('Scene completed successfully!', 'success');
+      await this.updateSceneStatus(sceneId, "completed");
+      this.showToast("Scene completed successfully!", "success");
       this.exitRunSceneMode();
     } catch (error) {
-      console.error('Failed to complete scene:', error);
-      this.showToast('Failed to complete scene', 'error');
+      console.error("Failed to complete scene:", error);
+      this.showToast("Failed to complete scene", "error");
     }
   }
 
@@ -1129,9 +1341,9 @@ class SceneRenderer {
     try {
       // Load available NPCs first
       const { availableNPCs, error } = await this.loadAvailableNPCs(scene);
-      
+
       if (error) {
-        this.showToast('Failed to load NPCs', 'error');
+        this.showToast("Failed to load NPCs", "error");
         return;
       }
 
@@ -1156,21 +1368,33 @@ class SceneRenderer {
             <h4>Existing NPCs</h4>
             <p class="section-description">Add NPCs from your character database</p>
             <div class="existing-npcs-container">
-              ${availableNPCs.length > 0 ? `
+              ${
+                availableNPCs.length > 0
+                  ? `
                 <div class="npcs-grid">
-                  ${availableNPCs.map(npc => `
+                  ${availableNPCs
+                    .map(
+                      (npc) => `
                     <div class="npc-card" data-npc-id="${npc.id}">
                       <div class="npc-card-content">
                         <strong>${escapeHTML(npc.name)}</strong>
-                        <span class="npc-role">${escapeHTML(npc.role || 'NPC')}</span>
+                        <span class="npc-role">${escapeHTML(
+                          npc.role || "NPC"
+                        )}</span>
                       </div>
-                      <button class="btn btn-sm btn-outline-success add-existing-npc-btn" data-npc-id="${npc.id}">
+                      <button class="btn btn-sm btn-outline-success add-existing-npc-btn" data-npc-id="${
+                        npc.id
+                      }">
                         <i class="fas fa-plus"></i> Add
                       </button>
                     </div>
-                  `).join('')}
+                  `
+                    )
+                    .join("")}
                 </div>
-              ` : '<p class="no-npcs-available">No additional NPCs available from your character database.</p>'}
+              `
+                  : '<p class="no-npcs-available">No additional NPCs available from your character database.</p>'
+              }
             </div>
           </div>
 
@@ -1185,10 +1409,9 @@ class SceneRenderer {
 
       // Add event handlers
       this.setupAddNPCModalHandlers(modalOverlay, scene);
-
     } catch (error) {
-      console.error('Failed to show Add NPC modal:', error);
-      this.showToast('Failed to load Add NPC dialog', 'error');
+      console.error("Failed to show Add NPC modal:", error);
+      this.showToast("Failed to load Add NPC dialog", "error");
     }
   }
 
@@ -1199,21 +1422,22 @@ class SceneRenderer {
     try {
       // Get campaign ID from scene or use the same source as Characters tab
       let campaignId = scene.campaign_id;
-      
+
       // If no campaign ID in scene, get it from data manager like Characters tab does
       if (!campaignId) {
         // Try to get it from the same source as Characters tab
-        campaignId = window.dataManager?.currentCampaignId || 'campaign-4-old-cistern';
+        campaignId =
+          window.dataManager?.currentCampaignId || "campaign-4-old-cistern";
       }
-      
-      console.log('🔍 Run Scene loading NPCs for campaign:', campaignId);
-      console.log('🎭 Scene details:', {
+
+      console.log("🔍 Run Scene loading NPCs for campaign:", campaignId);
+      console.log("🎭 Scene details:", {
         sceneId: scene.id,
         sceneCampaignId: scene.campaign_id,
         dataManagerCampaignId: window.dataManager?.currentCampaignId,
-        finalCampaignId: campaignId
+        finalCampaignId: campaignId,
       });
-      
+
       // Fetch all NPCs using the same endpoint structure as Characters tab
       const response = await fetch(`/api/characters?campaign_id=${campaignId}`);
       if (!response.ok) {
@@ -1222,19 +1446,27 @@ class SceneRenderer {
 
       const charactersData = await response.json();
       const allNPCs = charactersData.npcs || [];
-      
-      console.log('📊 Available NPCs from API:', allNPCs.map(npc => npc.name));
-      
+
+      console.log(
+        "📊 Available NPCs from API:",
+        allNPCs.map((npc) => npc.name)
+      );
+
       // Filter out NPCs already in scene
-      const currentNPCIds = document.querySelectorAll('.actor-item.npc').length > 0 ? 
-        Array.from(document.querySelectorAll('.actor-item.npc')).map(item => item.dataset.characterId) : [];
-      
-      const availableNPCs = allNPCs.filter(npc => !currentNPCIds.includes(npc.id));
+      const currentNPCIds =
+        document.querySelectorAll(".actor-item.npc").length > 0
+          ? Array.from(document.querySelectorAll(".actor-item.npc")).map(
+              (item) => item.dataset.characterId
+            )
+          : [];
+
+      const availableNPCs = allNPCs.filter(
+        (npc) => !currentNPCIds.includes(npc.id)
+      );
 
       return { availableNPCs, error: null };
-
     } catch (error) {
-      console.error('Failed to load available NPCs:', error);
+      console.error("Failed to load available NPCs:", error);
       return { availableNPCs: [], error: error.message };
     }
   }
@@ -1244,36 +1476,38 @@ class SceneRenderer {
    */
   setupAddNPCModalHandlers(modalOverlay, scene) {
     // Close modal button
-    const closeBtn = modalOverlay.querySelector('.close-modal-btn');
+    const closeBtn = modalOverlay.querySelector(".close-modal-btn");
     if (closeBtn) {
-      closeBtn.addEventListener('click', () => modalOverlay.remove());
+      closeBtn.addEventListener("click", () => modalOverlay.remove());
     }
 
     // Quick create button
-    const createBtn = modalOverlay.querySelector('#create-quick-npc-btn');
-    const nameInput = modalOverlay.querySelector('#quick-npc-name');
+    const createBtn = modalOverlay.querySelector("#create-quick-npc-btn");
+    const nameInput = modalOverlay.querySelector("#quick-npc-name");
     if (createBtn && nameInput) {
-      createBtn.addEventListener('click', async () => {
+      createBtn.addEventListener("click", async () => {
         const npcName = nameInput.value.trim();
         if (!npcName) {
-          this.showToast('Please enter an NPC name', 'warning');
+          this.showToast("Please enter an NPC name", "warning");
           return;
         }
         await this.createQuickNPC(scene, npcName, modalOverlay);
       });
 
       // Allow Enter key to create
-      nameInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
+      nameInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
           createBtn.click();
         }
       });
     }
 
     // Add existing NPC buttons
-    const addExistingBtns = modalOverlay.querySelectorAll('.add-existing-npc-btn');
-    addExistingBtns.forEach(btn => {
-      btn.addEventListener('click', async (e) => {
+    const addExistingBtns = modalOverlay.querySelectorAll(
+      ".add-existing-npc-btn"
+    );
+    addExistingBtns.forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
         const npcId = e.target.dataset.npcId;
         await this.addExistingNPCToScene(scene, npcId, modalOverlay);
       });
@@ -1289,21 +1523,21 @@ class SceneRenderer {
       const quickNPC = {
         id: `quick-npc-${Date.now()}`, // Temporary ID
         name: npcName,
-        role: 'Quick NPC',
-        type: 'npc',
-        isQuickNPC: true // Flag to identify quick NPCs
+        role: "Quick NPC",
+        type: "npc",
+        isQuickNPC: true, // Flag to identify quick NPCs
       };
 
       // Add to the scene immediately
       await this.addNPCToScene(scene.id, quickNPC);
-      
+
       // Close modal
       modalOverlay.remove();
-      
-      this.showToast(`Added ${npcName} to scene!`, 'success');
+
+      this.showToast(`Added ${npcName} to scene!`, "success");
     } catch (error) {
-      console.error('Failed to create quick NPC:', error);
-      this.showToast('Failed to create NPC', 'error');
+      console.error("Failed to create quick NPC:", error);
+      this.showToast("Failed to create NPC", "error");
     }
   }
 
@@ -1317,25 +1551,25 @@ class SceneRenderer {
       if (!npcCard) return;
 
       // Create NPC object (would normally fetch full data from API)
-      const npcName = npcCard.querySelector('strong').textContent;
-      const npcRole = npcCard.querySelector('.npc-role').textContent;
-      
+      const npcName = npcCard.querySelector("strong").textContent;
+      const npcRole = npcCard.querySelector(".npc-role").textContent;
+
       const npc = {
         id: npcId,
         name: npcName,
         role: npcRole,
-        type: 'npc'
+        type: "npc",
       };
 
       await this.addNPCToScene(scene.id, npc);
-      
+
       // Close modal
       modalOverlay.remove();
-      
-      this.showToast(`Added ${npcName} to scene!`, 'success');
+
+      this.showToast(`Added ${npcName} to scene!`, "success");
     } catch (error) {
-      console.error('Failed to add existing NPC:', error);
-      this.showToast('Failed to add NPC', 'error');
+      console.error("Failed to add existing NPC:", error);
+      this.showToast("Failed to add NPC", "error");
     }
   }
 
@@ -1344,11 +1578,11 @@ class SceneRenderer {
    */
   async addNPCToScene(sceneId, npc) {
     try {
-      const npcsContainer = document.querySelector('.npcs-list');
+      const npcsContainer = document.querySelector(".npcs-list");
       if (!npcsContainer) return;
 
       // Remove "no NPCs" message if it exists
-      const noNPCsMsg = npcsContainer.querySelector('.no-npcs');
+      const noNPCsMsg = npcsContainer.querySelector(".no-npcs");
       if (noNPCsMsg) {
         noNPCsMsg.remove();
       }
@@ -1362,23 +1596,35 @@ class SceneRenderer {
               <span class="actor-type">NPC</span>
             </div>
             <div class="actor-actions">
-              <button class="btn btn-xs btn-outline-primary view-character-btn" data-character-id="${npc.id}">
+              <button class="btn btn-xs btn-outline-primary view-character-btn" data-character-id="${
+                npc.id
+              }">
                 <i class="fas fa-eye"></i>
               </button>
-              <button class="btn btn-xs btn-outline-secondary toggle-actor-details" data-character-id="${npc.id}">
+              <button class="btn btn-xs btn-outline-secondary toggle-actor-details" data-character-id="${
+                npc.id
+              }">
                 <i class="fas fa-chevron-down"></i>
               </button>
             </div>
           </div>
-          <div class="actor-details" id="actor-details-${npc.id}" style="display: none;">
+          <div class="actor-details" id="actor-details-${
+            npc.id
+          }" style="display: none;">
             <div class="actor-thought-section">
               <label>NPC Motivation/State:</label>
-              <textarea class="actor-thought-input" rows="2" placeholder="What does this NPC want? How are they feeling about the situation?" data-character-id="${npc.id}"></textarea>
+              <textarea class="actor-thought-input" rows="2" placeholder="What does this NPC want? How are they feeling about the situation?" data-character-id="${
+                npc.id
+              }"></textarea>
             </div>
             <div class="actor-action-section">
               <label>NPC Action/Response:</label>
-              <textarea class="actor-action-input" rows="2" placeholder="How does this NPC react? What do they do?" data-character-id="${npc.id}"></textarea>
-              <button class="btn btn-xs btn-success save-actor-state-btn" data-character-id="${npc.id}">
+              <textarea class="actor-action-input" rows="2" placeholder="How does this NPC react? What do they do?" data-character-id="${
+                npc.id
+              }"></textarea>
+              <button class="btn btn-xs btn-success save-actor-state-btn" data-character-id="${
+                npc.id
+              }">
                 <i class="fas fa-save"></i> Save State
               </button>
             </div>
@@ -1393,21 +1639,27 @@ class SceneRenderer {
       `;
 
       // Add to the container
-      npcsContainer.insertAdjacentHTML('beforeend', npcHTML);
+      npcsContainer.insertAdjacentHTML("beforeend", npcHTML);
 
       // Add event listeners for the new NPC
-      const newNPCElement = npcsContainer.querySelector(`[data-character-id="${npc.id}"]`);
+      const newNPCElement = npcsContainer.querySelector(
+        `[data-character-id="${npc.id}"]`
+      );
       if (newNPCElement) {
         // Toggle button
-        const toggleBtn = newNPCElement.querySelector('.toggle-actor-details');
+        const toggleBtn = newNPCElement.querySelector(".toggle-actor-details");
         if (toggleBtn) {
-          toggleBtn.addEventListener('click', (e) => this.toggleActorDetails(e.target.dataset.characterId));
+          toggleBtn.addEventListener("click", (e) =>
+            this.toggleActorDetails(e.target.dataset.characterId)
+          );
         }
 
         // Save button
-        const saveBtn = newNPCElement.querySelector('.save-actor-state-btn');
+        const saveBtn = newNPCElement.querySelector(".save-actor-state-btn");
         if (saveBtn) {
-          saveBtn.addEventListener('click', (e) => this.saveActorState(sceneId, e.target.dataset.characterId));
+          saveBtn.addEventListener("click", (e) =>
+            this.saveActorState(sceneId, e.target.dataset.characterId)
+          );
         }
       }
 
@@ -1418,10 +1670,76 @@ class SceneRenderer {
       if (!this.sceneActionHistory[sceneId][npc.id]) {
         this.sceneActionHistory[sceneId][npc.id] = [];
       }
-
     } catch (error) {
-      console.error('Failed to add NPC to scene:', error);
+      console.error("Failed to add NPC to scene:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Get character type (pc or npc) based on character ID
+   */
+  getCharacterType(characterId) {
+    // Check if character exists in the current scene interface
+    const pcElement = document.querySelector(
+      `.actor-item.pc[data-character-id="${characterId}"]`
+    );
+    if (pcElement) {
+      return "pc";
+    }
+
+    const npcElement = document.querySelector(
+      `.actor-item.npc[data-character-id="${characterId}"]`
+    );
+    if (npcElement) {
+      return "npc";
+    }
+
+    // Default to NPC if we can't determine
+    return "npc";
+  }
+
+  /**
+   * Load actor state history from database
+   */
+  async loadActorStateHistory(sceneId) {
+    try {
+      const response = await fetch(`/api/scenes/${sceneId}/actor-states`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to load actor states: ${response.status}`);
+      }
+
+      const actorStates = await response.json();
+
+      // Group states by character ID
+      const groupedStates = {};
+      actorStates.forEach((state) => {
+        if (!groupedStates[state.character_id]) {
+          groupedStates[state.character_id] = [];
+        }
+        groupedStates[state.character_id].push({
+          thought: state.thought,
+          action: state.action,
+          timestamp: state.timestamp,
+          characterType: state.character_type,
+        });
+      });
+
+      // Update local history and display
+      this.sceneActionHistory[sceneId] = groupedStates;
+
+      // Update all character history displays
+      Object.keys(groupedStates).forEach((characterId) => {
+        this.updateActorHistory(characterId, groupedStates[characterId]);
+      });
+
+      console.log(
+        `📚 Loaded ${actorStates.length} actor states for scene ${sceneId}`
+      );
+    } catch (error) {
+      console.error("Failed to load actor state history:", error);
+      // Don't show error toast as this is a background operation
     }
   }
 
